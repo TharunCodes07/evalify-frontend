@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/popover";
 import { CalendarDatePicker } from "@/components/data-table/date-picker";
 import { DataTableViewOptions } from "@/components/data-table/view-options";
+import { DataTableFacetedFilter } from "@/components/data-table/column-filter";
 import { DataTableExport } from "./data-export";
 import { resetUrlState } from "./utils/deep-utils";
 import { parseDateFromUrl } from "./utils/url-state";
@@ -83,6 +84,15 @@ interface DataTableToolbarProps<TData> {
   columnWidths?: Array<{ wch: number }>;
   headers?: string[];
   customToolbarComponent?: React.ReactNode;
+  columnFilterOptions?: Array<{
+    columnId: string;
+    title: string;
+    options: Array<{
+      label: string;
+      value: string;
+      icon?: React.ComponentType<{ className?: string }>;
+    }>;
+  }>;
 }
 
 export function DataTableToolbar<TData>({
@@ -101,6 +111,7 @@ export function DataTableToolbar<TData>({
   columnWidths,
   headers,
   customToolbarComponent,
+  columnFilterOptions,
 }: DataTableToolbarProps<TData>) {
   // Get router and pathname for URL state reset
   const router = useRouter();
@@ -384,7 +395,6 @@ export function DataTableToolbar<TData>({
             )}`}
           />
         )}
-
         {config.enableDateFilter && (
           <div className="flex items-center">
             <CalendarDatePicker
@@ -400,7 +410,22 @@ export function DataTableToolbar<TData>({
             />
           </div>
         )}
+        {config.enableColumnFilters &&
+          columnFilterOptions &&
+          columnFilterOptions.map((filter) => {
+            const column = table.getColumn(filter.columnId);
+            if (!column) return null;
 
+            return (
+              <DataTableFacetedFilter
+                key={filter.columnId}
+                column={column}
+                title={filter.title}
+                options={filter.options}
+                size={config.size}
+              />
+            );
+          })}
         {isFiltered && (
           <Button
             variant="ghost"
@@ -494,11 +519,10 @@ export function DataTableToolbar<TData>({
                     className="justify-start"
                     onClick={(e) => {
                       e.preventDefault();
-                      table.resetRowSelection();
-                      // Also call the parent component's deleteSelection function if available
                       if (deleteSelection) {
                         deleteSelection();
                       }
+                      table.resetRowSelection();
                     }}
                   >
                     <CheckSquare className="mr-2 h-4 w-4" />

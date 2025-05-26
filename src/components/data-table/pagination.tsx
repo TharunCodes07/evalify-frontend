@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useUrlState } from "@/components/data-table/utils/url-state";
 
 const getButtonSizeClass = (size: "sm" | "default" | "lg") => {
   switch (size) {
@@ -42,6 +43,16 @@ export function DataTablePagination<TData>({
   pageSizeOptions = [10, 20, 30, 40, 50], // Default options if none provided
   size = "default",
 }: DataTablePaginationProps<TData>) {
+  // Use URL state hooks for managing pagination state in the URL
+  const [, setPageSize] = useUrlState(
+      "pageSize",
+      table.getState().pagination.pageSize
+    ),
+    [, setPage] = useUrlState(
+      "page",
+      table.getState().pagination.pageIndex + 1
+    );
+
   // Convert 'lg' size to 'default' for SelectTrigger since it only accepts 'sm' | 'default'
   const selectSize = size === "lg" ? "default" : size;
 
@@ -56,15 +67,9 @@ export function DataTablePagination<TData>({
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
-              // Force URL update via direct window manipulation first
-              // This ensures the URL gets updated before the table state changes
-              const url = new URL(window.location.href);
-              url.searchParams.set("pageSize", value);
-              url.searchParams.set("page", "1"); // Always reset to page 1
-              window.history.replaceState({}, "", url.toString());
-
-              // Then use the table's pagination change handler to update table state
-              // This order ensures the URL is already set when the table state updates
+              // Update URL state and table state together
+              setPageSize(Number(value));
+              setPage(1);
               table.setPagination({
                 pageIndex: 0, // Reset to first page
                 pageSize: Number(value),
@@ -88,7 +93,7 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className="flex items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          Page {table.getState().pagination.pageIndex + 1} of
           {table.getPageCount() || 1}
         </div>
         <div className="flex items-center space-x-2">

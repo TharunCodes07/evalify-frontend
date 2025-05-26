@@ -120,6 +120,7 @@ const fetchUsers = async (params: {
   to_date: string;
   sort_by: string;
   sort_order: string;
+  column_filters?: Record<string, string[]>;
 }) => {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 300));
@@ -139,6 +140,19 @@ const fetchUsers = async (params: {
         user.role.toLowerCase().includes(searchLower)
     );
   }
+
+  // Apply column filters
+  if (params.column_filters) {
+    Object.entries(params.column_filters).forEach(([columnId, values]) => {
+      if (values && values.length > 0) {
+        filteredUsers = filteredUsers.filter((user) => {
+          const userValue = user[columnId as keyof User];
+          return values.includes(String(userValue));
+        });
+      }
+    });
+  }
+
   // Sort users
   filteredUsers.sort((a, b) => {
     let aValue: string | number = a[params.sort_by as keyof User] as
@@ -213,6 +227,7 @@ export default function DevlabsDashboardPage() {
         ),
         enableSorting: false,
         enableHiding: false,
+        size: 50, // Make the select column smaller by default
       },
       {
         accessorKey: "firstName",
@@ -234,10 +249,10 @@ export default function DevlabsDashboardPage() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <div className="font-medium text-gray-900">
+                <div className="font-medium text-gray-500">
                   {user.firstName} {user.lastName}
                 </div>
-                <div className="text-sm text-gray-500">{user.email}</div>
+                <div className="text-sm text-gray-700">{user.email}</div>
               </div>
             </div>
           );
@@ -268,7 +283,7 @@ export default function DevlabsDashboardPage() {
           <DataTableColumnHeader column={column} title="Department" />
         ),
         cell: ({ row }) => (
-          <span className="text-gray-900">{row.getValue("department")}</span>
+          <span className="text-gray-600">{row.getValue("department")}</span>
         ),
       },
       {
@@ -417,16 +432,14 @@ export default function DevlabsDashboardPage() {
     }),
     []
   );
-
   return (
-    <div className="container mx-auto py-6">
+    <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Users Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-600">Users Dashboard</h1>
         <p className="mt-2 text-gray-600">
           Manage and view all users in your organization
         </p>
       </div>
-
       <DataTable<User, string | number>
         config={tableConfig}
         getColumns={getColumns}
@@ -435,6 +448,38 @@ export default function DevlabsDashboardPage() {
         exportConfig={exportConfig}
         idField="id"
         pageSizeOptions={[10, 20, 30, 50, 100]}
+        columnFilterOptions={[
+          {
+            columnId: "role",
+            title: "Role",
+            options: [
+              { label: "Admin", value: "admin" },
+              { label: "Moderator", value: "moderator" },
+              { label: "User", value: "user" },
+            ],
+          },
+          {
+            columnId: "department",
+            title: "Department",
+            options: [
+              { label: "Engineering", value: "Engineering" },
+              { label: "Marketing", value: "Marketing" },
+              { label: "Sales", value: "Sales" },
+              { label: "HR", value: "HR" },
+              { label: "Finance", value: "Finance" },
+              { label: "Operations", value: "Operations" },
+            ],
+          },
+          {
+            columnId: "status",
+            title: "Status",
+            options: [
+              { label: "Active", value: "active" },
+              { label: "Inactive", value: "inactive" },
+              { label: "Pending", value: "pending" },
+            ],
+          },
+        ]}
         renderToolbarContent={({
           selectedRows,
           totalSelectedCount,

@@ -30,11 +30,10 @@ export function extractDefaultColumnSizes<TData>(
 }
 
 /**
- * Initialize column sizes from localStorage or defaults
+ * Initialize column sizes from defaults
  */
 export function initializeColumnSizes<TData>(
   columns: ColumnDef<TData, unknown>[],
-  tableId: string,
   setColumnSizing: (sizes: Record<string, number>) => void
 ): void {
   // Only proceed if we have columns to work with
@@ -46,24 +45,8 @@ export function initializeColumnSizes<TData>(
   // Only set if we have sizes to apply
   if (Object.keys(defaultSizing).length === 0) return;
 
-  // Check localStorage first
-  try {
-    const savedSizing = localStorage.getItem(`table-column-sizing-${tableId}`);
-    if (!savedSizing) {
-      // Only apply defaults if no saved sizing exists
-      setColumnSizing(defaultSizing);
-    } else {
-      // Parse saved sizing
-      const parsedSizing = JSON.parse(savedSizing);
-
-      // Apply saved sizing
-      setColumnSizing(parsedSizing);
-    }
-  } catch (error) {
-    // If localStorage fails, apply defaults
-    console.warn("Failed to load saved column sizes. Using defaults.", error);
-    setColumnSizing(defaultSizing);
-  }
+  // Apply default sizing
+  setColumnSizing(defaultSizing);
 }
 
 /**

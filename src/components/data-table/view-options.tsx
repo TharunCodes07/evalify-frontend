@@ -19,16 +19,13 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import * as React from "react";
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useState, useMemo } from "react";
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
   columnMapping?: Record<string, string>;
   size?: "sm" | "default" | "lg";
 }
-
-// Local storage key for column order
-const COLUMN_ORDER_STORAGE_KEY = "data-table-column-order";
 
 export function DataTableViewOptions<TData>({
   table,
@@ -60,41 +57,13 @@ export function DataTableViewOptions<TData>({
     // Create a new array with columns sorted according to the columnOrder
     return [...columns].sort((a, b) => {
       const aIndex = columnOrder.indexOf(a.id);
-      const bIndex = columnOrder.indexOf(b.id);
-
-      // If column isn't in the order array, put it at the end
+      const bIndex = columnOrder.indexOf(b.id); // If column isn't in the order array, put it at the end
       if (aIndex === -1) return 1;
       if (bIndex === -1) return -1;
 
       return aIndex - bIndex;
     });
   }, [columns, columnOrder]);
-
-  // Load column order from localStorage on initial render
-  useEffect(() => {
-    try {
-      const savedOrder = localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
-      if (savedOrder) {
-        const columnOrder = JSON.parse(savedOrder);
-        // Apply saved column order to the table
-        table.setColumnOrder(columnOrder);
-      }
-    } catch (error) {
-      console.error("Error loading column order:", error);
-    }
-  }, [table]);
-
-  // Save column order to localStorage when it changes
-  const saveColumnOrder = useCallback((columnOrder: string[]) => {
-    try {
-      localStorage.setItem(
-        COLUMN_ORDER_STORAGE_KEY,
-        JSON.stringify(columnOrder)
-      );
-    } catch (error) {
-      console.error("Error saving column order:", error);
-    }
-  }, []);
 
   // Handle drag start
   const handleDragStart = useCallback(
@@ -145,20 +114,15 @@ export function DataTableViewOptions<TData>({
       // Update table column order
       table.setColumnOrder(newOrder);
 
-      // Save to localStorage
-      saveColumnOrder(newOrder);
-
       setDraggedColumnId(null);
     },
-    [draggedColumnId, table, saveColumnOrder]
+    [draggedColumnId, table]
   );
 
   // Reset column order
   const resetColumnOrder = useCallback(() => {
     // Clear order by setting empty array (table will use default order)
     table.setColumnOrder([]);
-    // Remove from localStorage
-    localStorage.removeItem(COLUMN_ORDER_STORAGE_KEY);
   }, [table]);
 
   // Get column display label

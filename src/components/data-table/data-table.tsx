@@ -34,7 +34,6 @@ import {
   useTableConfig,
   type TableConfig,
 } from "@/components/data-table/utils/table-config";
-import { useTableColumnResize } from "./hooks/use-table-column-resize";
 import { DataTableResizer } from "./data-table-resizer";
 import { preprocessSearch } from "@/components/data-table/utils/search";
 import {
@@ -44,11 +43,6 @@ import {
   createSortingState,
 } from "@/components/data-table/utils/table-state-handlers";
 import { createConditionalStateHook } from "@/components/data-table/utils/conditional-state";
-import {
-  initializeColumnSizes,
-  trackColumnResizing,
-  cleanupColumnResizing,
-} from "@/components/data-table/utils/column-sizing";
 
 // Define types for the data fetching function params and result
 interface DataFetchParams {
@@ -59,6 +53,7 @@ interface DataFetchParams {
   to_date: string;
   sort_by: string;
   sort_order: string;
+  column_filters?: Record<string, string[]>;
 }
 
 interface DataFetchResult<TData> {
@@ -119,7 +114,6 @@ interface DataTableProps<TData, TValue> {
 
   // Custom page size options
   pageSizeOptions?: number[];
-
   // Custom toolbar content render function
   renderToolbarContent?: (props: {
     selectedRows: TData[];
@@ -127,6 +121,16 @@ interface DataTableProps<TData, TValue> {
     totalSelectedCount: number;
     resetSelection: () => void;
   }) => React.ReactNode;
+  // Column filters configuration
+  columnFilterOptions?: Array<{
+    columnId: string;
+    title: string;
+    options: Array<{
+      label: string;
+      value: string;
+      icon?: React.ComponentType<{ className?: string }>;
+    }>;
+  }>;
 }
 
 export function DataTable<TData, TValue>({
@@ -138,16 +142,13 @@ export function DataTable<TData, TValue>({
   idField = "id" as keyof TData,
   pageSizeOptions,
   renderToolbarContent,
+  columnFilterOptions,
 }: DataTableProps<TData, TValue>) {
   // Load table configuration with any overrides
   const tableConfig = useTableConfig(config);
 
-  // Table ID for localStorage storage - generate a default if not provided
-  const tableId = tableConfig.columnResizingTableId || "data-table-default";
-
-  // Use our custom hook for column resizing
-  const { columnSizing, setColumnSizing, resetColumnSizing } =
-    useTableColumnResize(tableId, tableConfig.enableColumnResizing);
+  // Column sizing state (no localStorage persistence)
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
 
   // Create conditional URL state hook based on config
   const useConditionalUrlState = createConditionalStateHook(
@@ -188,19 +189,33 @@ export function DataTable<TData, TValue>({
     };
   } | null>(null);
 
-  // Column order state (managed separately from URL state as it's persisted in localStorage)
+  // Column order state (in-memory only)
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
 
   // PERFORMANCE FIX: Use only one selection state as the source of truth
   const [selectedItemIds, setSelectedItemIds] = useState<
     Record<string | number, boolean>
   >({});
-
   // Convert the sorting from URL to the format TanStack Table expects
   const sorting = useMemo(
     () => createSortingState(sortBy, sortOrder),
     [sortBy, sortOrder]
   );
+
+  // Convert column filters to server format
+  const serverColumnFilters = useMemo(() => {
+    const filters: Record<string, string[]> = {};
+    columnFilters.forEach((filter) => {
+      if (
+        filter.value &&
+        Array.isArray(filter.value) &&
+        filter.value.length > 0
+      ) {
+        filters[filter.id] = filter.value as string[];
+      }
+    });
+    return Object.keys(filters).length > 0 ? filters : undefined;
+  }, [columnFilters]);
 
   // Get current data items - memoize to avoid recalculations
   const dataItems = useMemo(() => data?.data || [], [data?.data]);
@@ -366,7 +381,6 @@ export function DataTable<TData, TValue>({
       const fetchData = async () => {
         try {
           setIsLoading(true);
-
           const result = await (
             fetchDataFn as (
               params: DataFetchParams
@@ -379,6 +393,7 @@ export function DataTable<TData, TValue>({
             to_date: dateRange.to_date,
             sort_by: currentSortBy,
             sort_order: currentSortOrder,
+            column_filters: serverColumnFilters,
           });
           setData(result);
           setIsError(false);
@@ -391,10 +406,18 @@ export function DataTable<TData, TValue>({
           setIsLoading(false);
         }
       };
-
       fetchData();
     }
-  }, [page, pageSize, search, dateRange, sortBy, sortOrder, fetchDataFn]);
+  }, [
+    page,
+    pageSize,
+    search,
+    dateRange,
+    sortBy,
+    sortOrder,
+    serverColumnFilters,
+    fetchDataFn,
+  ]);
 
   // If fetchDataFn is a React Query hook, call it directly with parameters
   const queryResult =
@@ -511,15 +534,10 @@ export function DataTable<TData, TValue>({
 
       // Special handling: When page size changes, always reset to page 1
       if (newPagination.pageSize !== pageSize) {
-        // First, directly update URL to ensure it's in sync
-        const url = new URL(window.location.href);
-        url.searchParams.set("pageSize", String(newPagination.pageSize));
-        url.searchParams.set("page", "1"); // Always reset to page 1
-        window.history.replaceState({}, "", url.toString());
+        Promise.all([setPageSize(newPagination.pageSize), setPage(1)]).catch(
+          console.error
+        );
 
-        // Then update our state
-        setPageSize(newPagination.pageSize);
-        setPage(1);
         return;
       }
 
@@ -550,7 +568,7 @@ export function DataTable<TData, TValue>({
     [setColumnSizing]
   );
 
-  // Column order change handler
+  // Column order change handler (no localStorage persistence)
   const handleColumnOrderChange = useCallback(
     (updaterOrValue: ColumnOrderUpdater | string[]) => {
       const newColumnOrder =
@@ -559,32 +577,9 @@ export function DataTable<TData, TValue>({
           : updaterOrValue;
 
       setColumnOrder(newColumnOrder);
-
-      // Persist column order to localStorage
-      try {
-        localStorage.setItem(
-          "data-table-column-order",
-          JSON.stringify(newColumnOrder)
-        );
-      } catch (error) {
-        console.error("Failed to save column order to localStorage:", error);
-      }
     },
     [columnOrder]
   );
-
-  // Load column order from localStorage on initial render
-  useEffect(() => {
-    try {
-      const savedOrder = localStorage.getItem("data-table-column-order");
-      if (savedOrder) {
-        const parsedOrder = JSON.parse(savedOrder);
-        setColumnOrder(parsedOrder);
-      }
-    } catch (error) {
-      console.error("Error loading column order:", error);
-    }
-  }, []);
 
   // Set up the table with memoized state
   const table = useReactTable<TData>({
@@ -631,39 +626,16 @@ export function DataTable<TData, TValue>({
     }
   }, [data?.pagination?.total_pages, page, setPage]);
 
-  // Initialize default column sizes when columns are available and no saved sizes exist
-  useEffect(() => {
-    initializeColumnSizes(columns, tableId, setColumnSizing);
-  }, [columns, tableId, setColumnSizing]);
+  // Reset column sizing (no localStorage persistence)
+  const resetColumnSizing = useCallback(() => {
+    setColumnSizing({});
+  }, []);
 
-  // Handle column resizing
-  useEffect(() => {
-    const isResizingAny = table
-      .getHeaderGroups()
-      .some((headerGroup) =>
-        headerGroup.headers.some((header) => header.column.getIsResizing())
-      );
-
-    trackColumnResizing(isResizingAny);
-
-    // Cleanup on unmount
-    return () => {
-      cleanupColumnResizing();
-    };
-  }, [table]);
-
-  // Reset column order
+  // Reset column order (no localStorage persistence)
   const resetColumnOrder = useCallback(() => {
     // Reset to empty array (which resets to default order)
     table.setColumnOrder([]);
     setColumnOrder([]);
-
-    // Remove from localStorage
-    try {
-      localStorage.removeItem("data-table-column-order");
-    } catch (error) {
-      console.error("Failed to remove column order from localStorage:", error);
-    }
   }, [table]);
 
   // Add synchronization effect to ensure URL is the source of truth
@@ -697,7 +669,7 @@ export function DataTable<TData, TValue>({
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
-          Failed to load data:{" "}
+          Failed to load data:
           {error instanceof Error ? error.message : "Unknown error"}
         </AlertDescription>
       </Alert>
@@ -728,6 +700,7 @@ export function DataTable<TData, TValue>({
           columnMapping={exportConfig.columnMapping}
           columnWidths={exportConfig.columnWidths}
           headers={exportConfig.headers}
+          columnFilterOptions={columnFilterOptions}
           customToolbarComponent={renderToolbarContent?.({
             selectedRows: dataItems.filter(
               (item) => selectedItemIds[String(item[idField])]
@@ -737,7 +710,7 @@ export function DataTable<TData, TValue>({
             resetSelection: clearAllSelections,
           })}
         />
-      )}{" "}
+      )}
       <div
         ref={tableContainerRef}
         className="overflow-y-auto rounded-md border table-container"
@@ -768,7 +741,7 @@ export function DataTable<TData, TValue>({
                       : flexRender(
                           header.column.columnDef.header,
                           header.getContext()
-                        )}{" "}
+                        )}
                     {tableConfig.enableColumnResizing &&
                       header.column.getCanResize() && (
                         <DataTableResizer header={header} />
@@ -780,7 +753,6 @@ export function DataTable<TData, TValue>({
           </TableHeader>
 
           <TableBody>
-            {" "}
             {isLoading ? (
               // Loading state
               Array.from({ length: pageSize }).map((_, index) => (

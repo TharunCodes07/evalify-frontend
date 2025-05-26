@@ -39,7 +39,11 @@ export function ThemeToggle() {
   return (
     <SidebarMenuButton
       onClick={toggleTheme}
-      tooltip={`Switch to ${resolvedTheme === "dark" ? "Light" : "Dark"} theme`}
+      tooltip={
+        mounted
+          ? `Switch to ${resolvedTheme === "dark" ? "Light" : "Dark"} theme`
+          : "Switch theme"
+      }
     >
       {getThemeIcon()}
       <span>{getThemeLabel()}</span>

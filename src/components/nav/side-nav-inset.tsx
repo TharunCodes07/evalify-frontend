@@ -47,10 +47,10 @@ export function AppSidebarInset({ children }: { children: React.ReactNode }) {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-        </div>
+        </div>{" "}
         <div className="mr-2 sm:mr-4"></div>
       </header>
-      {children}
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
     </SidebarInset>
   );
 }

@@ -39,10 +39,6 @@ export interface TableConfig {
   // Control the size of buttons and inputs throughout the table
   // sm: small, default: standard, lg: large
   size: "sm" | "default" | "lg";
-
-  // Unique ID for storing column sizing in localStorage
-  // This allows multiple tables to have independent sizing states
-  columnResizingTableId?: string;
 }
 
 // Default configuration
@@ -59,7 +55,6 @@ const defaultConfig: TableConfig = {
   enableColumnResizing: true, // Column resizing enabled by default
   enableToolbar: true, // Toolbar enabled by default
   size: "default", // Default size for buttons and inputs
-  columnResizingTableId: undefined, // No table ID by default
 };
 
 /**

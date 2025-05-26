@@ -45,9 +45,7 @@ export function isDeepEqual(a: Comparable, b: Comparable): boolean {
     // Handle different types quickly
     const typeA = typeof a;
     const typeB = typeof b;
-    if (typeA !== typeB) return false;
-
-    // Fast non-recursive paths for common types
+    if (typeA !== typeB) return false; // Fast non-recursive paths for common types
     if (typeA !== "object") return false; // We already checked a === b for primitives
 
     // Handle special object types
@@ -59,45 +57,32 @@ export function isDeepEqual(a: Comparable, b: Comparable): boolean {
       return b instanceof RegExp && a.toString() === b.toString();
     }
 
-    // Handle arrays more efficiently
+    // Handle arrays
     if (Array.isArray(a)) {
       if (!Array.isArray(b) || a.length !== b.length) return false;
 
-      // For small arrays, use direct comparison
-      if (a.length < 20) {
-        for (let i = 0; i < a.length; i++) {
-          if (!compare(a[i] as Comparable, b[i] as Comparable)) return false;
-        }
-        return true;
-      }
-
-      // For larger arrays, handle simple values quickly first
-      const sortedA = [...a].sort();
-      const sortedB = [...b].sort();
-
-      // First do a quick comparison of primitives
-      for (let i = 0; i < sortedA.length; i++) {
-        const itemA = sortedA[i];
-        const itemB = sortedB[i];
-        if (typeof itemA !== "object" && typeof itemB !== "object") {
-          if (itemA !== itemB) return false;
-        }
-      }
-
-      // Then compare actual positions
+      // Compare elements in order
       for (let i = 0; i < a.length; i++) {
         if (!compare(a[i] as Comparable, b[i] as Comparable)) return false;
       }
 
       return true;
-    }
-
-    // Special handling for Set
+    } // Special handling for Set - order doesn't matter for Sets
     if (a instanceof Set) {
       if (!(b instanceof Set) || a.size !== b.size) return false;
 
-      // Convert to arrays and compare
-      return compare([...a] as Comparable, [...b] as Comparable);
+      // For Sets, we need to check if all elements in a exist in b
+      for (const item of a) {
+        let found = false;
+        for (const otherItem of b) {
+          if (compare(item as Comparable, otherItem as Comparable)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) return false;
+      }
+      return true;
     }
 
     // Special handling for Map
@@ -113,61 +98,49 @@ export function isDeepEqual(a: Comparable, b: Comparable): boolean {
       }
 
       return true;
-    }
-
-    // Handle typed arrays
+    } // Handle typed arrays
     if (ArrayBuffer.isView(a)) {
       if (
         !ArrayBuffer.isView(b) ||
+        a.constructor !== b.constructor ||
         (a as TypedArray).length !== (b as TypedArray).length
       )
         return false;
 
-      // Use fast native comparison for TypedArrays
-      if (a instanceof Uint8Array && b instanceof Uint8Array) {
-        for (let i = 0; i < a.length; i++) {
-          if (a[i] !== b[i]) return false;
-        }
-        return true;
+      // Use optimized comparison for same typed array types
+      const typedA = a as TypedArray;
+      const typedB = b as TypedArray;
+
+      for (let i = 0; i < typedA.length; i++) {
+        if (typedA[i] !== typedB[i]) return false;
       }
-
-      // For other typed arrays
-      return compare(Array.from(a as TypedArray), Array.from(b as TypedArray));
-    }
-
-    // Handle plain objects with circular reference detection
+      return true;
+    } // Handle plain objects with circular reference detection
     if (a.constructor === Object && b.constructor === Object) {
+      const objA = a as Record<string, unknown>;
+      const objB = b as Record<string, unknown>;
+
       // Check for circular references
-      if (visited.has(a as object)) {
-        return visited.get(a as object) === b;
+      if (visited.has(objA)) {
+        return visited.get(objA) === objB;
       }
 
-      visited.set(a as object, b as object);
+      visited.set(objA, objB);
 
-      const keysA = Object.keys(a);
-      const keysB = Object.keys(b);
+      const keysA = Object.keys(objA);
+      const keysB = Object.keys(objB);
 
       // Quick length check
       if (keysA.length !== keysB.length) return false;
 
-      // Sort keys for faster comparison
-      keysA.sort();
-      keysB.sort();
-
-      // Compare keys first (much faster than comparing values)
-      for (let i = 0; i < keysA.length; i++) {
-        if (keysA[i] !== keysB[i]) return false;
-      }
-
-      // Compare values
+      // Compare values directly without sorting keys (object key order matters in modern JS)
       for (const key of keysA) {
         if (
-          !compare(
-            (a as Record<string, unknown>)[key] as Comparable,
-            (b as Record<string, unknown>)[key] as Comparable
-          )
-        )
+          !(key in objB) ||
+          !compare(objA[key] as Comparable, objB[key] as Comparable)
+        ) {
           return false;
+        }
       }
 
       return true;
@@ -208,7 +181,31 @@ export function memoize<T>(
   const cache = new Map<string, T>();
 
   return (...args: unknown[]): T => {
-    const key = JSON.stringify(args);
+    // Create a more robust key that handles circular references and special types
+    let key: string;
+    try {
+      key = JSON.stringify(args, (_, value) => {
+        // Handle special cases that JSON.stringify can't handle well
+        if (value instanceof Map) {
+          return { __type: "Map", entries: Array.from(value.entries()) };
+        }
+        if (value instanceof Set) {
+          return { __type: "Set", values: Array.from(value) };
+        }
+        if (value instanceof Date) {
+          return { __type: "Date", value: value.toISOString() };
+        }
+        if (value instanceof RegExp) {
+          return { __type: "RegExp", value: value.toString() };
+        }
+        return value;
+      });
+    } catch {
+      // Fallback for circular references or other serialization issues
+      key =
+        String(args.length) +
+        args.map((arg, i) => `${i}:${typeof arg}`).join(",");
+    }
 
     if (cache.has(key)) {
       const cachedValue = cache.get(key);

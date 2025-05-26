@@ -348,7 +348,14 @@ export function useUrlState<T>(
           isInBatchUpdate = false;
 
           // Update the URL immediately and resolve
-          updateUrlNow(params).then(resolve);
+          updateUrlNow(params)
+            .then(resolve)
+            .catch((error) => {
+              // Clear pending updates on error to prevent memory leaks
+              pendingUpdates.clear();
+              isInBatchUpdate = false;
+              throw error;
+            });
         });
       });
     },
