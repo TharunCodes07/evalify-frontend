@@ -6,9 +6,6 @@ export interface TableConfig {
   // Enable/disable row selection
   enableRowSelection: boolean;
 
-  // Enable/disable keyboard navigation
-  enableKeyboardNavigation: boolean;
-
   // Enable/disable clicking a row to select it
   enableClickRowSelect: boolean;
 
@@ -51,7 +48,6 @@ export interface TableConfig {
 // Default configuration
 const defaultConfig: TableConfig = {
   enableRowSelection: true, // Row selection enabled by default
-  enableKeyboardNavigation: false, // Keyboard navigation disabled by default
   enableClickRowSelect: false, // Clicking row to select disabled by default
   enablePagination: true, // Pagination enabled by default
   enableSearch: true, // Search enabled by default

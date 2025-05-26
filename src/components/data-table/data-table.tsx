@@ -43,7 +43,6 @@ import {
   createColumnVisibilityHandler,
   createSortingState,
 } from "@/components/data-table/utils/table-state-handlers";
-import { createKeyboardNavigationHandler } from "@/components/data-table/utils/keyboard-navigation";
 import { createConditionalStateHook } from "@/components/data-table/utils/conditional-state";
 import {
   initializeColumnSizes,
@@ -447,7 +446,7 @@ export function DataTable<TData, TValue>({
     [page, pageSize]
   );
 
-  // Ref for the table container for keyboard navigation
+  // Ref for the table container
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Get columns with the deselection handler (memoize to avoid recreation on render)
@@ -620,17 +619,7 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
-  }); // Create keyboard navigation handler
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      const handler = createKeyboardNavigationHandler(table, () => {
-        // Example action on keyboard activation
-      });
-      // Pass the React KeyboardEvent directly to the handler
-      handler(e);
-    },
-    [table]
-  );
+  });
 
   // Add an effect to validate page number when page size changes
   useEffect(() => {
@@ -748,15 +737,11 @@ export function DataTable<TData, TValue>({
             resetSelection: clearAllSelections,
           })}
         />
-      )}
-
+      )}{" "}
       <div
         ref={tableContainerRef}
         className="overflow-y-auto rounded-md border table-container"
         aria-label="Data table"
-        onKeyDown={
-          tableConfig.enableKeyboardNavigation ? handleKeyDown : undefined
-        }
       >
         <Table
           className={tableConfig.enableColumnResizing ? "resizable-table" : ""}
@@ -867,7 +852,6 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-
       {tableConfig.enablePagination && (
         <DataTablePagination
           table={table}

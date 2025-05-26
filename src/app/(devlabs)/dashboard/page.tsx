@@ -402,6 +402,7 @@ export default function DevlabsDashboardPage() {
     }),
     []
   );
+
   // Table configuration
   const tableConfig = useMemo(
     () => ({
@@ -410,7 +411,6 @@ export default function DevlabsDashboardPage() {
       enableToolbar: true,
       enablePagination: true,
       enableUrlState: true,
-      enableKeyboardNavigation: true,
       enableClickRowSelect: false,
       columnResizingTableId: "users-table",
       size: "default" as const,
