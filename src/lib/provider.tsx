@@ -5,15 +5,16 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { type ThemeProviderProps } from "next-themes";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 
 export interface ProvidersProps {
   children: React.ReactNode;
   theme?: ThemeProviderProps;
 }
 
-const queryClient = new QueryClient();
-
 export function Providers({ children }: ProvidersProps) {
+  const [queryClient] = useState(() => new QueryClient());
+
   return (
     <NextThemesProvider
       attribute="class"
