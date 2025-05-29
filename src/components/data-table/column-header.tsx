@@ -26,7 +26,6 @@ export function DataTableColumnHeader<TData, TValue>({
     return <div className={cn(className)}>{title}</div>;
   }
 
-  // Get the current sort direction for this column
   const currentDirection = column.getIsSorted();
 
   // Use direct method to set sort with an explicit direction

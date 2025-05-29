@@ -34,6 +34,7 @@ interface DataTablePaginationProps<TData> {
   totalSelectedItems?: number; // Total selected items across all pages
   pageSizeOptions?: number[]; // Custom page size options
   size?: "sm" | "default" | "lg"; // Size prop for components
+  paginationLabel?: string; // Custom label for pagination (e.g., "Rows per page" or "Grids per page")
 }
 
 export function DataTablePagination<TData>({
@@ -42,15 +43,16 @@ export function DataTablePagination<TData>({
   totalSelectedItems = 0,
   pageSizeOptions = [10, 20, 30, 40, 50], // Default options if none provided
   size = "default",
+  paginationLabel = "Rows per page", // Default label
 }: DataTablePaginationProps<TData>) {
   // Use URL state hooks for managing pagination state in the URL
   const [, setPageSize] = useUrlState(
       "pageSize",
-      table.getState().pagination.pageSize
+      table.getState().pagination.pageSize,
     ),
     [, setPage] = useUrlState(
       "page",
-      table.getState().pagination.pageIndex + 1
+      table.getState().pagination.pageIndex + 1,
     );
 
   // Convert 'lg' size to 'default' for SelectTrigger since it only accepts 'sm' | 'default'
@@ -62,8 +64,11 @@ export function DataTablePagination<TData>({
         {totalSelectedItems} of {totalItems} row(s) selected.
       </div>
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
+        {" "}
         <div className="flex items-center space-x-2">
-          <p className="whitespace-nowrap text-sm font-medium">Rows per page</p>
+          <p className="whitespace-nowrap text-sm font-medium">
+            {paginationLabel}
+          </p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
@@ -101,7 +106,7 @@ export function DataTablePagination<TData>({
             aria-label="Go to first page"
             variant="outline"
             className={`${getButtonSizeClass(
-              size
+              size,
             )} hidden lg:flex cursor-pointer`}
             onClick={() =>
               table.setPagination({
@@ -145,7 +150,7 @@ export function DataTablePagination<TData>({
             aria-label="Go to last page"
             variant="outline"
             className={`${getButtonSizeClass(
-              size
+              size,
             )} hidden lg:flex cursor-pointer`}
             onClick={() =>
               table.setPagination({

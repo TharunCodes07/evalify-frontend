@@ -3,7 +3,6 @@
 import type * as React from "react";
 import {
   type ColumnSizingState,
-  flexRender,
   getCoreRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
@@ -12,18 +11,8 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type ColumnResizeMode,
 } from "@tanstack/react-table";
-import { useEffect, useCallback, useMemo, useRef, useState } from "react";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { useEffect, useCallback, useMemo, useState } from "react";
 
 import { DataTablePagination } from "@/components/data-table/pagination";
 import { DataTableToolbar } from "@/components/data-table/toolbar";
@@ -34,7 +23,6 @@ import {
   useTableConfig,
   type TableConfig,
 } from "@/components/data-table/utils/table-config";
-import { DataTableResizer } from "./data-table-resizer";
 import { preprocessSearch } from "@/components/data-table/utils/search";
 import {
   createSortingHandler,
@@ -72,19 +60,26 @@ type PaginationUpdater = (prev: { pageIndex: number; pageSize: number }) => {
   pageIndex: number;
   pageSize: number;
 };
-type ColumnOrderUpdater = (prev: string[]) => string[];
 type RowSelectionUpdater = (
   prev: Record<string, boolean>,
 ) => Record<string, boolean>;
 
-interface DataTableProps<TData, TValue> {
+interface DataGridProps<TData, TValue> {
   // Allow overriding the table configuration
   config?: Partial<TableConfig>;
 
-  // Column definitions generator
+  // Column definitions generator (for filtering/sorting metadata)
   getColumns: (
     handleRowDeselection: ((rowId: string) => void) | null | undefined,
   ) => ColumnDef<TData, TValue>[];
+
+  // Custom grid item renderer
+  renderGridItem: (
+    item: TData,
+    index: number,
+    isSelected: boolean,
+    onToggleSelect: () => void,
+  ) => React.ReactNode;
 
   // Data fetching function
   fetchDataFn:
@@ -111,16 +106,21 @@ interface DataTableProps<TData, TValue> {
 
   // ID field in TData for tracking selected items
   idField: keyof TData;
-
   // Custom page size options
   pageSizeOptions?: number[];
+
+  // Custom pagination label (e.g., "Rows per page" or "Grids per page")
+  paginationLabel?: string;
+
   // Custom toolbar content render function
   renderToolbarContent?: (props: {
     selectedRows: TData[];
     allSelectedIds: (string | number)[];
     totalSelectedCount: number;
     resetSelection: () => void;
-  }) => React.ReactNode; // Column filters configuration
+  }) => React.ReactNode;
+
+  // Column filters configuration
   columnFilterOptions?: Array<{
     columnId: string;
     title: string;
@@ -131,22 +131,37 @@ interface DataTableProps<TData, TValue> {
     }>;
   }>;
 
-  // Row click handler
-  onRowClick?: (data: TData) => void;
+  // Grid layout configuration
+  gridConfig?: {
+    columns?: {
+      default: number;
+      sm?: number;
+      md?: number;
+      lg?: number;
+      xl?: number;
+      "2xl"?: number;
+    };
+    gap?: number;
+  };
 }
 
-export function DataTable<TData, TValue>({
+export function DataGrid<TData, TValue>({
   config = {},
   getColumns,
+  renderGridItem,
   fetchDataFn,
   fetchByIdsFn,
   exportConfig,
   idField = "id" as keyof TData,
   pageSizeOptions,
+  paginationLabel,
   renderToolbarContent,
   columnFilterOptions,
-  onRowClick,
-}: DataTableProps<TData, TValue>) {
+  gridConfig = {
+    columns: { default: 1, md: 2, lg: 3, xl: 4 },
+    gap: 6,
+  },
+}: DataGridProps<TData, TValue>) {
   // Load table configuration with any overrides
   const tableConfig = useTableConfig(config);
 
@@ -160,7 +175,7 @@ export function DataTable<TData, TValue>({
 
   // States for API parameters using conditional URL state
   const [page, setPage] = useConditionalUrlState("page", 1);
-  const [pageSize, setPageSize] = useConditionalUrlState("pageSize", 10);
+  const [pageSize, setPageSize] = useConditionalUrlState("pageSize", 12); // Default to 12 for grid
   const [search, setSearch] = useConditionalUrlState("search", "");
   const [dateRange, setDateRange] = useConditionalUrlState<{
     from_date: string;
@@ -192,13 +207,11 @@ export function DataTable<TData, TValue>({
     };
   } | null>(null);
 
-  // Column order state (in-memory only)
-  const [columnOrder, setColumnOrder] = useState<string[]>([]);
-
   // PERFORMANCE FIX: Use only one selection state as the source of truth
   const [selectedItemIds, setSelectedItemIds] = useState<
     Record<string | number, boolean>
   >({});
+
   // Convert the sorting from URL to the format TanStack Table expects
   const sorting = useMemo(
     () => createSortingState(sortBy, sortOrder),
@@ -472,16 +485,15 @@ export function DataTable<TData, TValue>({
     [page, pageSize],
   );
 
-  // Ref for the table container
-  const tableContainerRef = useRef<HTMLDivElement>(null);
-
   // Get columns with the deselection handler (memoize to avoid recreation on render)
   const columns = useMemo(() => {
     // Only pass deselection handler if row selection is enabled
     return getColumns(
       tableConfig.enableRowSelection ? handleRowDeselection : null,
     );
-  }, [getColumns, handleRowDeselection, tableConfig.enableRowSelection]); // Create event handlers using utility functions
+  }, [getColumns, handleRowDeselection, tableConfig.enableRowSelection]);
+
+  // Create event handlers using utility functions
   const handleSortingChange = useCallback(
     (
       updaterOrValue:
@@ -523,6 +535,7 @@ export function DataTable<TData, TValue>({
     },
     [setColumnVisibility],
   );
+
   const handlePaginationChange = useCallback(
     (
       updaterOrValue:
@@ -556,6 +569,7 @@ export function DataTable<TData, TValue>({
     },
     [page, pageSize, setPage, setPageSize],
   );
+  // Column sizing change handler (not used in grid, but kept for consistency)
   const handleColumnSizingChange = useCallback(
     (
       updaterOrValue:
@@ -571,20 +585,10 @@ export function DataTable<TData, TValue>({
     [setColumnSizing],
   );
 
-  // Column order change handler (no localStorage persistence)
-  const handleColumnOrderChange = useCallback(
-    (updaterOrValue: ColumnOrderUpdater | string[]) => {
-      const newColumnOrder =
-        typeof updaterOrValue === "function"
-          ? updaterOrValue(columnOrder)
-          : updaterOrValue;
+  // Suppress unused variable warning
+  void handleColumnSizingChange;
 
-      setColumnOrder(newColumnOrder);
-    },
-    [columnOrder],
-  );
-
-  // Set up the table with memoized state
+  // Set up the table with memoized state (for filtering/sorting logic)
   const table = useReactTable<TData>({
     data: dataItems,
     columns,
@@ -595,14 +599,9 @@ export function DataTable<TData, TValue>({
       columnFilters,
       pagination,
       columnSizing,
-      columnOrder,
     },
-    columnResizeMode: "onChange" as ColumnResizeMode,
-    onColumnSizingChange: handleColumnSizingChange,
-    onColumnOrderChange: handleColumnOrderChange,
     pageCount: data?.pagination.total_pages || 0,
     enableRowSelection: tableConfig.enableRowSelection,
-    enableColumnResizing: tableConfig.enableColumnResizing,
     manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
@@ -629,41 +628,33 @@ export function DataTable<TData, TValue>({
     }
   }, [data?.pagination?.total_pages, page, setPage]);
 
-  // Reset column sizing (no localStorage persistence)
-  const resetColumnSizing = useCallback(() => {
-    setColumnSizing({});
-  }, []);
+  // Generate grid class names based on configuration
+  const gridClasses = useMemo(() => {
+    const baseClass = "grid";
+    const gapClass = `gap-${gridConfig.gap || 6}`;
 
-  // Reset column order (no localStorage persistence)
-  const resetColumnOrder = useCallback(() => {
-    // Reset to empty array (which resets to default order)
-    table.setColumnOrder([]);
-    setColumnOrder([]);
-  }, [table]);
-
-  // Add synchronization effect to ensure URL is the source of truth
-  useEffect(() => {
-    // Force the table's sorting state to match URL parameters
-    table.setSorting(sorting);
-  }, [table, sorting]);
-
-  // Keep pagination in sync with URL parameters
-  useEffect(() => {
-    // Make sure table pagination state matches URL state
-    const tableState = table.getState().pagination;
-    if (tableState.pageIndex !== page - 1 || tableState.pageSize !== pageSize) {
-      // Avoid unnecessary updates that might cause infinite loops
-      if (
-        tableState.pageSize !== pageSize ||
-        Math.abs(tableState.pageIndex - (page - 1)) > 0
-      ) {
-        table.setPagination({
-          pageIndex: page - 1,
-          pageSize: pageSize,
-        });
-      }
+    const colClasses = [];
+    if (gridConfig.columns?.default) {
+      colClasses.push(`grid-cols-${gridConfig.columns.default}`);
     }
-  }, [table, page, pageSize]);
+    if (gridConfig.columns?.sm) {
+      colClasses.push(`sm:grid-cols-${gridConfig.columns.sm}`);
+    }
+    if (gridConfig.columns?.md) {
+      colClasses.push(`md:grid-cols-${gridConfig.columns.md}`);
+    }
+    if (gridConfig.columns?.lg) {
+      colClasses.push(`lg:grid-cols-${gridConfig.columns.lg}`);
+    }
+    if (gridConfig.columns?.xl) {
+      colClasses.push(`xl:grid-cols-${gridConfig.columns.xl}`);
+    }
+    if (gridConfig.columns?.["2xl"]) {
+      colClasses.push(`2xl:grid-cols-${gridConfig.columns["2xl"]}`);
+    }
+
+    return [baseClass, gapClass, ...colClasses].join(" ");
+  }, [gridConfig]);
 
   // Handle error state
   if (isError) {
@@ -691,14 +682,8 @@ export function DataTable<TData, TValue>({
           getSelectedItems={getSelectedItems}
           getAllItems={getAllItems}
           config={tableConfig}
-          resetColumnSizing={() => {
-            resetColumnSizing();
-            // Force a small delay and then refresh the UI
-            setTimeout(() => {
-              window.dispatchEvent(new Event("resize"));
-            }, 100);
-          }}
-          resetColumnOrder={resetColumnOrder}
+          resetColumnSizing={() => {}}
+          resetColumnOrder={() => {}}
           entityName={exportConfig.entityName}
           columnMapping={exportConfig.columnMapping}
           columnWidths={exportConfig.columnWidths}
@@ -714,140 +699,62 @@ export function DataTable<TData, TValue>({
           })}
         />
       )}
-      <div
-        ref={tableContainerRef}
-        className="overflow-auto rounded-md border table-container"
-        aria-label="Data table"
-      >
-        <Table
-          className={`${tableConfig.enableColumnResizing ? "resizable-table" : ""} min-w-full`}
-          style={{ minWidth: "800px" }}
-        >
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    className={`px-2 py-2 relative text-left group/th ${
-                      header.id === "actions" ? "w-20 min-w-20" : ""
-                    }`}
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    scope="col"
-                    tabIndex={-1}
-                    style={{
-                      width: header.getSize(),
-                    }}
-                    data-column-resizing={
-                      header.column.getIsResizing() ? "true" : undefined
-                    }
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                    {tableConfig.enableColumnResizing &&
-                      header.column.getCanResize() && (
-                        <DataTableResizer header={header} />
-                      )}
-                  </TableHead>
-                ))}
-              </TableRow>
+      <div className="rounded-md border p-4" aria-label="Data grid">
+        {isLoading ? (
+          // Loading state
+          <div className={gridClasses}>
+            {Array.from({ length: pageSize }).map((_, index) => (
+              <div key={`loading-item-${index}`}>
+                <Skeleton className="h-48 w-full rounded-lg" />
+              </div>
             ))}
-          </TableHeader>
+          </div>
+        ) : dataItems.length > 0 ? (
+          // Data items
+          <div className={gridClasses}>
+            {dataItems.map((item, index) => {
+              const itemId = String(item[idField]);
+              const isSelected = selectedItemIds[itemId] || false;
 
-          <TableBody>
-            {isLoading ? (
-              // Loading state
-              Array.from({ length: pageSize }).map((_, index) => (
-                <TableRow key={`loading-row-${index}`} tabIndex={-1}>
-                  {Array.from({ length: columns.length }).map(
-                    (_, cellIndex) => (
-                      <TableCell
-                        key={`skeleton-cell-${index}-${cellIndex}`}
-                        className="px-4 py-2 truncate max-w-0 text-left"
-                        tabIndex={-1}
-                      >
-                        <Skeleton className="h-6 w-full" />
-                      </TableCell>
-                    ),
-                  )}
-                </TableRow>
-              ))
-            ) : table.getRowModel().rows?.length ? (
-              // Data rows
-              table.getRowModel().rows.map((row, rowIndex) => (
-                <TableRow
-                  key={row.id}
-                  id={`row-${rowIndex}`}
-                  data-row-index={rowIndex}
-                  data-state={row.getIsSelected() ? "selected" : undefined}
-                  tabIndex={0}
-                  aria-selected={row.getIsSelected()}
-                  onClick={() => {
-                    // If there's a custom onRowClick handler, use it
-                    if (onRowClick) {
-                      onRowClick(row.original);
-                    } else if (tableConfig.enableClickRowSelect) {
-                      // Otherwise, fall back to selection toggle
-                      row.toggleSelected();
-                    }
-                  }}
-                  className={
-                    onRowClick ? "cursor-pointer hover:bg-muted/50" : undefined
+              const onToggleSelect = () => {
+                setSelectedItemIds((prev) => {
+                  const next = { ...prev };
+                  if (isSelected) {
+                    delete next[itemId];
+                  } else {
+                    next[itemId] = true;
                   }
-                  onFocus={(e) => {
-                    // Add a data attribute to the currently focused row
-                    for (const el of document.querySelectorAll(
-                      '[data-focused="true"]',
-                    )) {
-                      el.removeAttribute("data-focused");
-                    }
-                    e.currentTarget.setAttribute("data-focused", "true");
-                  }}
-                >
-                  {row.getVisibleCells().map((cell, cellIndex) => (
-                    <TableCell
-                      className={`px-4 py-2 text-left ${
-                        cell.column.id === "actions"
-                          ? "w-20 min-w-20"
-                          : "truncate max-w-0"
-                      }`}
-                      key={cell.id}
-                      id={`cell-${rowIndex}-${cellIndex}`}
-                      data-cell-index={cellIndex}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              // No results
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-left truncate"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                  return next;
+                });
+              };
+
+              return (
+                <div key={itemId}>
+                  {renderGridItem(item, index, isSelected, onToggleSelect)}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          // No results
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="text-lg font-medium">No results found</div>
+              <div className="text-sm text-muted-foreground mt-2">
+                Try adjusting your search or filter criteria.
+              </div>
+            </div>
+          </div>
+        )}
+      </div>{" "}
       {tableConfig.enablePagination && (
         <DataTablePagination
           table={table}
           totalItems={data?.pagination.total_items || 0}
           totalSelectedItems={totalSelectedItems}
-          pageSizeOptions={pageSizeOptions || [10, 20, 30, 40, 50]}
+          pageSizeOptions={pageSizeOptions || [12, 24, 36, 48, 60]}
           size={tableConfig.size}
+          paginationLabel={paginationLabel || "Items per page"}
         />
       )}
     </div>
