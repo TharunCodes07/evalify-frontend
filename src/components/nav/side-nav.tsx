@@ -2,14 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { signOut, useSession } from "next-auth/react";
 import {
-  BadgeCheck,
-  Bell,
   BookOpen,
   Bot,
   ChevronRight,
   ChevronsUpDown,
-  CreditCard,
   Folder,
   Forward,
   Frame,
@@ -19,7 +18,6 @@ import {
   PieChart,
   Plus,
   Settings2,
-  Sparkles,
   SquareTerminal,
   Trash2,
   User,
@@ -36,7 +34,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -60,12 +57,16 @@ import {
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/nav/theme-toggle";
 
-// This is sample data.
 const data = {
   user: {
     name: "shadcn",
     email: "m@example.com",
-    avatar: null, // Using simple user icon instead
+    image: null, // Using simple user icon instead
+    id: "sample-id",
+    role: "USER",
+    profileId: "SAMPLE",
+    phoneNumber: "123456789",
+    isActive: true,
   },
   navMain: [
     {
@@ -212,6 +213,11 @@ const data = {
 };
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession();
+
+  // Get user data from session or fallback to sample data if not available
+  const userData = session?.user || data.user;
+
   return (
     <>
       <Sidebar collapsible="icon">
@@ -326,6 +332,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
+              {" "}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
@@ -333,17 +340,25 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   >
                     <Avatar className="h-8 w-8 rounded-lg">
-                      <AvatarFallback className="rounded-lg">
-                        <User className="h-4 w-4" />
-                      </AvatarFallback>
+                      {userData.image ? (
+                        <Image
+                          src={userData.image}
+                          alt={userData.name || "User"}
+                          width={32}
+                          height={32}
+                          className="rounded-lg object-cover"
+                        />
+                      ) : (
+                        <AvatarFallback className="rounded-lg">
+                          <User className="h-4 w-4" />
+                        </AvatarFallback>
+                      )}
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">
-                        {data.user.name}
+                        {userData.name}
                       </span>
-                      <span className="truncate text-xs">
-                        {data.user.email}
-                      </span>
+                      <span className="truncate text-xs">{userData.email}</span>
                     </div>
                     <ChevronsUpDown className="ml-auto size-4" />
                   </SidebarMenuButton>
@@ -355,46 +370,39 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                   sideOffset={4}
                 >
                   <DropdownMenuLabel className="p-0 font-normal">
+                    {" "}
                     <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                       <Avatar className="h-8 w-8 rounded-lg">
-                        <AvatarFallback className="rounded-lg">
-                          <User className="h-4 w-4" />
-                        </AvatarFallback>
+                        {userData.image ? (
+                          <Image
+                            src={userData.image}
+                            alt={userData.name || "User"}
+                            width={32}
+                            height={32}
+                            className="rounded-lg object-cover"
+                          />
+                        ) : (
+                          <AvatarFallback className="rounded-lg">
+                            <User className="h-4 w-4" />
+                          </AvatarFallback>
+                        )}
                       </Avatar>
                       <div className="grid flex-1 text-left text-sm leading-tight">
                         <span className="truncate font-semibold">
-                          {data.user.name}
+                          {userData.name}
                         </span>
                         <span className="truncate text-xs">
-                          {data.user.email}
+                          {userData.email}
                         </span>
                       </div>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem>
-                      <Sparkles />
-                      Upgrade to Pro
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem>
-                      <BadgeCheck />
-                      Account
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <CreditCard />
-                      Billing
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Bell />
-                      Notifications
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuSeparator />{" "}
+                  <DropdownMenuItem
+                    onClick={() => {
+                      signOut({ redirect: true, callbackUrl: "/auth/login" });
+                    }}
+                  >
                     <LogOut />
                     Log out
                   </DropdownMenuItem>

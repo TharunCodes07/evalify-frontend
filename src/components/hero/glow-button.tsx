@@ -26,7 +26,7 @@ export default function GlowButton({
         hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20
         group ${className}
       `}
-      onClick={() => router.push("/auth/login")}
+      onClick={() => router.push("/login")}
       {...props}
     >
       <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600" />

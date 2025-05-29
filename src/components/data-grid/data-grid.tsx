@@ -61,7 +61,7 @@ type PaginationUpdater = (prev: { pageIndex: number; pageSize: number }) => {
   pageSize: number;
 };
 type RowSelectionUpdater = (
-  prev: Record<string, boolean>,
+  prev: Record<string, boolean>
 ) => Record<string, boolean>;
 
 interface DataGridProps<TData, TValue> {
@@ -70,7 +70,7 @@ interface DataGridProps<TData, TValue> {
 
   // Column definitions generator (for filtering/sorting metadata)
   getColumns: (
-    handleRowDeselection: ((rowId: string) => void) | null | undefined,
+    handleRowDeselection: ((rowId: string) => void) | null | undefined
   ) => ColumnDef<TData, TValue>[];
 
   // Custom grid item renderer
@@ -78,7 +78,7 @@ interface DataGridProps<TData, TValue> {
     item: TData,
     index: number,
     isSelected: boolean,
-    onToggleSelect: () => void,
+    onToggleSelect: () => void
   ) => React.ReactNode;
 
   // Data fetching function
@@ -90,7 +90,7 @@ interface DataGridProps<TData, TValue> {
         search: string,
         dateRange: { from_date: string; to_date: string },
         sortBy: string,
-        sortOrder: string,
+        sortOrder: string
       ) => unknown);
 
   // Function to fetch specific items by their IDs
@@ -170,7 +170,7 @@ export function DataGrid<TData, TValue>({
 
   // Create conditional URL state hook based on config
   const useConditionalUrlState = createConditionalStateHook(
-    tableConfig.enableUrlState,
+    tableConfig.enableUrlState
   );
 
   // States for API parameters using conditional URL state
@@ -184,7 +184,7 @@ export function DataGrid<TData, TValue>({
   const [sortBy, setSortBy] = useConditionalUrlState("sortBy", "created_at");
   const [sortOrder, setSortOrder] = useConditionalUrlState<"asc" | "desc">(
     "sortOrder",
-    "desc",
+    "desc"
   );
   const [columnVisibility, setColumnVisibility] = useConditionalUrlState<
     Record<string, boolean>
@@ -215,7 +215,7 @@ export function DataGrid<TData, TValue>({
   // Convert the sorting from URL to the format TanStack Table expects
   const sorting = useMemo(
     () => createSortingState(sortBy, sortOrder),
-    [sortBy, sortOrder],
+    [sortBy, sortOrder]
   );
 
   // Convert column filters to server format
@@ -256,7 +256,7 @@ export function DataGrid<TData, TValue>({
   // Calculate total selected items - memoize to avoid recalculation
   const totalSelectedItems = useMemo(
     () => Object.keys(selectedItemIds).length,
-    [selectedItemIds],
+    [selectedItemIds]
   );
 
   // PERFORMANCE FIX: Optimized row deselection handler
@@ -277,7 +277,7 @@ export function DataGrid<TData, TValue>({
         });
       }
     },
-    [dataItems, idField],
+    [dataItems, idField]
   );
 
   // Clear all selections
@@ -330,7 +330,7 @@ export function DataGrid<TData, TValue>({
         return next;
       });
     },
-    [dataItems, rowSelection, idField],
+    [dataItems, rowSelection, idField]
   );
 
   // Get selected items data
@@ -342,22 +342,22 @@ export function DataGrid<TData, TValue>({
 
     // Get IDs of selected items
     const selectedIdsArray = Object.keys(selectedItemIds).map((id) =>
-      typeof id === "string" ? Number.parseInt(id, 10) : (id as number),
+      typeof id === "string" ? Number.parseInt(id, 10) : (id as number)
     );
 
     // Find items from current page that are selected
     const itemsInCurrentPage = dataItems.filter(
-      (item) => selectedItemIds[String(item[idField])],
+      (item) => selectedItemIds[String(item[idField])]
     );
 
     // Get IDs of items on current page
     const idsInCurrentPage = itemsInCurrentPage.map(
-      (item) => item[idField] as unknown as number,
+      (item) => item[idField] as unknown as number
     );
 
     // Find IDs that need to be fetched (not on current page)
     const idsToFetch = selectedIdsArray.filter(
-      (id) => !idsInCurrentPage.includes(id),
+      (id) => !idsInCurrentPage.includes(id)
     );
 
     // If all selected items are on current page or we can't fetch by IDs
@@ -399,7 +399,7 @@ export function DataGrid<TData, TValue>({
           setIsLoading(true);
           const result = await (
             fetchDataFn as (
-              params: DataFetchParams,
+              params: DataFetchParams
             ) => Promise<DataFetchResult<TData>>
           )({
             page,
@@ -445,7 +445,7 @@ export function DataGrid<TData, TValue>({
             search: string,
             dateRange: { from_date: string; to_date: string },
             sortBy: string,
-            sortOrder: string,
+            sortOrder: string
           ) => {
             isLoading: boolean;
             isSuccess: boolean;
@@ -470,7 +470,7 @@ export function DataGrid<TData, TValue>({
         setError(
           queryResult.error instanceof Error
             ? queryResult.error
-            : new Error("Unknown error"),
+            : new Error("Unknown error")
         );
       }
     }
@@ -482,14 +482,14 @@ export function DataGrid<TData, TValue>({
       pageIndex: page - 1,
       pageSize,
     }),
-    [page, pageSize],
+    [page, pageSize]
   );
 
   // Get columns with the deselection handler (memoize to avoid recreation on render)
   const columns = useMemo(() => {
     // Only pass deselection handler if row selection is enabled
     return getColumns(
-      tableConfig.enableRowSelection ? handleRowDeselection : null,
+      tableConfig.enableRowSelection ? handleRowDeselection : null
     );
   }, [getColumns, handleRowDeselection, tableConfig.enableRowSelection]);
 
@@ -500,12 +500,12 @@ export function DataGrid<TData, TValue>({
         | import("@tanstack/react-table").SortingState
         | import("@tanstack/react-table").Updater<
             import("@tanstack/react-table").SortingState
-          >,
+          >
     ) => {
       const handler = createSortingHandler(setSortBy, setSortOrder, sorting);
       return handler(updaterOrValue);
     },
-    [setSortBy, setSortOrder, sorting],
+    [setSortBy, setSortOrder, sorting]
   );
 
   const handleColumnFiltersChange = useCallback(
@@ -514,12 +514,12 @@ export function DataGrid<TData, TValue>({
         | import("@tanstack/react-table").ColumnFiltersState
         | import("@tanstack/react-table").Updater<
             import("@tanstack/react-table").ColumnFiltersState
-          >,
+          >
     ) => {
       const handler = createColumnFiltersHandler(setColumnFilters);
       return handler(updaterOrValue);
     },
-    [setColumnFilters],
+    [setColumnFilters]
   );
 
   const handleColumnVisibilityChange = useCallback(
@@ -528,19 +528,19 @@ export function DataGrid<TData, TValue>({
         | import("@tanstack/react-table").VisibilityState
         | import("@tanstack/react-table").Updater<
             import("@tanstack/react-table").VisibilityState
-          >,
+          >
     ) => {
       const handler = createColumnVisibilityHandler(setColumnVisibility);
       return handler(updaterOrValue);
     },
-    [setColumnVisibility],
+    [setColumnVisibility]
   );
 
   const handlePaginationChange = useCallback(
     (
       updaterOrValue:
         | PaginationUpdater
-        | { pageIndex: number; pageSize: number },
+        | { pageIndex: number; pageSize: number }
     ) => {
       // Extract the new pagination state
       const newPagination =
@@ -551,7 +551,7 @@ export function DataGrid<TData, TValue>({
       // Special handling: When page size changes, always reset to page 1
       if (newPagination.pageSize !== pageSize) {
         Promise.all([setPageSize(newPagination.pageSize), setPage(1)]).catch(
-          console.error,
+          console.error
         );
 
         return;
@@ -567,14 +567,14 @@ export function DataGrid<TData, TValue>({
         }
       }
     },
-    [page, pageSize, setPage, setPageSize],
+    [page, pageSize, setPage, setPageSize]
   );
   // Column sizing change handler (not used in grid, but kept for consistency)
   const handleColumnSizingChange = useCallback(
     (
       updaterOrValue:
         | ColumnSizingState
-        | ((prev: ColumnSizingState) => ColumnSizingState),
+        | ((prev: ColumnSizingState) => ColumnSizingState)
     ) => {
       if (typeof updaterOrValue === "function") {
         setColumnSizing((current) => updaterOrValue(current));
@@ -582,7 +582,7 @@ export function DataGrid<TData, TValue>({
         setColumnSizing(updaterOrValue);
       }
     },
-    [setColumnSizing],
+    [setColumnSizing]
   );
 
   // Suppress unused variable warning
@@ -691,7 +691,7 @@ export function DataGrid<TData, TValue>({
           columnFilterOptions={columnFilterOptions}
           customToolbarComponent={renderToolbarContent?.({
             selectedRows: dataItems.filter(
-              (item) => selectedItemIds[String(item[idField])],
+              (item) => selectedItemIds[String(item[idField])]
             ),
             allSelectedIds: Object.keys(selectedItemIds),
             totalSelectedCount: totalSelectedItems,
@@ -746,7 +746,7 @@ export function DataGrid<TData, TValue>({
             </div>
           </div>
         )}
-      </div>{" "}
+      </div>
       {tableConfig.enablePagination && (
         <DataTablePagination
           table={table}

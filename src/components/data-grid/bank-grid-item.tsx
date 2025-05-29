@@ -48,12 +48,11 @@ export function BankGridItem({
     <Card
       className={cn(
         "group hover:shadow-lg transition-all duration-200 cursor-pointer",
-        isSelected && "ring-2 ring-primary shadow-lg",
+        isSelected && "ring-2 ring-primary shadow-lg"
       )}
       onClick={handleCardClick}
     >
       <CardHeader className="pb-3">
-        {" "}
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             {enableSelection && (
@@ -96,7 +95,7 @@ export function BankGridItem({
                 <span className="sr-only">Open menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
-            </DropdownMenuTrigger>{" "}
+            </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem
@@ -155,7 +154,7 @@ export function BankGridItem({
           <div className="flex items-center text-sm text-muted-foreground">
             <Calendar className="h-4 w-4 mr-2" />
             <span>{new Date(bank.createdAt).toLocaleDateString()}</span>
-          </div>{" "}
+          </div>
         </div>
       </CardContent>
     </Card>

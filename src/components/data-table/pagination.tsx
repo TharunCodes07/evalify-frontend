@@ -48,11 +48,11 @@ export function DataTablePagination<TData>({
   // Use URL state hooks for managing pagination state in the URL
   const [, setPageSize] = useUrlState(
       "pageSize",
-      table.getState().pagination.pageSize,
+      table.getState().pagination.pageSize
     ),
     [, setPage] = useUrlState(
       "page",
-      table.getState().pagination.pageIndex + 1,
+      table.getState().pagination.pageIndex + 1
     );
 
   // Convert 'lg' size to 'default' for SelectTrigger since it only accepts 'sm' | 'default'
@@ -64,7 +64,6 @@ export function DataTablePagination<TData>({
         {totalSelectedItems} of {totalItems} row(s) selected.
       </div>
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
-        {" "}
         <div className="flex items-center space-x-2">
           <p className="whitespace-nowrap text-sm font-medium">
             {paginationLabel}
@@ -106,7 +105,7 @@ export function DataTablePagination<TData>({
             aria-label="Go to first page"
             variant="outline"
             className={`${getButtonSizeClass(
-              size,
+              size
             )} hidden lg:flex cursor-pointer`}
             onClick={() =>
               table.setPagination({
@@ -150,7 +149,7 @@ export function DataTablePagination<TData>({
             aria-label="Go to last page"
             variant="outline"
             className={`${getButtonSizeClass(
-              size,
+              size
             )} hidden lg:flex cursor-pointer`}
             onClick={() =>
               table.setPagination({
