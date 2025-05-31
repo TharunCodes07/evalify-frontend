@@ -48,7 +48,7 @@ const defaultConfig: TableConfig = {
   enablePagination: true, // Pagination enabled by default
   enableSearch: true, // Search enabled by default
   enableColumnFilters: true, // Column filters enabled by default
-  enableDateFilter: true, // Date filter enabled by default
+  enableDateFilter: false, // Date filter disabled by default
   enableColumnVisibility: true, // Column visibility options enabled by default
   enableExport: true, // Data export enabled by default
   enableUrlState: true, // URL state persistence enabled by default

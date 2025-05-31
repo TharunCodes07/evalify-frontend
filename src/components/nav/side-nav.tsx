@@ -332,7 +332,6 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              {" "}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
@@ -370,7 +369,6 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                   sideOffset={4}
                 >
                   <DropdownMenuLabel className="p-0 font-normal">
-                    {" "}
                     <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                       <Avatar className="h-8 w-8 rounded-lg">
                         {userData.image ? (
@@ -397,7 +395,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                       </div>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator />{" "}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => {
                       signOut({ redirect: true, callbackUrl: "/auth/login" });

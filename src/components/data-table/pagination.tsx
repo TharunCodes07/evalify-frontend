@@ -30,8 +30,6 @@ const getButtonSizeClass = (size: "sm" | "default" | "lg") => {
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
-  totalItems?: number; // Total number of items from API
-  totalSelectedItems?: number; // Total selected items across all pages
   pageSizeOptions?: number[]; // Custom page size options
   size?: "sm" | "default" | "lg"; // Size prop for components
   paginationLabel?: string; // Custom label for pagination (e.g., "Rows per page" or "Grids per page")
@@ -39,8 +37,6 @@ interface DataTablePaginationProps<TData> {
 
 export function DataTablePagination<TData>({
   table,
-  totalItems = 0,
-  totalSelectedItems = 0,
   pageSizeOptions = [10, 20, 30, 40, 50], // Default options if none provided
   size = "default",
   paginationLabel = "Rows per page", // Default label
@@ -57,11 +53,10 @@ export function DataTablePagination<TData>({
 
   // Convert 'lg' size to 'default' for SelectTrigger since it only accepts 'sm' | 'default'
   const selectSize = size === "lg" ? "default" : size;
-
   return (
     <div className="flex w-full flex-col items-center justify-between gap-4 overflow-auto px-2 py-1 sm:flex-row sm:gap-8">
       <div className="flex-1 text-sm text-muted-foreground">
-        {totalSelectedItems} of {totalItems} row(s) selected.
+        {/* Selection information removed as requested */}
       </div>
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
         <div className="flex items-center space-x-2">
@@ -97,8 +92,10 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className="flex items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of
-          {table.getPageCount() || 1}
+          <pre>
+            Page {table.getState().pagination.pageIndex + 1} of {""}
+            {table.getPageCount() || 1}
+          </pre>
         </div>
         <div className="flex items-center space-x-2">
           <Button

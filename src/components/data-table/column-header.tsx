@@ -23,7 +23,7 @@ export function DataTableColumnHeader<TData, TValue>({
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (!column.getCanSort()) {
-    return <div className={cn(className)}>{title}</div>;
+    return <div className={cn("w-full text-center", className)}>{title}</div>;
   }
 
   const currentDirection = column.getIsSorted();
@@ -40,15 +40,14 @@ export function DataTableColumnHeader<TData, TValue>({
     // The second param (false) prevents multi-sort
     column.toggleSorting(direction === "desc", false);
   };
-
   return (
-    <div className={cn("flex items-center space-x-2", className)}>
+    <div className={cn("flex items-center justify-center w-full", className)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="sm"
-            className="data-[state=open]:bg-accent h-8 focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="data-[state=open]:bg-accent h-8 focus-visible:ring-0 focus-visible:ring-offset-0 flex items-center justify-center"
           >
             <span>{title}</span>
             {currentDirection === "desc" ? (

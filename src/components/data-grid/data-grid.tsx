@@ -434,7 +434,6 @@ export function DataGrid<TData, TValue>({
     serverColumnFilters,
     fetchDataFn,
   ]);
-
   // If fetchDataFn is a React Query hook, call it directly with parameters
   const queryResult =
     (fetchDataFn as { isQueryHook?: boolean }).isQueryHook === true
@@ -445,7 +444,8 @@ export function DataGrid<TData, TValue>({
             search: string,
             dateRange: { from_date: string; to_date: string },
             sortBy: string,
-            sortOrder: string
+            sortOrder: string,
+            columnFilters?: Record<string, string[]>
           ) => {
             isLoading: boolean;
             isSuccess: boolean;
@@ -453,7 +453,15 @@ export function DataGrid<TData, TValue>({
             data?: DataFetchResult<TData>;
             error?: Error;
           }
-        )(page, pageSize, search, dateRange, sortBy, sortOrder)
+        )(
+          page,
+          pageSize,
+          search,
+          dateRange,
+          sortBy,
+          sortOrder,
+          serverColumnFilters
+        )
       : null;
 
   // If using React Query, update state based on query result
@@ -600,7 +608,7 @@ export function DataGrid<TData, TValue>({
       pagination,
       columnSizing,
     },
-    pageCount: data?.pagination.total_pages || 0,
+    pageCount: data?.pagination?.total_pages || 0,
     enableRowSelection: tableConfig.enableRowSelection,
     manualPagination: true,
     manualSorting: true,
@@ -617,11 +625,10 @@ export function DataGrid<TData, TValue>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
-
   // Add an effect to validate page number when page size changes
   useEffect(() => {
     // This effect ensures page is valid after page size changes
-    const totalPages = data?.pagination.total_pages || 0;
+    const totalPages = data?.pagination?.total_pages || 0;
 
     if (totalPages > 0 && page > totalPages) {
       setPage(1);
@@ -750,8 +757,6 @@ export function DataGrid<TData, TValue>({
       {tableConfig.enablePagination && (
         <DataTablePagination
           table={table}
-          totalItems={data?.pagination.total_items || 0}
-          totalSelectedItems={totalSelectedItems}
           pageSizeOptions={pageSizeOptions || [12, 24, 36, 48, 60]}
           size={tableConfig.size}
           paginationLabel={paginationLabel || "Items per page"}

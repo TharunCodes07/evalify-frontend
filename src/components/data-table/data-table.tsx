@@ -74,7 +74,7 @@ type PaginationUpdater = (prev: { pageIndex: number; pageSize: number }) => {
 };
 type ColumnOrderUpdater = (prev: string[]) => string[];
 type RowSelectionUpdater = (
-  prev: Record<string, boolean>,
+  prev: Record<string, boolean>
 ) => Record<string, boolean>;
 
 interface DataTableProps<TData, TValue> {
@@ -83,7 +83,7 @@ interface DataTableProps<TData, TValue> {
 
   // Column definitions generator
   getColumns: (
-    handleRowDeselection: ((rowId: string) => void) | null | undefined,
+    handleRowDeselection: ((rowId: string) => void) | null | undefined
   ) => ColumnDef<TData, TValue>[];
 
   // Data fetching function
@@ -95,7 +95,7 @@ interface DataTableProps<TData, TValue> {
         search: string,
         dateRange: { from_date: string; to_date: string },
         sortBy: string,
-        sortOrder: string,
+        sortOrder: string
       ) => unknown);
 
   // Function to fetch specific items by their IDs
@@ -114,6 +114,10 @@ interface DataTableProps<TData, TValue> {
 
   // Custom page size options
   pageSizeOptions?: number[];
+
+  // Callback when search changes
+  onSearch?: (searchValue: string) => void;
+
   // Custom toolbar content render function
   renderToolbarContent?: (props: {
     selectedRows: TData[];
@@ -146,6 +150,7 @@ export function DataTable<TData, TValue>({
   renderToolbarContent,
   columnFilterOptions,
   onRowClick,
+  onSearch,
 }: DataTableProps<TData, TValue>) {
   // Load table configuration with any overrides
   const tableConfig = useTableConfig(config);
@@ -155,7 +160,7 @@ export function DataTable<TData, TValue>({
 
   // Create conditional URL state hook based on config
   const useConditionalUrlState = createConditionalStateHook(
-    tableConfig.enableUrlState,
+    tableConfig.enableUrlState
   );
 
   // States for API parameters using conditional URL state
@@ -169,7 +174,7 @@ export function DataTable<TData, TValue>({
   const [sortBy, setSortBy] = useConditionalUrlState("sortBy", "created_at");
   const [sortOrder, setSortOrder] = useConditionalUrlState<"asc" | "desc">(
     "sortOrder",
-    "desc",
+    "desc"
   );
   const [columnVisibility, setColumnVisibility] = useConditionalUrlState<
     Record<string, boolean>
@@ -202,7 +207,7 @@ export function DataTable<TData, TValue>({
   // Convert the sorting from URL to the format TanStack Table expects
   const sorting = useMemo(
     () => createSortingState(sortBy, sortOrder),
-    [sortBy, sortOrder],
+    [sortBy, sortOrder]
   );
 
   // Convert column filters to server format
@@ -243,7 +248,7 @@ export function DataTable<TData, TValue>({
   // Calculate total selected items - memoize to avoid recalculation
   const totalSelectedItems = useMemo(
     () => Object.keys(selectedItemIds).length,
-    [selectedItemIds],
+    [selectedItemIds]
   );
 
   // PERFORMANCE FIX: Optimized row deselection handler
@@ -264,7 +269,23 @@ export function DataTable<TData, TValue>({
         });
       }
     },
-    [dataItems, idField],
+    [dataItems, idField]
+  );
+  // Create a custom setter for search that also triggers the onSearch callback
+  const setSearchWithCallback = useCallback(
+    (valueOrUpdater: string | ((prev: string) => string)) => {
+      // Handle both direct values and updater functions
+      const newValue =
+        typeof valueOrUpdater === "function"
+          ? valueOrUpdater(search)
+          : valueOrUpdater;
+
+      setSearch(newValue);
+      if (onSearch) {
+        onSearch(newValue);
+      }
+    },
+    [search, setSearch, onSearch]
   );
 
   // Clear all selections
@@ -317,7 +338,7 @@ export function DataTable<TData, TValue>({
         return next;
       });
     },
-    [dataItems, rowSelection, idField],
+    [dataItems, rowSelection, idField]
   );
 
   // Get selected items data
@@ -329,22 +350,22 @@ export function DataTable<TData, TValue>({
 
     // Get IDs of selected items
     const selectedIdsArray = Object.keys(selectedItemIds).map((id) =>
-      typeof id === "string" ? Number.parseInt(id, 10) : (id as number),
+      typeof id === "string" ? Number.parseInt(id, 10) : (id as number)
     );
 
     // Find items from current page that are selected
     const itemsInCurrentPage = dataItems.filter(
-      (item) => selectedItemIds[String(item[idField])],
+      (item) => selectedItemIds[String(item[idField])]
     );
 
     // Get IDs of items on current page
     const idsInCurrentPage = itemsInCurrentPage.map(
-      (item) => item[idField] as unknown as number,
+      (item) => item[idField] as unknown as number
     );
 
     // Find IDs that need to be fetched (not on current page)
     const idsToFetch = selectedIdsArray.filter(
-      (id) => !idsInCurrentPage.includes(id),
+      (id) => !idsInCurrentPage.includes(id)
     );
 
     // If all selected items are on current page or we can't fetch by IDs
@@ -386,7 +407,7 @@ export function DataTable<TData, TValue>({
           setIsLoading(true);
           const result = await (
             fetchDataFn as (
-              params: DataFetchParams,
+              params: DataFetchParams
             ) => Promise<DataFetchResult<TData>>
           )({
             page,
@@ -421,8 +442,6 @@ export function DataTable<TData, TValue>({
     serverColumnFilters,
     fetchDataFn,
   ]);
-
-  // If fetchDataFn is a React Query hook, call it directly with parameters
   const queryResult =
     (fetchDataFn as { isQueryHook?: boolean }).isQueryHook === true
       ? (
@@ -433,6 +452,7 @@ export function DataTable<TData, TValue>({
             dateRange: { from_date: string; to_date: string },
             sortBy: string,
             sortOrder: string,
+            columnFilters?: Record<string, string[]>
           ) => {
             isLoading: boolean;
             isSuccess: boolean;
@@ -440,7 +460,15 @@ export function DataTable<TData, TValue>({
             data?: DataFetchResult<TData>;
             error?: Error;
           }
-        )(page, pageSize, search, dateRange, sortBy, sortOrder)
+        )(
+          page,
+          pageSize,
+          search,
+          dateRange,
+          sortBy,
+          sortOrder,
+          serverColumnFilters
+        )
       : null;
 
   // If using React Query, update state based on query result
@@ -457,7 +485,7 @@ export function DataTable<TData, TValue>({
         setError(
           queryResult.error instanceof Error
             ? queryResult.error
-            : new Error("Unknown error"),
+            : new Error("Unknown error")
         );
       }
     }
@@ -469,7 +497,7 @@ export function DataTable<TData, TValue>({
       pageIndex: page - 1,
       pageSize,
     }),
-    [page, pageSize],
+    [page, pageSize]
   );
 
   // Ref for the table container
@@ -479,7 +507,7 @@ export function DataTable<TData, TValue>({
   const columns = useMemo(() => {
     // Only pass deselection handler if row selection is enabled
     return getColumns(
-      tableConfig.enableRowSelection ? handleRowDeselection : null,
+      tableConfig.enableRowSelection ? handleRowDeselection : null
     );
   }, [getColumns, handleRowDeselection, tableConfig.enableRowSelection]); // Create event handlers using utility functions
   const handleSortingChange = useCallback(
@@ -488,12 +516,12 @@ export function DataTable<TData, TValue>({
         | import("@tanstack/react-table").SortingState
         | import("@tanstack/react-table").Updater<
             import("@tanstack/react-table").SortingState
-          >,
+          >
     ) => {
       const handler = createSortingHandler(setSortBy, setSortOrder, sorting);
       return handler(updaterOrValue);
     },
-    [setSortBy, setSortOrder, sorting],
+    [setSortBy, setSortOrder, sorting]
   );
 
   const handleColumnFiltersChange = useCallback(
@@ -502,12 +530,12 @@ export function DataTable<TData, TValue>({
         | import("@tanstack/react-table").ColumnFiltersState
         | import("@tanstack/react-table").Updater<
             import("@tanstack/react-table").ColumnFiltersState
-          >,
+          >
     ) => {
       const handler = createColumnFiltersHandler(setColumnFilters);
       return handler(updaterOrValue);
     },
-    [setColumnFilters],
+    [setColumnFilters]
   );
 
   const handleColumnVisibilityChange = useCallback(
@@ -516,18 +544,18 @@ export function DataTable<TData, TValue>({
         | import("@tanstack/react-table").VisibilityState
         | import("@tanstack/react-table").Updater<
             import("@tanstack/react-table").VisibilityState
-          >,
+          >
     ) => {
       const handler = createColumnVisibilityHandler(setColumnVisibility);
       return handler(updaterOrValue);
     },
-    [setColumnVisibility],
+    [setColumnVisibility]
   );
   const handlePaginationChange = useCallback(
     (
       updaterOrValue:
         | PaginationUpdater
-        | { pageIndex: number; pageSize: number },
+        | { pageIndex: number; pageSize: number }
     ) => {
       // Extract the new pagination state
       const newPagination =
@@ -538,7 +566,7 @@ export function DataTable<TData, TValue>({
       // Special handling: When page size changes, always reset to page 1
       if (newPagination.pageSize !== pageSize) {
         Promise.all([setPageSize(newPagination.pageSize), setPage(1)]).catch(
-          console.error,
+          console.error
         );
 
         return;
@@ -554,13 +582,13 @@ export function DataTable<TData, TValue>({
         }
       }
     },
-    [page, pageSize, setPage, setPageSize],
+    [page, pageSize, setPage, setPageSize]
   );
   const handleColumnSizingChange = useCallback(
     (
       updaterOrValue:
         | ColumnSizingState
-        | ((prev: ColumnSizingState) => ColumnSizingState),
+        | ((prev: ColumnSizingState) => ColumnSizingState)
     ) => {
       if (typeof updaterOrValue === "function") {
         setColumnSizing((current) => updaterOrValue(current));
@@ -568,7 +596,7 @@ export function DataTable<TData, TValue>({
         setColumnSizing(updaterOrValue);
       }
     },
-    [setColumnSizing],
+    [setColumnSizing]
   );
 
   // Column order change handler (no localStorage persistence)
@@ -581,7 +609,7 @@ export function DataTable<TData, TValue>({
 
       setColumnOrder(newColumnOrder);
     },
-    [columnOrder],
+    [columnOrder]
   );
 
   // Set up the table with memoized state
@@ -600,7 +628,7 @@ export function DataTable<TData, TValue>({
     columnResizeMode: "onChange" as ColumnResizeMode,
     onColumnSizingChange: handleColumnSizingChange,
     onColumnOrderChange: handleColumnOrderChange,
-    pageCount: data?.pagination.total_pages || 0,
+    pageCount: data?.pagination?.total_pages || 0,
     enableRowSelection: tableConfig.enableRowSelection,
     enableColumnResizing: tableConfig.enableColumnResizing,
     manualPagination: true,
@@ -622,7 +650,7 @@ export function DataTable<TData, TValue>({
   // Add an effect to validate page number when page size changes
   useEffect(() => {
     // This effect ensures page is valid after page size changes
-    const totalPages = data?.pagination.total_pages || 0;
+    const totalPages = data?.pagination?.total_pages || 0;
 
     if (totalPages > 0 && page > totalPages) {
       setPage(1);
@@ -684,7 +712,7 @@ export function DataTable<TData, TValue>({
       {tableConfig.enableToolbar && (
         <DataTableToolbar
           table={table}
-          setSearch={setSearch}
+          setSearch={setSearchWithCallback}
           setDateRange={setDateRange}
           totalSelectedItems={totalSelectedItems}
           deleteSelection={clearAllSelections}
@@ -706,7 +734,7 @@ export function DataTable<TData, TValue>({
           columnFilterOptions={columnFilterOptions}
           customToolbarComponent={renderToolbarContent?.({
             selectedRows: dataItems.filter(
-              (item) => selectedItemIds[String(item[idField])],
+              (item) => selectedItemIds[String(item[idField])]
             ),
             allSelectedIds: Object.keys(selectedItemIds),
             totalSelectedCount: totalSelectedItems,
@@ -720,7 +748,9 @@ export function DataTable<TData, TValue>({
         aria-label="Data table"
       >
         <Table
-          className={`${tableConfig.enableColumnResizing ? "resizable-table" : ""} min-w-full`}
+          className={`${
+            tableConfig.enableColumnResizing ? "resizable-table" : ""
+          } min-w-full`}
           style={{ minWidth: "800px" }}
         >
           <TableHeader>
@@ -728,7 +758,7 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
-                    className={`px-2 py-2 relative text-left group/th ${
+                    className={`px-2 py-2 relative text-center group/th ${
                       header.id === "actions" ? "w-20 min-w-20" : ""
                     }`}
                     key={header.id}
@@ -746,7 +776,7 @@ export function DataTable<TData, TValue>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext(),
+                          header.getContext()
                         )}
                     {tableConfig.enableColumnResizing &&
                       header.column.getCanResize() && (
@@ -767,12 +797,12 @@ export function DataTable<TData, TValue>({
                     (_, cellIndex) => (
                       <TableCell
                         key={`skeleton-cell-${index}-${cellIndex}`}
-                        className="px-4 py-2 truncate max-w-0 text-left"
+                        className="px-4 py-2 truncate max-w-0 text-center"
                         tabIndex={-1}
                       >
                         <Skeleton className="h-6 w-full" />
                       </TableCell>
-                    ),
+                    )
                   )}
                 </TableRow>
               ))
@@ -801,7 +831,7 @@ export function DataTable<TData, TValue>({
                   onFocus={(e) => {
                     // Add a data attribute to the currently focused row
                     for (const el of document.querySelectorAll(
-                      '[data-focused="true"]',
+                      '[data-focused="true"]'
                     )) {
                       el.removeAttribute("data-focused");
                     }
@@ -810,7 +840,7 @@ export function DataTable<TData, TValue>({
                 >
                   {row.getVisibleCells().map((cell, cellIndex) => (
                     <TableCell
-                      className={`px-4 py-2 text-left ${
+                      className={`px-4 py-2 text-center ${
                         cell.column.id === "actions"
                           ? "w-20 min-w-20"
                           : "truncate max-w-0"
@@ -821,7 +851,7 @@ export function DataTable<TData, TValue>({
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext(),
+                        cell.getContext()
                       )}
                     </TableCell>
                   ))}
@@ -832,9 +862,18 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-left truncate"
+                  className="h-64 text-center"
                 >
-                  No results.
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="text-lg font-medium">
+                        No results found
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-2">
+                        Try adjusting your search or filter criteria.
+                      </div>
+                    </div>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -844,8 +883,6 @@ export function DataTable<TData, TValue>({
       {tableConfig.enablePagination && (
         <DataTablePagination
           table={table}
-          totalItems={data?.pagination.total_items || 0}
-          totalSelectedItems={totalSelectedItems}
           pageSizeOptions={pageSizeOptions || [10, 20, 30, 40, 50]}
           size={tableConfig.size}
         />

@@ -19,14 +19,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarDatePicker } from "@/components/data-table/date-picker";
 import { DataTableViewOptions } from "@/components/data-table/view-options";
 import { DataTableFacetedFilter } from "@/components/data-table/column-filter";
 import { DataTableExport } from "./data-export";
 import { resetUrlState } from "./utils/deep-utils";
 import { parseDateFromUrl } from "./utils/url-state";
 import type { TableConfig } from "./utils/table-config";
-import { formatDate } from "@/components/data-table/utils/date-format";
 
 // Helper functions for component sizing
 const getInputSizeClass = (size: "sm" | "default" | "lg") => {
@@ -308,44 +306,6 @@ export function DataTableToolbar<TData>({
     }
   }, [dates, getInitialDates]);
 
-  // Handle date selection for filtering
-  const handleDateSelect = ({ from, to }: { from: Date; to: Date }) => {
-    // Compare with previous dates to avoid unnecessary updates
-    const hasFromChanged =
-      (from && !dates.from) ||
-      (!from && dates.from) ||
-      (from && dates.from && from.getTime() !== dates.from.getTime());
-
-    const hasToChanged =
-      (to && !dates.to) ||
-      (!to && dates.to) ||
-      (to && dates.to && to.getTime() !== dates.to.getTime());
-
-    // Only update if dates have actually changed
-    if (!hasFromChanged && !hasToChanged) {
-      return;
-    }
-
-    // Set flag to prevent update loops
-    isUpdatingDates.current = true;
-
-    // Update internal state
-    setDates({ from, to });
-    setDatesModified(true);
-    lastSetDates.current = { from, to };
-
-    // Convert dates to strings in YYYY-MM-DD format for the API
-    setDateRange({
-      from_date: from ? formatDate(from) : "",
-      to_date: to ? formatDate(to) : "",
-    });
-
-    // Reset the updating flag after a delay
-    setTimeout(() => {
-      isUpdatingDates.current = false;
-    }, 100);
-  };
-
   // Reset all filters and URL state
   const handleResetFilters = () => {
     // Reset table filters
@@ -395,21 +355,7 @@ export function DataTableToolbar<TData>({
             )}`}
           />
         )}
-        {config.enableDateFilter && (
-          <div className="flex items-center">
-            <CalendarDatePicker
-              date={{
-                from: dates.from,
-                to: dates.to,
-              }}
-              onDateSelect={handleDateSelect}
-              className={`w-fit cursor-pointer ${getInputSizeClass(
-                config.size
-              )}`}
-              variant="outline"
-            />
-          </div>
-        )}
+        {/* Date filter disabled as per requirement */}
         {config.enableColumnFilters &&
           columnFilterOptions &&
           columnFilterOptions.map((filter) => {
