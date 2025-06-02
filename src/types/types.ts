@@ -26,3 +26,32 @@ export interface User extends Record<string, unknown> {
   image?: string;
   isActive: boolean;
 }
+
+export interface Semester extends Record<string, unknown> {
+  id: string;
+  name: string;
+  year: number;
+  isActive: boolean;
+}
+
+export interface Batch extends Record<string, unknown> {
+    id: string,
+    name: string,
+    batch: string,
+    department: string,
+    section: string,
+    isActive: boolean,
+}
+
+export interface Course extends Record<string, unknown> {
+    id: string;
+    name: string;
+    description: string;
+    type: CourseType;
+}
+
+enum CourseType {
+    CORE,
+    ELECTIVE,
+    MICRO_CREDENTIAL
+}

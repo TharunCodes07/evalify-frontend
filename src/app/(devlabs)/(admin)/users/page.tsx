@@ -3,6 +3,9 @@ import React from "react";
 import { DataTable } from "@/components/data-table/data-table";
 import { getColumns } from "@/components/admin/users/user-columns";
 import { useUsers } from "@/components/admin/users/hooks/use-users";
+import { Button } from "@/components/ui/button";
+import { DialogTrigger } from "@/components/ui/dialog";
+import { UserDialog } from "./user-dialog";
 
 function useUsersForDataTable(
   page: number,
@@ -27,7 +30,6 @@ export default function UsersPage() {
       columnId: "role",
       title: "Role",
       options: [
-        { label: "All Roles", value: "ALL" },
         { label: "Student", value: "STUDENT" },
         { label: "Admin", value: "ADMIN" },
         { label: "Faculty", value: "FACULTY" },
@@ -43,6 +45,7 @@ export default function UsersPage() {
       </div>
 
       <div>
+      <UserDialog />
         <DataTable
           config={{
             enableUrlState: false,
