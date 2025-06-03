@@ -1,89 +1,80 @@
 "use client";
-import { useState, useEffect } from "react";
-import { ViewToggle, ViewMode } from "@/components/view-toggle";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ViewToggle, ViewMode } from "@/components/view-toggle";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataGrid } from "@/components/data-grid/data-grid";
 import { GridItem } from "@/components/data-grid/grid-item";
-import { Team } from "@/types/types";
-import { Users } from "lucide-react";
-import { getColumns } from "@/components/teams/team-columns";
-import { useTeams } from "@/components/teams/hooks/use-teams";
+import { Project } from "@/types/types";
+import { useParams } from "next/navigation";
+import { getColumns } from "@/components/projects/project-columns";
+import { useProjects } from "@/components/projects/hooks/use-projects";
 
-function useTeamsForDataTable(page: number, pageSize: number, search: string) {
-  return useTeams(search, page - 1, pageSize);
+function useProjectsForDataTable(
+  page: number,
+  pageSize: number,
+  search: string
+) {
+  const params = useParams<{ id: string }>();
+  return useProjects(params.id, search, page - 1, pageSize);
 }
 
-useTeamsForDataTable.isQueryHook = true;
+useProjectsForDataTable.isQueryHook = true;
 
-export default function TeamsPage() {
+export default function ProjectsPage() {
   const [viewmode, setViewMode] = useState<ViewMode>("table");
   const router = useRouter();
 
   useEffect(() => {
-    const saved = localStorage.getItem("team-view") as ViewMode;
+    const saved = localStorage.getItem("project-view") as ViewMode;
     if ((saved && saved === "table") || saved === "grid") {
       setViewMode(saved);
     }
   }, []);
 
-  const handleViewModeChange = (newViewMode: ViewMode) => {
+  const handleViewModedChange = (newViewMode: ViewMode) => {
     setViewMode(newViewMode);
-    localStorage.setItem("team-view", newViewMode);
+    localStorage.setItem("project-view", newViewMode);
   };
-  const handleClick = (team: Team) => {
-    router.push(`/teams/${team.id}`);
+
+  const handleClick = (project: Project) => {
+    router.push(`/projects/${project.id}`);
   };
 
   const columnsWrapper = () => {
     return getColumns(handleClick);
   };
 
-  const renderTeamGrid = (
-    team: Team,
+  const renderProjectGrid = (
+    project: Project,
     index: number,
     isSelected: boolean,
     onToggleSelect: () => void
   ) => {
     return (
-      <GridItem<Team>
-        key={team.id}
-        item={team}
+      <GridItem<Project>
+        key={project.id}
+        item={project}
         isSelected={isSelected}
         onToggleSelect={onToggleSelect}
         onCardClick={handleClick}
         fieldConfig={{
           id: "id",
-          title: "name",
-          description: "description",
+          title: "title",
           createdAt: "createdAt",
-          badge: {
-            field: "projectCount",
-            label: "Projects:",
-            variant: "secondary",
-          },
-          stats: [
-            {
-              field: "members",
-              label: "member(s)",
-              icon: Users,
-              format: (value: unknown) =>
-                Array.isArray(value) ? value.length : 0,
-            },
-          ],
         }}
-        entityName="team"
       />
     );
   };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h1>Teams Page</h1>
+        <h1>Team Projects</h1>
         <div className="flex items-center gap-4">
           <ViewToggle
             view={viewmode}
-            onViewChange={handleViewModeChange}
+            onViewChange={handleViewModedChange}
             className="shrink-0"
           />
         </div>
@@ -98,13 +89,13 @@ export default function TeamsPage() {
               enableDateFilter: false,
             }}
             exportConfig={{
-              entityName: "teams",
+              entityName: "projects",
               columnMapping: {},
               columnWidths: [],
               headers: [],
             }}
             getColumns={columnsWrapper}
-            fetchDataFn={useTeamsForDataTable}
+            fetchDataFn={useProjectsForDataTable}
             idField="id"
             onRowClick={handleClick}
           />
@@ -120,8 +111,8 @@ export default function TeamsPage() {
               headers: [],
             }}
             getColumns={columnsWrapper}
-            renderGridItem={renderTeamGrid}
-            fetchDataFn={useTeamsForDataTable}
+            renderGridItem={renderProjectGrid}
+            fetchDataFn={useProjectsForDataTable}
             idField="id"
             gridConfig={{
               columns: { default: 1, md: 2, lg: 3, xl: 4 },
