@@ -6,9 +6,9 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  Mail,
-  Phone,
-  User as UserIcon,
+  Calendar,
+  Eye,
+  Settings,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -17,11 +17,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { User } from "@/types/types";
+import { Semester } from "@/types/types";
 
 export const getColumns = (
-  handleClick?: (user: User) => void
-): ColumnDef<User>[] => {
+  handleClick?: (semester: Semester) => void
+): ColumnDef<Semester>[] => {
   return [
     {
       id: "select",
@@ -60,77 +60,43 @@ export const getColumns = (
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title="User"
+          title="Semester Name"
           className="text-center"
         />
-      ),
-      cell: ({ row }) => {
-        const user = row.original;
-        const name = user.name as string;
-        const email = user.email as string;
+      ),      cell: ({ row }) => {
+        const semester = row.original;
+        const name = semester.name as string;
 
         return (
-          <div className="items-center">
+          <div className="flex items-center space-x-3">
             <div>
-              <div className="font-medium">{name}</div>
-              <div className="text-sm">{email}</div>
+              <div className="font-medium text-gray-900">{name}</div>
             </div>
           </div>
         );
-      },
-      meta: { label: "User" },
-      size: 250,
+      },meta: { label: "Semester Name" },
+      size: 200,
     },
     {
-      accessorKey: "phoneNumber",
+      accessorKey: "year",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title="Phone"
+          title="Year"
           className="text-center"
         />
       ),
       cell: ({ row }) => {
-        const phoneNumber = row.getValue("phoneNumber") as string | undefined;
+        const year = row.getValue("year") as number;
         return (
-          <div className="flex items-center justify-center">
-            <span className="text-sm">
-              {phoneNumber || "N/A"}
-            </span>
+          <div className="text-center font-medium">
+            {year}
           </div>
         );
       },
-      meta: { label: "Phone" },
-    },
-    {
-      accessorKey: "role",
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title="Role"
-          className="text-center"
-        />
-      ),
-      cell: ({ row }) => {
-        const role = row.getValue("role") as string;
-        const roleVariant =
-          role === "ADMIN"
-            ? "destructive"
-            : role === "MANAGER" || role === "FACULTY"
-            ? "secondary"
-            : "outline";
-
-        return (
-          <div className="flex justify-center">
-            <Badge variant={roleVariant} className="capitalize">
-              {role.toLowerCase()}
-            </Badge>
-          </div>
-        );
-      },
-      meta: { label: "Role" },
-    },
-    {
+      meta: { label: "Year" },
+      size: 100,
+    },    {
       accessorKey: "isActive",
       header: ({ column }) => (
         <DataTableColumnHeader
@@ -157,7 +123,7 @@ export const getColumns = (
       id: "actions",
       header: () => <div className="text-center">Actions</div>,
       cell: ({ row }) => {
-        const user = row.original;
+        const semester = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -166,25 +132,25 @@ export const getColumns = (
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleClick?.(user)}>
-                <UserIcon className="mr-2 h-4 w-4" />
-                View User
+              <DropdownMenuItem onClick={() => handleClick?.(semester)}>
+                <Eye className="mr-2 h-4 w-4" />
+                View Details
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Mail className="mr-2 h-4 w-4" />
-                Send Email
+                <Calendar className="mr-2 h-4 w-4" />
+                Manage Schedule
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Phone className="mr-2 h-4 w-4" />
-                Call User
+                <Settings className="mr-2 h-4 w-4" />
+                Configure
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Edit className="mr-2 h-4 w-4" />
-                Edit User
+                Edit Semester
               </DropdownMenuItem>
               <DropdownMenuItem className="text-red-600">
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete User
+                Delete Semester
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

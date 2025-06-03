@@ -3,6 +3,7 @@
 import type * as React from "react";
 import {
   type ColumnSizingState,
+  type SortingState,
   getCoreRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
@@ -205,14 +206,12 @@ export function DataGrid<TData, TValue>({
       total_pages: number;
       total_items: number;
     };
-  } | null>(null);
-
-  // PERFORMANCE FIX: Use only one selection state as the source of truth
+  } | null>(null);  // PERFORMANCE FIX: Use only one selection state as the source of truth
   const [selectedItemIds, setSelectedItemIds] = useState<
     Record<string | number, boolean>
   >({});
 
-  // Convert the sorting from URL to the format TanStack Table expects
+  // For server-side sorting, derive sorting state from URL parameters
   const sorting = useMemo(
     () => createSortingState(sortBy, sortOrder),
     [sortBy, sortOrder]
@@ -498,23 +497,7 @@ export function DataGrid<TData, TValue>({
     // Only pass deselection handler if row selection is enabled
     return getColumns(
       tableConfig.enableRowSelection ? handleRowDeselection : null
-    );
-  }, [getColumns, handleRowDeselection, tableConfig.enableRowSelection]);
-
-  // Create event handlers using utility functions
-  const handleSortingChange = useCallback(
-    (
-      updaterOrValue:
-        | import("@tanstack/react-table").SortingState
-        | import("@tanstack/react-table").Updater<
-            import("@tanstack/react-table").SortingState
-          >
-    ) => {
-      const handler = createSortingHandler(setSortBy, setSortOrder, sorting);
-      return handler(updaterOrValue);
-    },
-    [setSortBy, setSortOrder, sorting]
-  );
+    );  }, [getColumns, handleRowDeselection, tableConfig.enableRowSelection]);
 
   const handleColumnFiltersChange = useCallback(
     (
@@ -529,7 +512,6 @@ export function DataGrid<TData, TValue>({
     },
     [setColumnFilters]
   );
-
   const handleColumnVisibilityChange = useCallback(
     (
       updaterOrValue:
@@ -542,6 +524,21 @@ export function DataGrid<TData, TValue>({
       return handler(updaterOrValue);
     },
     [setColumnVisibility]
+  );
+
+  // Add sorting handler for server-side sorting
+  const handleSortingChange = useCallback(
+    (
+      updaterOrValue:
+        | import("@tanstack/react-table").SortingState
+        | import("@tanstack/react-table").Updater<
+            import("@tanstack/react-table").SortingState
+          >
+    ) => {
+      const handler = createSortingHandler(setSortBy, setSortOrder, sorting);
+      return handler(updaterOrValue);
+    },
+    [setSortBy, setSortOrder, sorting]
   );
 
   const handlePaginationChange = useCallback(
@@ -607,10 +604,7 @@ export function DataGrid<TData, TValue>({
       columnFilters,
       pagination,
       columnSizing,
-    },
-    pageCount: data?.pagination?.total_pages || 0,
-    enableRowSelection: tableConfig.enableRowSelection,
-    manualPagination: true,
+    },    pageCount: data?.pagination?.total_pages || 0,    enableRowSelection: tableConfig.enableRowSelection,    manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
     onRowSelectionChange: handleRowSelectionChange,

@@ -6,9 +6,9 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  Mail,
-  Phone,
-  User as UserIcon,
+  Calendar,
+  Eye,
+  Settings,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -17,11 +17,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { User } from "@/types/types";
+import { Batch } from "@/types/types";
+
+
+
+function handleDelete(batchId: string) {
+
+}
 
 export const getColumns = (
-  handleClick?: (user: User) => void
-): ColumnDef<User>[] => {
+  handleClick?: (batch: Batch) => void
+): ColumnDef<Batch>[] => {
   return [
     {
       id: "select",
@@ -60,104 +66,110 @@ export const getColumns = (
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title="User"
+          title="Batch Name"
           className="text-center"
         />
       ),
       cell: ({ row }) => {
-        const user = row.original;
-        const name = user.name as string;
-        const email = user.email as string;
+        const batch = row.original;
+        const name = batch.name as string;
 
         return (
-          <div className="items-center">
-            <div>
+          <div className="items-center space-x-3">
               <div className="font-medium">{name}</div>
-              <div className="text-sm">{email}</div>
+          </div>
+        );
+      },
+      meta: { label: "Batch Name" },
+      size: 200,
+    },
+    {
+      accessorKey: "batch",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title="Batch"
+          className="text-center"
+        />
+      ),
+      cell: ({ row }) => {
+        const batch = row.getValue("batch") as string;
+        return (
+          <div className="text-center font-medium">
+            {batch}
+          </div>
+        );
+      },
+      meta: { label: "Batch" },
+      size: 100,
+    },
+    {
+      accessorKey: "department",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title="Department"
+          className="text-center"
+        />
+      ),
+      cell: ({ row }) => {
+        const department = row.getValue("department") as string;
+        return (
+          <div className="text-center font-medium">
+            {department}
+          </div>
+        );
+      },
+      meta: { label: "Department" },
+      size: 100,
+    },
+    {
+        accessorKey: "section",
+        header: ({ column }) => (
+            <DataTableColumnHeader
+            column={column}
+            title="Section"
+            className="text-center"
+            />
+        ),
+        cell: ({ row }) => {
+            const section = row.getValue("section") as string;
+            return (
+                <div className="text-center font-medium">
+                    {section}
+                </div>
+            );
+        },
+        meta: { label: "Section" },
+        size: 100,
+    },
+    {
+        accessorKey: "isActive",
+        header: ({ column }) => (
+            <DataTableColumnHeader
+            column={column}
+            title="Status"
+            className="text-center"
+            />
+        ),
+        cell: ({ row }) => {
+            const isActive = row.getValue("isActive") as boolean;
+            return (
+            <div className="text-center">
+                <Badge variant={isActive ? "default" : "destructive"}>
+                {isActive ? "Active" : "Inactive"}
+                </Badge>
             </div>
-          </div>
-        );
-      },
-      meta: { label: "User" },
-      size: 250,
-    },
-    {
-      accessorKey: "phoneNumber",
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title="Phone"
-          className="text-center"
-        />
-      ),
-      cell: ({ row }) => {
-        const phoneNumber = row.getValue("phoneNumber") as string | undefined;
-        return (
-          <div className="flex items-center justify-center">
-            <span className="text-sm">
-              {phoneNumber || "N/A"}
-            </span>
-          </div>
-        );
-      },
-      meta: { label: "Phone" },
-    },
-    {
-      accessorKey: "role",
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title="Role"
-          className="text-center"
-        />
-      ),
-      cell: ({ row }) => {
-        const role = row.getValue("role") as string;
-        const roleVariant =
-          role === "ADMIN"
-            ? "destructive"
-            : role === "MANAGER" || role === "FACULTY"
-            ? "secondary"
-            : "outline";
-
-        return (
-          <div className="flex justify-center">
-            <Badge variant={roleVariant} className="capitalize">
-              {role.toLowerCase()}
-            </Badge>
-          </div>
-        );
-      },
-      meta: { label: "Role" },
-    },
-    {
-      accessorKey: "isActive",
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title="Status"
-          className="text-center"
-        />
-      ),
-      cell: ({ row }) => {
-        const isActive = row.getValue("isActive") as boolean;
-        const statusVariant = isActive ? "default" : "destructive";
-
-        return (
-          <div className="flex justify-center">
-            <Badge variant={statusVariant} className="capitalize">
-              {isActive ? "Active" : "Inactive"}
-            </Badge>
-          </div>
-        );
-      },
-      meta: { label: "Status" },
+            );
+        },
+        meta: { label: "Status" },
+        size: 100,
     },
     {
       id: "actions",
       header: () => <div className="text-center">Actions</div>,
       cell: ({ row }) => {
-        const user = row.original;
+        const batch = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -166,25 +178,13 @@ export const getColumns = (
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleClick?.(user)}>
-                <UserIcon className="mr-2 h-4 w-4" />
-                View User
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Mail className="mr-2 h-4 w-4" />
-                Send Email
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Phone className="mr-2 h-4 w-4" />
-                Call User
-              </DropdownMenuItem>
               <DropdownMenuItem>
                 <Edit className="mr-2 h-4 w-4" />
-                Edit User
+                Edit Batch
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(batch.id)}>
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete User
+                Delete Batch
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

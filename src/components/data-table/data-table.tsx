@@ -3,6 +3,7 @@
 import type * as React from "react";
 import {
   type ColumnSizingState,
+  type SortingState,
   flexRender,
   getCoreRowModel,
   getFacetedRowModel,
@@ -198,13 +199,12 @@ export function DataTable<TData, TValue>({
   } | null>(null);
 
   // Column order state (in-memory only)
-  const [columnOrder, setColumnOrder] = useState<string[]>([]);
-
-  // PERFORMANCE FIX: Use only one selection state as the source of truth
+  const [columnOrder, setColumnOrder] = useState<string[]>([]);  // PERFORMANCE FIX: Use only one selection state as the source of truth
   const [selectedItemIds, setSelectedItemIds] = useState<
     Record<string | number, boolean>
   >({});
-  // Convert the sorting from URL to the format TanStack Table expects
+
+  // For server-side sorting, derive sorting state from URL parameters
   const sorting = useMemo(
     () => createSortingState(sortBy, sortOrder),
     [sortBy, sortOrder]
@@ -508,21 +508,7 @@ export function DataTable<TData, TValue>({
     // Only pass deselection handler if row selection is enabled
     return getColumns(
       tableConfig.enableRowSelection ? handleRowDeselection : null
-    );
-  }, [getColumns, handleRowDeselection, tableConfig.enableRowSelection]); // Create event handlers using utility functions
-  const handleSortingChange = useCallback(
-    (
-      updaterOrValue:
-        | import("@tanstack/react-table").SortingState
-        | import("@tanstack/react-table").Updater<
-            import("@tanstack/react-table").SortingState
-          >
-    ) => {
-      const handler = createSortingHandler(setSortBy, setSortOrder, sorting);
-      return handler(updaterOrValue);
-    },
-    [setSortBy, setSortOrder, sorting]
-  );
+    );  }, [getColumns, handleRowDeselection, tableConfig.enableRowSelection]);
 
   const handleColumnFiltersChange = useCallback(
     (
@@ -537,7 +523,6 @@ export function DataTable<TData, TValue>({
     },
     [setColumnFilters]
   );
-
   const handleColumnVisibilityChange = useCallback(
     (
       updaterOrValue:
@@ -550,6 +535,21 @@ export function DataTable<TData, TValue>({
       return handler(updaterOrValue);
     },
     [setColumnVisibility]
+  );
+
+  // Add sorting handler for server-side sorting
+  const handleSortingChange = useCallback(
+    (
+      updaterOrValue:
+        | import("@tanstack/react-table").SortingState
+        | import("@tanstack/react-table").Updater<
+            import("@tanstack/react-table").SortingState
+          >
+    ) => {
+      const handler = createSortingHandler(setSortBy, setSortOrder, sorting);
+      return handler(updaterOrValue);
+    },
+    [setSortBy, setSortOrder, sorting]
   );
   const handlePaginationChange = useCallback(
     (
@@ -627,11 +627,8 @@ export function DataTable<TData, TValue>({
     },
     columnResizeMode: "onChange" as ColumnResizeMode,
     onColumnSizingChange: handleColumnSizingChange,
-    onColumnOrderChange: handleColumnOrderChange,
-    pageCount: data?.pagination?.total_pages || 0,
-    enableRowSelection: tableConfig.enableRowSelection,
-    enableColumnResizing: tableConfig.enableColumnResizing,
-    manualPagination: true,
+    onColumnOrderChange: handleColumnOrderChange,    pageCount: data?.pagination?.total_pages || 0,    enableRowSelection: tableConfig.enableRowSelection,
+    enableColumnResizing: tableConfig.enableColumnResizing,    manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
     onRowSelectionChange: handleRowSelectionChange,
@@ -661,19 +658,12 @@ export function DataTable<TData, TValue>({
   const resetColumnSizing = useCallback(() => {
     setColumnSizing({});
   }, []);
-
   // Reset column order (no localStorage persistence)
   const resetColumnOrder = useCallback(() => {
     // Reset to empty array (which resets to default order)
     table.setColumnOrder([]);
     setColumnOrder([]);
   }, [table]);
-
-  // Add synchronization effect to ensure URL is the source of truth
-  useEffect(() => {
-    // Force the table's sorting state to match URL parameters
-    table.setSorting(sorting);
-  }, [table, sorting]);
 
   // Keep pagination in sync with URL parameters
   useEffect(() => {
