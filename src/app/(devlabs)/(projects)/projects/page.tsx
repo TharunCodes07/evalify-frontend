@@ -1,7 +1,3 @@
 export default function DevlabsProjectPage() {
-  return (
-  <div>
-    
-  </div>
-  );
+  return <div>Project Page</div>;
 }

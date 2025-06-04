@@ -2,14 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import React from "react";
 import { DataTableColumnHeader } from "@/components/data-table/column-header";
 import { Button } from "@/components/ui/button";
-import {
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Calendar,
-  Eye,
-  Settings,
-} from "lucide-react";
+import { MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,11 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Batch } from "@/types/types";
 
-
-
-function handleDelete(batchId: string) {
-
-}
+function handleDelete(batchId: string) {}
 
 export const getColumns = (
   handleClick?: (batch: Batch) => void
@@ -76,7 +65,7 @@ export const getColumns = (
 
         return (
           <div className="items-center space-x-3">
-              <div className="font-medium">{name}</div>
+            <div className="font-medium">{name}</div>
           </div>
         );
       },
@@ -94,11 +83,7 @@ export const getColumns = (
       ),
       cell: ({ row }) => {
         const batch = row.getValue("batch") as string;
-        return (
-          <div className="text-center font-medium">
-            {batch}
-          </div>
-        );
+        return <div className="text-center font-medium">{batch}</div>;
       },
       meta: { label: "Batch" },
       size: 100,
@@ -114,56 +99,48 @@ export const getColumns = (
       ),
       cell: ({ row }) => {
         const department = row.getValue("department") as string;
-        return (
-          <div className="text-center font-medium">
-            {department}
-          </div>
-        );
+        return <div className="text-center font-medium">{department}</div>;
       },
       meta: { label: "Department" },
       size: 100,
     },
     {
-        accessorKey: "section",
-        header: ({ column }) => (
-            <DataTableColumnHeader
-            column={column}
-            title="Section"
-            className="text-center"
-            />
-        ),
-        cell: ({ row }) => {
-            const section = row.getValue("section") as string;
-            return (
-                <div className="text-center font-medium">
-                    {section}
-                </div>
-            );
-        },
-        meta: { label: "Section" },
-        size: 100,
+      accessorKey: "section",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title="Section"
+          className="text-center"
+        />
+      ),
+      cell: ({ row }) => {
+        const section = row.getValue("section") as string;
+        return <div className="text-center font-medium">{section}</div>;
+      },
+      meta: { label: "Section" },
+      size: 100,
     },
     {
-        accessorKey: "isActive",
-        header: ({ column }) => (
-            <DataTableColumnHeader
-            column={column}
-            title="Status"
-            className="text-center"
-            />
-        ),
-        cell: ({ row }) => {
-            const isActive = row.getValue("isActive") as boolean;
-            return (
-            <div className="text-center">
-                <Badge variant={isActive ? "default" : "destructive"}>
-                {isActive ? "Active" : "Inactive"}
-                </Badge>
-            </div>
-            );
-        },
-        meta: { label: "Status" },
-        size: 100,
+      accessorKey: "isActive",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title="Status"
+          className="text-center"
+        />
+      ),
+      cell: ({ row }) => {
+        const isActive = row.getValue("isActive") as boolean;
+        return (
+          <div className="text-center">
+            <Badge variant={isActive ? "default" : "destructive"}>
+              {isActive ? "Active" : "Inactive"}
+            </Badge>
+          </div>
+        );
+      },
+      meta: { label: "Status" },
+      size: 100,
     },
     {
       id: "actions",
@@ -182,7 +159,10 @@ export const getColumns = (
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Batch
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(batch.id)}>
+              <DropdownMenuItem
+                className="text-red-600"
+                onClick={() => handleDelete(batch.id)}
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Batch
               </DropdownMenuItem>

@@ -37,6 +37,7 @@ export interface Project extends Record<string, unknown> {
   courseId: string;
   createdAt: string;
   updatedAt: string;
+  githubUrl?: string | null;
 }
 
 export enum ProjectStatus {
@@ -66,23 +67,73 @@ export interface Semester extends Record<string, unknown> {
 }
 
 export interface Batch extends Record<string, unknown> {
-    id: string,
-    name: string,
-    batch: string,
-    department: string,
-    section: string,
-    isActive: boolean,
+  id: string;
+  name: string;
+  batch: string;
+  department: string;
+  section: string;
+  isActive: boolean;
 }
 
 export interface Course extends Record<string, unknown> {
-    id: string;
-    name: string;
-    description: string;
-    type: CourseType;
+  id: string;
+  name: string;
+  description: string;
+  type: CourseType;
 }
 
 enum CourseType {
-    CORE,
-    ELECTIVE,
-    MICRO_CREDENTIAL
+  CORE,
+  ELECTIVE,
+  MICRO_CREDENTIAL,
 }
+
+export interface KanbanTask {
+  id: string;
+  title: string;
+  description?: string;
+  position: number;
+  createdBy: User;
+  assignedTo?: User;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KanbanColumn {
+  id: string;
+  name: string;
+  position: number;
+  tasks: KanbanTask[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KanbanBoard {
+  id: string;
+  projectId: string;
+  columns: KanbanColumn[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTaskRequest {
+  title: string;
+  description?: string;
+  columnId: string;
+  assignedToId?: string;
+  userId: string;
+}
+
+export interface UpdateTaskRequest {
+  title?: string;
+  description?: string;
+  assignedToId?: string;
+  userId: string;
+}
+
+export interface MoveTaskRequest {
+  columnId: string;
+  position: number;
+  userId: string;
+}
+
