@@ -51,20 +51,17 @@ const navItems = [
     title: "Admin",
     icon: Settings2,
     items: [
-      { title: "User Management", url: "/users" },
-      { title: "Semester Management", url: "/semester" },
-      { title: "Batch Management", url: "/batch" },
-      { title: "Course Management", url: "/course" },
+      { title: "User", url: "/users" },
+      { title: "Semester", url: "/semester" },
+      { title: "Batch", url: "/batch" },
+      { title: "Course", url: "/course" },
     ],
   },
   {
-    title: "Projects",
+    title: "Project",
     icon: Folder,
     items: [
-      { title: "E-Commerce Platform", url: "/projects/ecommerce" },
-      { title: "Mobile App", url: "/projects/mobile-app" },
-      { title: "Analytics Dashboard", url: "/projects/analytics" },
-      { title: "API Gateway", url: "/projects/api-gateway" },
+      { title: "Reviews", url: "/reviews" },
     ],
   },
 ];
