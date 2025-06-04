@@ -226,7 +226,7 @@ export default function CreateReviewPage() {
       try {
         // Fetch current semester for the batch
         const semesterResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/batch/${selectedBatch}/active-semester`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/batch/${selectedBatch}/active-semester`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -237,13 +237,14 @@ export default function CreateReviewPage() {
 
         if (semesterResponse.ok) {
           const semesterData = await semesterResponse.json();
+          console.log("Current Semester Data:", semesterData);
           setCurrentSemester(semesterData.name);
           setSelectedSemester(semesterData.name.toString());
         }
 
         // Fetch classes for the batch and department
         const classesResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/batches/${selectedBatch}/classes?departmentId=${selectedDepartment}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedBatch}/classes?departmentId=${selectedDepartment}`,
           {
             headers: {
               "Content-Type": "application/json",
