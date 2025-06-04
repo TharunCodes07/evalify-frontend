@@ -47,18 +47,6 @@ export enum ProjectStatus {
   REJECTED = "REJECTED",
 }
 
-export interface Project extends Record<string, unknown> {
-  id: string;
-  title: string;
-  description: string;
-  objectives: string | null;
-  status: ProjectStatus;
-  teamId: string;
-  courseId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface Semester extends Record<string, unknown> {
   id: string;
   name: string;
@@ -136,4 +124,3 @@ export interface MoveTaskRequest {
   position: number;
   userId: string;
 }
-
