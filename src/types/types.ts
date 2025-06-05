@@ -37,6 +37,7 @@ export interface Project extends Record<string, unknown> {
   courseId: string;
   createdAt: string;
   updatedAt: string;
+  githubUrl?: string | null;
 }
 
 export enum ProjectStatus {
@@ -54,12 +55,12 @@ export interface Semester extends Record<string, unknown> {
 }
 
 export interface Batch extends Record<string, unknown> {
-    id: string,
-    name: string,
-    batch: string,
-    department: string,
-    section: string,
-    isActive: boolean,
+  id: string;
+  name: string;
+  batch: string;
+  department: string;
+  section: string;
+  isActive: boolean;
 }
 
 export interface Course {

@@ -13,13 +13,11 @@ import {
   useDroppable,
   useSensor,
   useSensors,
-} from "@dnd-kit/core";
-import type {
-  Announcements,
-  DndContextProps,
-  DragEndEvent,
-  DragOverEvent,
-  DragStartEvent,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+  type Announcements,
+  type DndContextProps,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -29,6 +27,7 @@ import {
   createContext,
   useContext,
   useState,
+  useMemo,
 } from "react";
 import { createPortal } from "react-dom";
 import tunnel from "tunnel-rat";
@@ -55,12 +54,14 @@ type KanbanContextProps<
   columns: C[];
   data: T[];
   activeCardId: string | null;
+  isDragging: boolean;
 };
 
 const KanbanContext = createContext<KanbanContextProps>({
   columns: [],
   data: [],
   activeCardId: null,
+  isDragging: false,
 });
 
 export type KanbanBoardProps = {
@@ -161,11 +162,21 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
   const filteredData = data.filter((item) => item.column === props.id);
   const items = filteredData.map((item) => item.id);
 
+  // Make the cards container droppable as well
+  const { isOver, setNodeRef: setDroppableRef } = useDroppable({
+    id: `${props.id}-cards`,
+  });
+
   return (
     <ScrollArea className="overflow-hidden">
       <SortableContext items={items}>
         <div
-          className={cn("flex flex-grow flex-col gap-2 p-2", className)}
+          ref={setDroppableRef}
+          className={cn(
+            "flex flex-grow flex-col gap-2 p-2 min-h-[100px]",
+            isOver && "bg-accent/20",
+            className
+          )}
           {...props}
         >
           {filteredData.map(children)}
@@ -211,101 +222,213 @@ export const KanbanProvider = <
   ...props
 }: KanbanProviderProps<T, C>) => {
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedData, setDraggedData] = useState<T[]>(data);
+
+  const displayData = useMemo(() => {
+    return isDragging ? draggedData : data;
+  }, [isDragging, draggedData, data]);
 
   const sensors = useSensors(
-    useSensor(MouseSensor),
-    useSensor(TouchSensor),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor)
   );
 
   const handleDragStart = (event: DragStartEvent) => {
-    const card = data.find((item) => item.id === event.active.id);
-    if (card) {
-      setActiveCardId(event.active.id as string);
-    }
+    const { active } = event;
+    setActiveCardId(active.id as string);
+    setIsDragging(true);
+    setDraggedData([...data]); 
     onDragStart?.(event);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
 
-    if (!over) {
+    if (!over || !isDragging) {
+      onDragOver?.(event);
       return;
     }
 
-    const activeItem = data.find((item) => item.id === active.id);
+    const activeId = active.id;
+    const overId = over.id;
+
+    const activeItem = data.find((item) => item.id === activeId);
     if (!activeItem) {
+      onDragOver?.(event);
       return;
     }
 
-    const activeColumn = activeItem.column;
-    let overColumn: string | null = null;
+    let targetColumnId: string;
+    const overItem = data.find((item) => item.id === overId);
 
-    const overItem = data.find((item) => item.id === over.id);
     if (overItem) {
-      overColumn = overItem.column;
+      targetColumnId = overItem.column;
     } else {
-      const column = columns.find((col) => col.id === over.id);
-      if (column) {
-        overColumn = column.id;
+      const targetColumn = columns.find((col) => col.id === overId);
+      if (targetColumn) {
+        targetColumnId = targetColumn.id;
+      } else {
+        const cardsDropId = overId.toString();
+        if (cardsDropId.endsWith("-cards")) {
+          const columnId = cardsDropId.replace("-cards", "");
+          const targetColumn = columns.find((col) => col.id === columnId);
+          if (targetColumn) {
+            targetColumnId = targetColumn.id;
+          } else {
+            onDragOver?.(event);
+            return;
+          }
+        } else {
+          onDragOver?.(event);
+          return;
+        }
       }
     }
 
-    if (overColumn && activeColumn !== overColumn) {
+    if (activeItem.column !== targetColumnId) {
       let newData = [...data];
-      const activeIndex = newData.findIndex((item) => item.id === active.id);
+      const activeIndex = newData.findIndex((item) => item.id === activeId);
+      newData[activeIndex] = {
+        ...newData[activeIndex],
+        column: targetColumnId,
+      };
 
-      newData[activeIndex] = { ...newData[activeIndex], column: overColumn };
+      // If dropped over another item, reorder within the column
       if (overItem) {
-        const overIndex = newData.findIndex((item) => item.id === over.id);
+        const overIndex = newData.findIndex((item) => item.id === overId);
         newData = arrayMove(newData, activeIndex, overIndex);
       }
 
-      onDataChange?.(newData);
+      setDraggedData(newData);
+    } else if (overItem) {
+      // Same column, just reordering
+      let newData = [...data];
+      const activeIndex = newData.findIndex((item) => item.id === activeId);
+      const overIndex = newData.findIndex((item) => item.id === overId);
+
+      if (activeIndex !== overIndex) {
+        newData = arrayMove(newData, activeIndex, overIndex);
+        setDraggedData(newData);
+      }
     }
 
     onDragOver?.(event);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    setActiveCardId(null);
-
     const { active, over } = event;
 
-    if (!over || active.id === over.id) {
+    setActiveCardId(null);
+    setIsDragging(false);
+
+    if (!over) {
+      setDraggedData(data); // Reset to original data
       onDragEnd?.(event);
       return;
     }
 
-    const activeItem = data.find((item) => item.id === active.id);
+    const activeId = active.id;
+    const overId = over.id;
+
+    // Find the active item in original data
+    const activeItem = data.find((item) => item.id === activeId);
     if (!activeItem) {
+      setDraggedData(data);
       onDragEnd?.(event);
       return;
     }
 
-    let newData = [...data];
-    const activeIndex = newData.findIndex((item) => item.id === active.id);
-    const overItem = data.find((item) => item.id === over.id);
-    if (overItem && activeItem.column === overItem.column) {
-      const overIndex = newData.findIndex((item) => item.id === over.id);
-      newData = arrayMove(newData, activeIndex, overIndex);
-      onDataChange?.(newData);
+    // Determine the target column
+    let targetColumnId: string;
+    const overItem = data.find((item) => item.id === overId);
+
+    if (overItem) {
+      targetColumnId = overItem.column;
     } else {
-      const column = columns.find((col) => col.id === over.id);
-      if (column && activeItem.column !== column.id) {
-        newData[activeIndex] = { ...newData[activeIndex], column: column.id };
-        onDataChange?.(newData);
+      // Check if dropped over a column directly
+      const targetColumn = columns.find((col) => col.id === overId);
+      if (targetColumn) {
+        targetColumnId = targetColumn.id;
+      } else {
+        // Check if dropped over a cards container (ends with -cards)
+        const cardsDropId = overId.toString();
+        if (cardsDropId.endsWith("-cards")) {
+          const columnId = cardsDropId.replace("-cards", "");
+          const targetColumn = columns.find((col) => col.id === columnId);
+          if (targetColumn) {
+            targetColumnId = targetColumn.id;
+          } else {
+            setDraggedData(data);
+            onDragEnd?.(event);
+            return;
+          }
+        } else {
+          setDraggedData(data);
+          onDragEnd?.(event);
+          return;
+        }
       }
     }
 
+    // Create the final data state
+    let newData = [...data];
+    const activeIndex = newData.findIndex((item) => item.id === activeId);
+
+    // Check if there's actually a change
+    let hasChange = false;
+
+    if (activeItem.column !== targetColumnId) {
+      // Column changed
+      hasChange = true;
+      newData[activeIndex] = {
+        ...newData[activeIndex],
+        column: targetColumnId,
+      };
+
+      if (overItem) {
+        const overIndex = newData.findIndex((item) => item.id === overId);
+        newData = arrayMove(newData, activeIndex, overIndex);
+      }
+    } else if (overItem) {
+      // Same column, check if position changed
+      const overIndex = newData.findIndex((item) => item.id === overId);
+      if (activeIndex !== overIndex) {
+        hasChange = true;
+        newData = arrayMove(newData, activeIndex, overIndex);
+      }
+    }
+
+    // Only call onDataChange if there's an actual change
+    if (hasChange) {
+      onDataChange?.(newData);
+    }
+
+    setDraggedData(data); // Reset dragged data
     onDragEnd?.(event);
+  };
+
+  const handleDragCancel = () => {
+    setActiveCardId(null);
+    setIsDragging(false);
+    setDraggedData(data); // Reset to original data
   };
 
   const announcements: Announcements = {
     onDragStart({ active }) {
       const { name, column } = data.find((item) => item.id === active.id) ?? {};
-
-      return `Picked up the card "${name}" from the "${column}" column`;
+      const columnName = columns.find((col) => col.id === column)?.name;
+      return `Picked up the card "${name}" from the "${columnName}" column`;
     },
     onDragOver({ active, over }) {
       const { name } = data.find((item) => item.id === active.id) ?? {};
@@ -337,19 +460,26 @@ export const KanbanProvider = <
     },
     onDragCancel({ active }) {
       const { name } = data.find((item) => item.id === active.id) ?? {};
-
       return `Cancelled dragging the card "${name}"`;
     },
   };
 
   return (
-    <KanbanContext.Provider value={{ columns, data, activeCardId }}>
+    <KanbanContext.Provider
+      value={{
+        columns,
+        data: displayData,
+        activeCardId,
+        isDragging,
+      }}
+    >
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
         accessibility={{ announcements }}
         {...props}
       >

@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -31,13 +30,10 @@ import {
 import { Alert } from "@/components/ui/alert";
 import {
   CalendarIcon,
-  Plus,
-  Trash2,
   Save,
   GraduationCap,
   Users,
   BookOpen,
-  Clock,
   FileText,
   AlertCircle,
   Loader2,
@@ -45,6 +41,7 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { MarkingScheme } from "@/components/reviews/marking-scheme";
 
 interface Subject {
   id: string;
@@ -68,7 +65,7 @@ interface RubricTemplate {
 
 interface Department {
   id: string;
-  name: string,
+  name: string;
 }
 
 interface Batch {
@@ -319,11 +316,6 @@ export default function CreateReviewPage() {
       setSubjects([]);
     }
   }, [selectedDepartment, selectedSemester, session]);
-
-  const selectedDept = departments.find(
-    (dept) => dept.id === selectedDepartment
-  );
-  const semesterOptions = [1, 2, 3, 4, 5, 6, 7, 8];
 
   const handleClassToggle = (classId: string) => {
     setSelectedClasses((prev) =>
@@ -639,15 +631,8 @@ export default function CreateReviewPage() {
                     />
                     {loadingClasses && (
                       <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                    )}
+                    )}{" "}
                   </SelectTrigger>
-                  {/* <SelectContent>
-                    {semesterOptions.map((sem) => (
-                      <SelectItem key={`${selectedDept.id}-sem-${sem}`} value={sem.toString()}>
-                        Semester {sem}
-                      </SelectItem>
-                    ))}
-                  </SelectContent> */}
                 </Select>
                 {currentSemester && (
                   <p className="text-xs text-muted-foreground">
@@ -716,19 +701,29 @@ export default function CreateReviewPage() {
             )}
           </CardContent>
         </Card>
-        {/* Subjects Selection */}
+        {/* Subjects Selection */}{" "}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5" />
               Subject Selection
+              {loadingSubjects && (
+                <Loader2 className="h-4 w-4 animate-spin ml-2" />
+              )}
             </CardTitle>
             <CardDescription>
               Choose the subjects to evaluate in this review
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {subjects.length > 0 ? (
+            {loadingSubjects ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                <span className="text-muted-foreground">
+                  Loading subjects...
+                </span>
+              </div>
+            ) : subjects.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {subjects.map((subject) => (
                   <div key={subject.id} className="flex items-center space-x-2">
@@ -762,144 +757,18 @@ export default function CreateReviewPage() {
                 })}
               </div>
             )}
-          </CardContent>
+          </CardContent>{" "}
         </Card>
         {/* Marking Scheme */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Marking Scheme
-            </CardTitle>
-            <CardDescription>
-              Define the evaluation criteria and scoring
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Template Selection */}
-            <div className="space-y-2">
-              <Label>Use Existing Template (Optional)</Label>
-              <Select
-                value={selectedRubricTemplate}
-                onValueChange={handleTemplateSelect}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a template or create custom criteria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {rubricTemplates.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
-                      {template.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Separator />
-
-            {/* Custom Rubrics */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-medium">
-                  Evaluation Criteria
-                </Label>
-                <Button
-                  type="button"
-                  onClick={addRubric}
-                  variant="outline"
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Criterion
-                </Button>
-              </div>
-
-              <div className="space-y-3">
-                {customRubrics.map((rubric, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 border rounded-lg"
-                  >
-                    <div className="md:col-span-3">
-                      <Label htmlFor={`criterion-${index}`} className="text-sm">
-                        Criterion
-                      </Label>
-                      <Input
-                        id={`criterion-${index}`}
-                        value={rubric.criterion}
-                        onChange={(e) =>
-                          handleRubricChange(index, "criterion", e.target.value)
-                        }
-                        placeholder="e.g., Content Knowledge"
-                      />
-                    </div>
-                    <div className="md:col-span-6">
-                      <Label
-                        htmlFor={`description-${index}`}
-                        className="text-sm"
-                      >
-                        Description
-                      </Label>
-                      <Input
-                        id={`description-${index}`}
-                        value={rubric.description}
-                        onChange={(e) =>
-                          handleRubricChange(
-                            index,
-                            "description",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Describe what this criterion evaluates"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <Label htmlFor={`score-${index}`} className="text-sm">
-                        Max Score
-                      </Label>
-                      <Input
-                        id={`score-${index}`}
-                        type="number"
-                        min="1"
-                        max="100"
-                        value={rubric.maxScore}
-                        onChange={(e) =>
-                          handleRubricChange(
-                            index,
-                            "maxScore",
-                            parseInt(e.target.value) || 0
-                          )
-                        }
-                      />
-                    </div>
-                    <div className="md:col-span-1 flex items-end">
-                      <Button
-                        type="button"
-                        onClick={() => removeRubric(index)}
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {customRubrics.length > 0 && (
-                <div className="text-sm text-muted-foreground">
-                  Total Points:{" "}
-                  {customRubrics.reduce(
-                    (sum, rubric) => sum + rubric.maxScore,
-                    0
-                  )}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <MarkingScheme
+          selectedRubricTemplate={selectedRubricTemplate}
+          customRubrics={customRubrics}
+          rubricTemplates={rubricTemplates}
+          onTemplateSelect={handleTemplateSelect}
+          onRubricChange={handleRubricChange}
+          onAddRubric={addRubric}
+          onRemoveRubric={removeRubric}
+        />
         {/* Submit Button */}
         <div className="flex justify-end space-x-4">
           <Button type="button" variant="outline" onClick={() => router.back()}>

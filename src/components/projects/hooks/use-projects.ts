@@ -60,6 +60,5 @@ export const useProjects = (
   });
   const queryWithFlag = query as typeof query & { isQueryHook: boolean };
   queryWithFlag.isQueryHook = true;
-
   return queryWithFlag;
 };
