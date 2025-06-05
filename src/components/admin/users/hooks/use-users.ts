@@ -37,7 +37,7 @@ export const useUsers = (
     queryFn: async (): Promise<DataTableResponse> => {
       if (!user) throw new Error("User not authenticated");
 
-      let endpoint = "/users";
+      let endpoint = "/api/user";
       const params = new URLSearchParams();
       if (role && role !== "ALL") {
         params.append("role", role);
@@ -46,7 +46,7 @@ export const useUsers = (
       if (searchQuery) {
         if (role && role !== "ALL") {
         } else {
-          endpoint = `/users/search`;
+          endpoint = `/api/user/search`;
           params.append("query", searchQuery);
           params.append("page", page.toString());
           params.append("size", size.toString());
@@ -119,7 +119,9 @@ export const useUsers = (
     },
     enabled: !!user,
     refetchOnMount: true,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: false,
+    refetchInterval: false,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });

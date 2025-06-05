@@ -75,8 +75,86 @@ export interface Course {
   };
 }
 
-export enum CourseType {
-    CORE,
-    ELECTIVE,
-    MICRO_CREDENTIAL
+enum CourseType {
+  CORE,
+  ELECTIVE,
+  MICRO_CREDENTIAL,
+}
+
+export interface KanbanTask {
+  id: string;
+  title: string;
+  description?: string;
+  position: number;
+  createdBy: User;
+  assignedTo?: User;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KanbanColumn {
+  id: string;
+  name: string;
+  position: number;
+  tasks: KanbanTask[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KanbanBoard {
+  id: string;
+  projectId: string;
+  columns: KanbanColumn[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTaskRequest {
+  title: string;
+  description?: string;
+  columnId: string;
+  assignedToId?: string;
+  userId: string;
+}
+
+export interface UpdateTaskRequest {
+  title?: string;
+  description?: string;
+  assignedToId?: string;
+  userId: string;
+}
+
+export interface MoveTaskRequest {
+  columnId: string;
+  position: number;
+  userId: string;
+}
+
+
+export interface Review {
+  reviewId: string
+  reviewName: string
+  reviewDate: string
+  averageScore: number
+  maxPossibleScore: number
+  criteriaBreakdown: {
+    criterionName: string
+    averageScore: number
+    maxScore: number
+  }[]
+}
+
+export interface CourseData {
+  id: string
+  name: string
+  description: string
+  type: "CORE" | "ELECTIVE" | "MICRO_CREDENTIAL"
+  progressPercentage: number
+  totalProjects: number
+  activeProjects: number
+  completedProjects: number
+  projects: Project[]
+  reviewHistory: Review[]
+  lastReviewDate: string | null
+  totalReviews: number
 }

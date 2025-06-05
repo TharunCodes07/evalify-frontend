@@ -47,7 +47,6 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error);
       } else {
-        // Redirect to dashboard after successful login
         router.push("/dashboard");
       }
     } catch (error) {

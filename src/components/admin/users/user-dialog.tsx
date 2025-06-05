@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +11,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,20 +36,31 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import userQueries from "@/components/admin/users/queries/user-queries";
+import { User } from "@/types/types";
 
 interface UserFormData {
   name: string;
   email: string;
   phoneNumber: string;
   role: string;
-  password: string;
+  password?: string;
   isActive: boolean;
 }
 
-export function UserDialog() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+interface UserDialogProps {
+  user?: User;
+  isOpen?: boolean;
+  onClose?: () => void;
+  mode?: "create" | "edit";
+}
+
+export function UserDialog({ user, isOpen: controlledIsOpen, onClose, mode = "create" }: UserDialogProps) {
+  const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
+  const isOpen = controlledIsOpen ?? uncontrolledIsOpen;
+  const setIsOpen = onClose ?? setUncontrolledIsOpen;
+
   const [formData, setFormData] = useState<UserFormData>({
     name: "",
     email: "",
@@ -47,14 +69,95 @@ export function UserDialog() {
     password: "",
     isActive: true,
   });
-  const {data: session} = useSession();
-  const queryClient = useQueryClient();
 
+  useEffect(() => {
+    if (user && mode === "edit") {
+      setFormData({
+        name: user.name ?? "",
+        email: user.email ?? "",
+        phoneNumber: user.phoneNumber ?? "",
+        role: user.role ?? "",
+        isActive: user.isActive ?? true,
+      });
+    } else if (mode === "create") {
+      resetForm();
+    }
+  }, [user, mode]);
+
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const { error, success } = useToast();
+
+  const createUserMutation = useMutation({
+    mutationFn: (data: UserFormData) => {
+      if (!session?.accessToken) {
+        throw new Error("No access token available");
+      }
+      return userQueries.createUser(data as Required<UserFormData>, session.accessToken);
+    },
+    onSuccess: () => {
+      success("User created successfully!");
+      resetForm();
+      setIsOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (e: Error) => {
+      console.error("Error creating user:", e);
+      error("Failed to create user. Please try again later.");
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: (data: UserFormData) => {
+      if (!user?.id) {
+        throw new Error("User ID is required for update");
+      }
+      if (!session?.accessToken) {
+        throw new Error("No access token available");
+      }
+      return userQueries.updateUser({ ...data, id: user.id }, session.accessToken);
+    },
+    onSuccess: () => {
+      success("User updated successfully!");
+      resetForm();
+      setIsOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (e: Error) => {
+      console.error("Error updating user:", e);
+      error("Failed to update user. Please try again later.");
+    },
+  });
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      email: "",
+      phoneNumber: "",
+      role: "",
+      password: "",
+      isActive: true,
+    });
+  };
+
+  const handleClose = () => {
+    if (mode === "create") {
+      resetForm();
+    }
+    setIsOpen(false);
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      handleClose();
+    } else {
+      setIsOpen(true);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Validation
     if (!formData.name.trim()) {
       error("Name is required");
       return;
@@ -75,44 +178,11 @@ export function UserDialog() {
       return;
     }
 
-    setIsLoading(true);
-    formData.password = formData.name;
-
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.accessToken}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create user");
-      }
-
-      const newUser = await response.json();
-
-      success("User created successfully!");
-
-      setFormData({
-        name: "",
-        email: "",
-        phoneNumber: "",
-        role: "",
-        password: "",
-        isActive: true,
-      });
-      setIsOpen(false);
-
-      await queryClient.invalidateQueries({ queryKey: ['users'] });
-    } catch (e) {
-      console.error("Error creating user:", e);
-      error("Failed to create user. Please try again later.");
-    } finally {
-      setIsLoading(false);
+    if (mode === "create") {
+      formData.password = formData.name;
+      createUserMutation.mutate(formData);
+    } else {
+      updateUserMutation.mutate(formData);
     }
   };
 
@@ -126,19 +196,26 @@ export function UserDialog() {
     }));
   };
 
+  const isLoading = createUserMutation.isPending || updateUserMutation.isPending;
+  const isEditMode = mode === "edit";
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="mb-4" variant={"outline"}>
-          Add User
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      {!isEditMode && (
+        <DialogTrigger asChild>
+          <Button className="mb-4" variant={"outline"}>
+            Add User
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader className="mb-4">
-            <DialogTitle>Add User</DialogTitle>
+            <DialogTitle>{isEditMode ? "Edit User" : "Add User"}</DialogTitle>
             <DialogDescription>
-              Fill in the details below to create a new user account.
+              {isEditMode
+                ? "Update the user's information below."
+                : "Fill in the details below to create a new user account."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
@@ -221,7 +298,13 @@ export function UserDialog() {
               </Button>
             </DialogClose>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Save changes"}
+              {isLoading
+                ? isEditMode
+                  ? "Updating..."
+                  : "Creating..."
+                : isEditMode
+                ? "Save changes"
+                : "Create user"}
             </Button>
           </DialogFooter>
         </form>

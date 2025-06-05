@@ -3,9 +3,7 @@ import React from "react";
 import { DataTable } from "@/components/data-table/data-table";
 import { getColumns } from "@/components/admin/users/user-columns";
 import { useUsers } from "@/components/admin/users/hooks/use-users";
-import { Button } from "@/components/ui/button";
-import { DialogTrigger } from "@/components/ui/dialog";
-import { UserDialog } from "./user-dialog";
+import { UserDialog } from "@/components/admin/users/user-dialog";
 
 function useUsersForDataTable(
   page: number,

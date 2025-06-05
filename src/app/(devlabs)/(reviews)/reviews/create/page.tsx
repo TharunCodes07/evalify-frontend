@@ -221,13 +221,12 @@ export default function CreateReviewPage() {
       setSubjects([]);
 
       try {
-        // Fetch current semester for the batch
         const semesterResponse = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/batch/${selectedBatch}/active-semester`,
           {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${session.accessToken}`,
+              Authorization: `Bearer ${session?.accessToken}`,
             },
           }
         );

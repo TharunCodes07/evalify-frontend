@@ -1,3 +1,4 @@
+"use client";
 import { ColumnDef } from "@tanstack/react-table";
 import React from "react";
 import { DataTableColumnHeader } from "@/components/data-table/column-header";
@@ -9,15 +10,26 @@ import {
   Mail,
   Phone,
   User as UserIcon,
+  Pencil,
+  Trash,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { User } from "@/types/types";
+import { useState } from "react";
+import { UserDialog } from "./user-dialog";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
+import { useSession } from "next-auth/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import userQueries from "./queries/user-queries";
+import { useToast } from "@/hooks/use-toast";
 
 export const getColumns = (
   handleClick?: (user: User) => void
@@ -157,37 +169,67 @@ export const getColumns = (
       id: "actions",
       header: () => <div className="text-center">Actions</div>,
       cell: ({ row }) => {
-        const user = row.original;
+        const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+        const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+        const { data: session } = useSession();
+        const queryClient = useQueryClient();
+        const { error, success } = useToast();
+
+        const deleteUserMutation = useMutation({
+          mutationFn: () =>
+            userQueries.deleteUser(row.original.id, session?.accessToken as string),
+          onSuccess: () => {
+            success("User deleted successfully!");
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+          },
+          onError: (e: Error) => {
+            console.error("Error deleting user:", e);
+            error("Failed to delete user. Please try again later.");
+          },
+        });
+
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0 mx-auto">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleClick?.(user)}>
-                <UserIcon className="mr-2 h-4 w-4" />
-                View User
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Mail className="mr-2 h-4 w-4" />
-                Send Email
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Phone className="mr-2 h-4 w-4" />
-                Call User
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit User
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete User
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="text-red-600"
+                >
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <UserDialog
+              user={row.original}
+              isOpen={isEditDialogOpen}
+              onClose={() => setIsEditDialogOpen(false)}
+              mode="edit"
+            />
+
+            <DeleteDialog
+              isOpen={isDeleteDialogOpen}
+              onClose={() => setIsDeleteDialogOpen(false)}
+              onConfirm={() => deleteUserMutation.mutate()}
+              title="Delete User"
+              description={`Are you sure you want to delete ${row.original.name}? This action cannot be undone.`}
+              isLoading={deleteUserMutation.isPending}
+            />
+          </>
         );
       },
       enableSorting: false,
