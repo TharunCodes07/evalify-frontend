@@ -9,51 +9,43 @@ import {
   Calendar,
   Eye,
   Settings,
+  Pencil,
+  Trash,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Semester } from "@/types/types";
+import { Checkbox } from "@/components/ui/checkbox";
 
-export const getColumns = (
-  handleClick?: (semester: Semester) => void
-): ColumnDef<Semester>[] => {
+type SemesterAction = (semester: Semester, action: string) => void;
+
+export const getColumns = (onAction: SemesterAction): ColumnDef<Semester>[] => {
   return [
     {
       id: "select",
       header: ({ table }) => (
-        <div className="flex justify-center p-2">
-          <input
-            type="checkbox"
-            checked={table.getIsAllPageRowsSelected()}
-            onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
-            className="rounded border-gray-300 cursor-pointer"
-            aria-label="Select all rows"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
       ),
       cell: ({ row }) => (
-        <div
-          className="flex justify-center p-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <input
-            type="checkbox"
-            checked={row.getIsSelected()}
-            onChange={(e) => row.toggleSelected(e.target.checked)}
-            className="rounded border-gray-300 cursor-pointer"
-            aria-label="Select row"
-          />
-        </div>
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
       ),
       enableSorting: false,
       enableHiding: false,
-      size: 50,
     },
     {
       accessorKey: "name",
@@ -63,18 +55,20 @@ export const getColumns = (
           title="Semester Name"
           className="text-center"
         />
-      ),      cell: ({ row }) => {
+      ),
+      cell: ({ row }) => {
         const semester = row.original;
         const name = semester.name as string;
 
         return (
-          <div className="flex items-center space-x-3">
+          <div className="items-center space-x-3">
             <div>
-              <div className="font-medium text-gray-900">{name}</div>
+              <div className="font-medium">{name}</div>
             </div>
           </div>
         );
-      },meta: { label: "Semester Name" },
+      },
+      meta: { label: "Semester Name" },
       size: 200,
     },
     {
@@ -96,7 +90,8 @@ export const getColumns = (
       },
       meta: { label: "Year" },
       size: 100,
-    },    {
+    },
+    {
       accessorKey: "isActive",
       header: ({ column }) => (
         <DataTableColumnHeader
@@ -107,7 +102,7 @@ export const getColumns = (
       ),
       cell: ({ row }) => {
         const isActive = row.getValue("isActive") as boolean;
-        const statusVariant = isActive ? "default" : "destructive";
+        const statusVariant = isActive ? "default" : "secondary";
 
         return (
           <div className="flex justify-center">
@@ -127,30 +122,48 @@ export const getColumns = (
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0 mx-auto">
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleClick?.(semester)}>
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => onAction(semester, "view")}
+                className="cursor-pointer"
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 View Details
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onAction(semester, "schedule")}
+                className="cursor-pointer"
+              >
                 <Calendar className="mr-2 h-4 w-4" />
                 Manage Schedule
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onAction(semester, "configure")}
+                className="cursor-pointer"
+              >
                 <Settings className="mr-2 h-4 w-4" />
                 Configure
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Semester
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => onAction(semester, "edit")}
+                className="cursor-pointer"
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Semester
+              <DropdownMenuItem
+                onClick={() => onAction(semester, "delete")}
+                className="cursor-pointer text-destructive"
+              >
+                <Trash className="mr-2 h-4 w-4" />
+                Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

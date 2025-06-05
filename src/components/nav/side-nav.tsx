@@ -62,6 +62,7 @@ const navItems = [
     icon: Folder,
     items: [
       { title: "Reviews", url: "/reviews" },
+      {title: "Evaluation", url: "/evaluation" },
     ],
   },
 ];

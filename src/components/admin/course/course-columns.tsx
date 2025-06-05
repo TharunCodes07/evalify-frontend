@@ -17,148 +17,139 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Course } from "@/types/types";
+import { Course, CourseType } from "@/types/types";
+import { Checkbox } from "@/components/ui/checkbox";
 
-export const getColumns = (
-  handleClick?: (course: Course) => void
-): ColumnDef<Course>[] => {
+type CourseAction = (course: Course, action: string) => void;
+
+export const getColumns = (onAction: CourseAction): ColumnDef<Course>[] => {
   return [
     {
       id: "select",
       header: ({ table }) => (
-        <div className="flex justify-center p-2">
-          <input
-            type="checkbox"
-            checked={table.getIsAllPageRowsSelected()}
-            onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
-            className="rounded border-gray-300 cursor-pointer"
-            aria-label="Select all rows"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
       ),
       cell: ({ row }) => (
-        <div
-          className="flex justify-center p-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <input
-            type="checkbox"
-            checked={row.getIsSelected()}
-            onChange={(e) => row.toggleSelected(e.target.checked)}
-            className="rounded border-gray-300 cursor-pointer"
-            aria-label="Select row"
-          />
-        </div>
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
       ),
       enableSorting: false,
       enableHiding: false,
-      size: 50,
     },
     {
       accessorKey: "name",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title="Semester Name"
+          title="Course Name"
           className="text-center"
         />
-      ),      cell: ({ row }) => {
-        const semester = row.original;
-        const name = semester.name as string;
+      ),
+      cell: ({ row }) => {
+        const course = row.original;
+        const name = course.name as string;
 
         return (
-          <div className="flex items-center space-x-3">
+          <div className="items-center space-x-3">
             <div>
-              <div className="font-medium text-gray-900">{name}</div>
+              <div className="font-medium">{name}</div>
             </div>
           </div>
         );
-      },meta: { label: "Semester Name" },
+      },
+      meta: { label: "Course Name" },
       size: 200,
     },
     {
-      accessorKey: "year",
+      accessorKey: "description",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title="Year"
+          title="Description"
           className="text-center"
         />
       ),
       cell: ({ row }) => {
-        const year = row.getValue("year") as number;
+        const description = row.getValue("description") as string;
         return (
           <div className="text-center font-medium">
-            {year}
+            {description}
           </div>
         );
       },
-      meta: { label: "Year" },
-      size: 100,
-    },    {
-      accessorKey: "isActive",
+      meta: { label: "Description" },
+      size: 300,
+    },
+    {
+      accessorKey: "type",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title="Status"
+          title="Type"
           className="text-center"
         />
       ),
       cell: ({ row }) => {
-        const isActive = row.getValue("isActive") as boolean;
-        const statusVariant = isActive ? "default" : "destructive";
+        const type = row.getValue("type") as CourseType;
+        const typeVariant = type === CourseType.CORE ? "default" : "secondary";
 
         return (
           <div className="flex justify-center">
-            <Badge variant={statusVariant} className="capitalize">
-              {isActive ? "Active" : "Inactive"}
+            <Badge variant={typeVariant} className="capitalize">
+              {type}
             </Badge>
           </div>
         );
       },
-      meta: { label: "Status" },
+      meta: { label: "Type" },
     },
     {
       id: "actions",
       header: () => <div className="text-center">Actions</div>,
       cell: ({ row }) => {
-        const semester = row.original;
+        const course = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0 mx-auto">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleClick?.(semester)}>
-                <Eye className="mr-2 h-4 w-4" />
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Calendar className="mr-2 h-4 w-4" />
-                Manage Schedule
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                Configure
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Semester
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Semester
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex justify-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onAction(course, "view")}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  View
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onAction(course, "schedules")}>
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Schedules
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onAction(course, "settings")}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onAction(course, "edit")}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onAction(course, "delete")}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         );
       },
-      enableSorting: false,
-      enableHiding: false,
-      meta: { label: "Actions" },
     },
   ];
 };

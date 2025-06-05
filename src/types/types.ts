@@ -46,18 +46,6 @@ export enum ProjectStatus {
   REJECTED = "REJECTED",
 }
 
-export interface Project extends Record<string, unknown> {
-  id: string;
-  title: string;
-  description: string;
-  objectives: string | null;
-  status: ProjectStatus;
-  teamId: string;
-  courseId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface Semester extends Record<string, unknown> {
   id: string;
   name: string;
@@ -74,14 +62,19 @@ export interface Batch extends Record<string, unknown> {
     isActive: boolean,
 }
 
-export interface Course extends Record<string, unknown> {
-    id: string;
-    name: string;
-    description: string;
-    type: CourseType;
+export interface Course {
+  id: string;
+  name: string;
+  description: string;
+  type: CourseType;
+  _links?: {
+    self: {
+      href: string;
+    };
+  };
 }
 
-enum CourseType {
+export enum CourseType {
     CORE,
     ELECTIVE,
     MICRO_CREDENTIAL
