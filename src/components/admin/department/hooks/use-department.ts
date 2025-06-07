@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Department } from "@/types/types";
-import { useSession } from "next-auth/react";
-import departmentQueries from "../queries/department-queries";
+import * as departmentQueries from "@/components/admin/department/queries/department-queries";
+import axiosInstance from "@/lib/axios/axios-client";
 
 interface DataTableResponse {
   data: Department[];
@@ -11,14 +11,6 @@ interface DataTableResponse {
     per_page: number;
     total_count: number;
   };
-}
-
-interface CreateDepartmentRequest {
-  name: string;
-}
-
-interface UpdateDepartmentRequest {
-  name: string;
 }
 
 interface DepartmentResponse {
@@ -32,64 +24,31 @@ interface DepartmentResponse {
   }>;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
 export const useDepartments = (
   searchQuery?: string,
   page: number = 0,
   size: number = 10,
   columnFilters?: Record<string, string[]>
 ) => {
-  const { data: session } = useSession();
-  const user = session?.user;
-
   const query = useQuery({
-    queryKey: [
-      "departments",
-      user?.id,
-      user?.role,
-      searchQuery,
-      page,
-      size,
-      columnFilters,
-    ],
+    queryKey: ["departments", searchQuery, page, size, columnFilters],
     queryFn: async (): Promise<DataTableResponse> => {
-      if (!user) throw new Error("User not authenticated");
-
-      let endpoint = searchQuery ? "/api/department/search" : "/api/department";
-      const params = new URLSearchParams();
-
-      params.append("page", page.toString());
-      params.append("size", size.toString());
+      const endpoint = searchQuery
+        ? "/api/department/search"
+        : "/api/department";
+      const params: { [key: string]: string | number } = {
+        page: page,
+        size: size,
+      };
 
       if (searchQuery) {
-        params.append("query", searchQuery);
+        params.query = searchQuery;
       }
 
-      const url = `${API_BASE_URL}${endpoint}?${params.toString()}`;
-      console.log("Fetching departments from:", url);
-
       try {
-        const response = await fetch(url, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.accessToken}`,
-          },
-        });
+        const response = await axiosInstance.get(endpoint, { params });
+        const backendResponse = response.data;
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.message ||
-              errorData.error ||
-              `HTTP error! status: ${response.status}`
-          );
-        }
-
-        const backendResponse = await response.json();
-        console.log("Backend response:", backendResponse);
-
-        // Handle the new response format with batches
         if (backendResponse.data && backendResponse.pagination) {
           const departments = backendResponse.data.map(
             (dept: DepartmentResponse) => ({
@@ -105,11 +64,9 @@ export const useDepartments = (
           };
         }
 
-        // Fallback for array response
         if (Array.isArray(backendResponse)) {
           let filteredData = backendResponse;
 
-          // Apply search filter if needed
           if (searchQuery) {
             filteredData = filteredData.filter((department: Department) =>
               department.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -127,7 +84,6 @@ export const useDepartments = (
           };
         }
 
-        // Fallback for empty or invalid response
         return {
           data: [],
           pagination: {
@@ -150,7 +106,6 @@ export const useDepartments = (
         };
       }
     },
-    enabled: !!user,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000,
@@ -164,35 +119,15 @@ export const useDepartments = (
 
 export const useAllDepartments = (options: { enabled?: boolean } = {}) => {
   const { enabled = true } = options;
-  const { data: session } = useSession();
-  const user = session?.user;
 
   return useQuery({
-    queryKey: ["all-departments", user?.id, user?.role],
+    queryKey: ["all-departments"],
     queryFn: async (): Promise<Department[]> => {
-      if (!user) throw new Error("User not authenticated");
-
-      const url = `${API_BASE_URL}/api/department/all`;
-      console.log("Fetching all departments from:", url);
+      const url = "/api/department/all";
 
       try {
-        const response = await fetch(url, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.accessToken}`,
-          },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.message ||
-              errorData.error ||
-              `HTTP error! status: ${response.status}`
-          );
-        }
-
-        const responseData = await response.json();
+        const response = await axiosInstance.get(url);
+        const responseData = response.data;
         if (Array.isArray(responseData)) {
           return responseData;
         }
@@ -209,8 +144,28 @@ export const useAllDepartments = (options: { enabled?: boolean } = {}) => {
         return [];
       }
     },
-    enabled: !!user && enabled,
+    enabled: enabled,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+  });
+};
+
+export const useDepartmentBatches = (departmentId: string | null) => {
+  return useQuery({
+    queryKey: ["departmentBatches", departmentId],
+    queryFn: () => {
+      if (!departmentId) throw new Error("No department selected");
+      return departmentQueries.getBatchesByDepartment(departmentId);
+    },
+    enabled: !!departmentId,
+  });
+};
+
+export const useDepartmentsQuery = () => {
+  return useQuery({
+    queryKey: ["departments"],
+    queryFn: () => {
+      return departmentQueries.getAllDepartments();
+    },
   });
 };

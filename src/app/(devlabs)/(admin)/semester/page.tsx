@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table/data-table";
 import { getColumns } from "@/components/admin/semesters/semester-columns";
 import { Semester } from "@/types/types";
@@ -14,7 +14,6 @@ import semesterQueries from "@/components/admin/semesters/queries/semester-queri
 
 export default function SemesterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [selectedSemester, setSelectedSemester] =
     React.useState<Semester | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
@@ -28,8 +27,7 @@ export default function SemesterPage() {
 
   const createSemester = useMutation({
     mutationFn: (semester: Omit<Semester, "id">) => {
-      if (!session) throw new Error("User not authenticated");
-      return semesterQueries.createSemester(session, semester);
+      return semesterQueries.createSemester(semester);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["semesters"] });
@@ -38,8 +36,7 @@ export default function SemesterPage() {
 
   const updateSemester = useMutation({
     mutationFn: (semester: Semester) => {
-      if (!session) throw new Error("User not authenticated");
-      return semesterQueries.updateSemester(session, semester);
+      return semesterQueries.updateSemester(semester);
     },
     onSuccess: (data: Semester) => {
       queryClient.invalidateQueries({ queryKey: ["semesters"] });
@@ -49,8 +46,7 @@ export default function SemesterPage() {
 
   const deleteSemester = useMutation({
     mutationFn: (id: string) => {
-      if (!session) throw new Error("User not authenticated");
-      return semesterQueries.deleteSemester(session, id);
+      return semesterQueries.deleteSemester(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["semesters"] });
@@ -148,7 +144,7 @@ export default function SemesterPage() {
           enableToolbar: true,
           size: "default",
         }}
-        getColumns={(handleRowDeselection) => getColumns(handleAction)}
+        getColumns={() => getColumns(handleAction)}
         fetchDataFn={useSemestersForDataTable}
         idField="id"
         onRowClick={handleRowClick}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
 import {
   KanbanProvider,
   KanbanBoard,
@@ -42,7 +41,6 @@ interface EnhancedKanbanColumn extends KanbanColumnProps {
 }
 
 export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
-  const { data: session } = useSession();
   const [kanbanTasks, setKanbanTasks] = useState<EnhancedKanbanItem[]>([]);
   const {
     data: kanbanData,
@@ -50,9 +48,8 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
     error,
   } = useQuery({
     queryKey: ["kanbanBoard", id],
-    queryFn: () =>
-      kanbanAPI.getKanbanBoard(id as string, session?.accessToken as string),
-    enabled: !!id && !!session?.accessToken,
+    queryFn: () => kanbanAPI.getKanbanBoard(id as string),
+    enabled: !!id,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 2 * 60 * 1000,
@@ -66,11 +63,7 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
       taskId: string;
       request: { columnId: string; position: number; userId: string };
     }) => {
-      return kanbanAPI.moveTask(
-        taskId,
-        request,
-        session?.accessToken as string
-      );
+      return kanbanAPI.moveTask(taskId, request);
     },
     onSuccess: () => {},
     onError: (error) => {
@@ -157,7 +150,7 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
       }
     }
 
-    if (movedTask && session?.accessToken && session?.user?.id) {
+    if (movedTask) {
       const tasksInColumn = newData.filter(
         (task) => task.column === movedTask.column
       );
@@ -171,7 +164,7 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
         request: {
           columnId: movedTask.column,
           position: position,
-          userId: session.user.id,
+          userId: "user-id-placeholder",
         },
       });
     }

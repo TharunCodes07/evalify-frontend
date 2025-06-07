@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Course } from "@/types/types";
 import { useSession } from "next-auth/react";
+import { courseQueries } from "../queries/course-queries";
+import axiosInstance from "@/lib/axios/axios-client";
 
 interface DataTableResponse {
   data: Course[];
@@ -11,8 +13,6 @@ interface DataTableResponse {
     total_count: number;
   };
 }
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export const useCourses = (
   searchQuery?: string,
@@ -38,78 +38,56 @@ export const useCourses = (
       if (!user) throw new Error("User not authenticated");
 
       let endpoint = "/course";
-      const params = new URLSearchParams();
+      const params: { [key: string]: string } = {};
       if (role && role !== "ALL") {
-        params.append("role", role);
+        params.role = role;
       }
 
       if (searchQuery) {
         if (role && role !== "ALL") {
         } else {
           endpoint = `/course/search`;
-          params.append("query", searchQuery);
-          params.append("page", page.toString());
-          params.append("size", size.toString());
+          params.query = searchQuery;
+          params.page = page.toString();
+          params.size = size.toString();
         }
       } else if (!role || role === "ALL") {
-        params.append("page", page.toString());
-        params.append("size", size.toString());
+        params.page = page.toString();
+        params.size = size.toString();
       }
-      const url = `${API_BASE_URL}${endpoint}?${params.toString()}`;
-      const response = await fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.accessToken}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      try {
-        const backendResponse = await response.json();
-        if (Array.isArray(backendResponse)) {
-          let filteredData = backendResponse;
+      const response = await axiosInstance.get(endpoint, { params });
+      const backendResponse = response.data;
+      if (Array.isArray(backendResponse)) {
+        let filteredData = backendResponse;
 
-          if (searchQuery && role && role !== "ALL") {
-            filteredData = backendResponse.filter((course: Course) =>
-              course.name?.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-          }
-
-          return {
-            data: filteredData,
-            pagination: {
-              total_pages: 1,
-              current_page: 0,
-              per_page: filteredData.length,
-              total_count: filteredData.length,
-            },
-          };
+        if (searchQuery && role && role !== "ALL") {
+          filteredData = backendResponse.filter((course: Course) =>
+            course.name?.toLowerCase().includes(searchQuery.toLowerCase())
+          );
         }
 
-        if (backendResponse.pagination) {
-          return backendResponse as DataTableResponse;
-        } else {
-          const users = backendResponse.data || [];
-          return {
-            data: users,
-            pagination: {
-              total_pages: 1,
-              current_page: 0,
-              per_page: users.length,
-              total_count: users.length,
-            },
-          };
-        }
-      } catch (error) {
-        console.error("Error parsing response:", error);
         return {
-          data: [],
+          data: filteredData,
           pagination: {
-            total_pages: 0,
+            total_pages: 1,
             current_page: 0,
-            per_page: size,
-            total_count: 0,
+            per_page: filteredData.length,
+            total_count: filteredData.length,
+          },
+        };
+      }
+
+      if (backendResponse.pagination) {
+        return backendResponse as DataTableResponse;
+      } else {
+        const users = backendResponse.data || [];
+        return {
+          data: users,
+          pagination: {
+            total_pages: 1,
+            current_page: 0,
+            per_page: users.length,
+            total_count: users.length,
           },
         };
       }
@@ -123,4 +101,19 @@ export const useCourses = (
   const queryWithFlag = query as typeof query & { isQueryHook: boolean };
   queryWithFlag.isQueryHook = true;
   return queryWithFlag;
+};
+
+export const useCourse = (courseId: string) => {
+  const { data: session } = useSession();
+
+  return useQuery({
+    queryKey: ["course", courseId],
+    queryFn: () => {
+      if (!session?.accessToken) {
+        throw new Error("Not authenticated");
+      }
+      return courseQueries.getCourseById(courseId);
+    },
+    enabled: !!session?.accessToken && !!courseId,
+  });
 };

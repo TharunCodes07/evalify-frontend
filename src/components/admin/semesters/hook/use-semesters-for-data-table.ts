@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
-import semesterQueries, {
-  DataTableResponse,
-} from "../queries/semester-queries";
+import axiosInstance from "@/lib/axios/axios-client";
+import { Semester } from "@/types/types";
+import { DataTableResponse } from "../queries/semester-queries";
 
 const useGetSemesters = (
   searchQuery?: string,
@@ -10,28 +9,71 @@ const useGetSemesters = (
   size: number = 10,
   columnFilters?: Record<string, string[]>
 ) => {
-  const { data: session } = useSession();
-
   return useQuery({
-    queryKey: [
-      "semesters",
-      session?.user?.id,
-      searchQuery,
-      page,
-      size,
-      columnFilters,
-    ],
+    queryKey: ["semesters", searchQuery, page, size, columnFilters],
     queryFn: async (): Promise<DataTableResponse> => {
-      if (!session) throw new Error("User not authenticated");
-      return semesterQueries.getSemesters(
-        session,
-        searchQuery,
-        page,
-        size,
-        columnFilters
-      );
+      const isActiveFilter = columnFilters?.isActive?.[0];
+      let endpoint = "/semester";
+      const params: { [key: string]: any } = {
+        page: page.toString(),
+        size: size.toString(),
+      };
+
+      if (searchQuery) {
+        endpoint = `/semester/search`;
+        params.query = searchQuery;
+      }
+
+      const response = await axiosInstance.get(endpoint, { params });
+      const data = response.data;
+
+      if (Array.isArray(data)) {
+        let filteredData = data;
+
+        if (isActiveFilter !== undefined) {
+          const isActiveValue = isActiveFilter === "true";
+          filteredData = filteredData.filter(
+            (semester: Semester) => semester.isActive === isActiveValue
+          );
+        }
+
+        return {
+          data: filteredData,
+          pagination: {
+            total_pages: 1,
+            current_page: 0,
+            per_page: filteredData.length,
+            total_count: filteredData.length,
+          },
+        };
+      }
+
+      if (data.pagination) {
+        return data as DataTableResponse;
+      }
+
+      if (data.data) {
+        return {
+          data: data.data,
+          pagination: {
+            total_pages: 1,
+            current_page: 0,
+            per_page: data.data.length,
+            total_count: data.data.length,
+          },
+        };
+      }
+
+      return {
+        data: [],
+        pagination: {
+          total_pages: 0,
+          current_page: 0,
+          per_page: size,
+          total_count: 0,
+        },
+      };
     },
-    enabled: !!session,
   });
 };
 

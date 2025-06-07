@@ -5,9 +5,9 @@ import { getColumns } from "@/components/admin/users/user-columns";
 import { useUsers } from "@/components/admin/users/hooks/use-users";
 import { UserDialog } from "@/components/admin/users/user-dialog";
 import userQueries from "@/components/admin/users/queries/user-queries";
-import { useSession } from "next-auth/react";
 import { AssignBatchDialog } from "@/components/admin/users/assign-batch-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import batchQueries from "@/components/admin/batch/queries/batch-queries";
 
 function useUsersForDataTable(
   page: number,
@@ -24,8 +24,6 @@ function useUsersForDataTable(
 useUsersForDataTable.isQueryHook = true;
 
 export default function UsersPage() {
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken;
   const queryClient = useQueryClient();
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>(
@@ -49,7 +47,7 @@ export default function UsersPage() {
   ];
 
   const deleteMutation = useMutation<void, Error, (string | number)[]>({
-    mutationFn: (userIds) => userQueries.bulkDeleteUsers(userIds, accessToken!),
+    mutationFn: (userIds) => userQueries.bulkDeleteUsers(userIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       // toast.success("Users deleted successfully");
@@ -64,7 +62,7 @@ export default function UsersPage() {
     Error,
     { userIds: (string | number)[]; batchId: string }
   >({
-    mutationFn: (data) => userQueries.assignUsersToBatch(data, accessToken!),
+    mutationFn: (data) => batchQueries.assignUsersToBatch(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       // toast.success("Users assigned successfully");

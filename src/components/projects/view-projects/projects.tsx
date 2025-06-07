@@ -8,11 +8,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FolderGit, AlertTriangle, Info, PlusCircle, Clock, CheckCircle, XCircle } from 'lucide-react';
+import {
+  FolderGit,
+  AlertTriangle,
+  Info,
+  PlusCircle,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Project, ProjectStatus } from "@/types/types";
 import { projectQueries } from "@/components/projects/queries/project-queries";
@@ -68,14 +75,13 @@ const getStatusVariant = (status: ProjectStatus) => {
   }
 };
 
-  export function Projects({ teamId }: ProjectsProps) {
+export function Projects({ teamId }: ProjectsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab") || "live";
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
 
   const {
     data: projects,
@@ -86,8 +92,7 @@ const getStatusVariant = (status: ProjectStatus) => {
 
   const createProjectMutation = useMutation({
     mutationFn: (project: CreateProjectRequest) => {
-      if (!session?.accessToken) throw new Error("Not authenticated");
-      return projectQueries.createProject(project, session.accessToken);
+      return projectQueries.createProject(project);
     },
     onSuccess: () => {
       toast.success("Project created successfully");
@@ -157,7 +162,7 @@ const getStatusVariant = (status: ProjectStatus) => {
                     <h4 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors">
                       {project.title}
                     </h4>
-                    <Badge 
+                    <Badge
                       variant={getStatusVariant(project.status)}
                       className="ml-2 flex items-center gap-1 text-xs"
                     >
@@ -194,10 +199,7 @@ const getStatusVariant = (status: ProjectStatus) => {
               </div>
               Projects ({projects?.length || 0})
             </CardTitle>
-            <Button 
-              onClick={() => setIsFormOpen(true)}
-              className="gap-2"
-            >
+            <Button onClick={() => setIsFormOpen(true)} className="gap-2">
               <PlusCircle className="h-4 w-4" />
               New Project
             </Button>
@@ -235,17 +237,19 @@ const getStatusVariant = (status: ProjectStatus) => {
                 )}
               </TabsTrigger>
             </TabsList>
-            
+
             <div className="relative">
               {(areProjectsLoading || areProjectsFetching) && (
                 <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                    <span className="text-sm text-muted-foreground">Loading projects...</span>
+                    <span className="text-sm text-muted-foreground">
+                      Loading projects...
+                    </span>
                   </div>
                 </div>
               )}
-              
+
               <TabsContent value="live" className="mt-0">
                 {renderProjectGrid(liveProjects)}
               </TabsContent>
@@ -259,7 +263,7 @@ const getStatusVariant = (status: ProjectStatus) => {
           </Tabs>
         </CardContent>
       </Card>
-      
+
       <ProjectForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}

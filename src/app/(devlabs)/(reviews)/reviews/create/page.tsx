@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useSession } from "next-auth/react";
+import axiosInstance from "@/lib/axios/axios-client";
 import { MarkingScheme } from "@/components/reviews/marking-scheme";
 
 interface Subject {
@@ -81,7 +81,7 @@ interface Class {
 }
 
 export default function CreateReviewPage() {
-  const router = useRouter(); // Form state - starts empty for progressive loading
+  const router = useRouter();
   const [reviewName, setReviewName] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
@@ -100,55 +100,6 @@ export default function CreateReviewPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [currentSemester, setCurrentSemester] = useState<number | null>(null);
   const [rubricTemplates, setRubricTemplates] = useState<RubricTemplate[]>([]);
-  const { data: session } = useSession();
-
-  // Load initial data (departments and rubric templates)
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      if (!session?.accessToken) return;
-
-      setIsLoading(true);
-      try {
-        // Fetch departments
-        const departmentsResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/departments`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.accessToken}`,
-            },
-          }
-        );
-
-        if (departmentsResponse.ok) {
-          const departmentsData = await departmentsResponse.json();
-          setDepartments(departmentsData);
-        }
-
-        // Fetch rubric templates
-        const templatesResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/rubrics`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.accessToken}`,
-            },
-          }
-        );
-        if (templatesResponse.ok) {
-          const templatesData = await templatesResponse.json();
-          setRubricTemplates(templatesData._embedded?.rubrics || []);
-        }
-      } catch (error) {
-        console.error("Error fetching initial data:", error);
-        setError("Failed to load initial data. Please refresh the page.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchInitialData();
-  }, [session]);
 
   // UI state
   const [isLoading, setIsLoading] = useState(false);
@@ -159,10 +110,30 @@ export default function CreateReviewPage() {
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
 
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setIsLoading(true);
+      try {
+        const departmentsResponse = await axiosInstance.get("/departments");
+        setDepartments(departmentsResponse.data);
+
+        const templatesResponse = await axiosInstance.get("/api/rubrics");
+        setRubricTemplates(templatesResponse.data._embedded?.rubrics || []);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        setError("Failed to load initial data. Please refresh the page.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
+
   // Load batches when department changes
   useEffect(() => {
     const fetchBatches = async () => {
-      if (!selectedDepartment || !session?.accessToken) return;
+      if (!selectedDepartment) return;
 
       setLoadingBatches(true);
       // Reset dependent selections
@@ -176,22 +147,10 @@ export default function CreateReviewPage() {
       setSubjects([]);
 
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/departments/${selectedDepartment}/batches`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.accessToken}`,
-            },
-          }
+        const response = await axiosInstance.get(
+          `/departments/${selectedDepartment}/batches`
         );
-
-        if (response.ok) {
-          const data = await response.json();
-          setBatches(data);
-        } else {
-          setError("Failed to load batches for selected department");
-        }
+        setBatches(response.data);
       } catch (error) {
         console.error("Error fetching batches:", error);
         setError("Failed to load batches. Please try again.");
@@ -205,12 +164,11 @@ export default function CreateReviewPage() {
     } else {
       setBatches([]);
     }
-  }, [selectedDepartment, session]);
+  }, [selectedDepartment]);
 
   useEffect(() => {
     const fetchClassesAndSemester = async () => {
-      if (!selectedBatch || !selectedDepartment || !session?.accessToken)
-        return;
+      if (!selectedBatch || !selectedDepartment) return;
 
       setLoadingClasses(true);
       setSelectedClasses([]);
@@ -220,45 +178,21 @@ export default function CreateReviewPage() {
       setSubjects([]);
 
       try {
-        const semesterResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/batch/${selectedBatch}/active-semester`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session?.accessToken}`,
-            },
-          }
+        const semesterResponse = await axiosInstance.get(
+          `/batch/${selectedBatch}/active-semester`
         );
+        const semesterData = semesterResponse.data;
+        console.log("Current Semester Data:", semesterData);
+        setCurrentSemester(semesterData.name);
+        setSelectedSemester(semesterData.name.toString());
 
-        if (semesterResponse.ok) {
-          const semesterData = await semesterResponse.json();
-          console.log("Current Semester Data:", semesterData);
-          setCurrentSemester(semesterData.name);
-          setSelectedSemester(semesterData.name.toString());
-        }
-
-        // Fetch classes for the batch and department
-        const classesResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batches/${selectedBatch}/classes?departmentId=${selectedDepartment}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.accessToken}`,
-            },
-          }
+        const classesResponse = await axiosInstance.get(
+          `/api/batches/${selectedBatch}/classes?departmentId=${selectedDepartment}`
         );
-
-        if (classesResponse.ok) {
-          const classesData = await classesResponse.json();
-          setClasses(classesData);
-        } else {
-          setError("Failed to load classes for selected batch");
-        }
+        setClasses(classesResponse.data);
       } catch (error) {
         console.error("Error fetching classes and semester:", error);
-        setError(
-          "Failed to load classes and semester information. Please try again."
-        );
+        setError("Failed to load class information. Please try again.");
       } finally {
         setLoadingClasses(false);
       }
@@ -266,40 +200,20 @@ export default function CreateReviewPage() {
 
     if (selectedBatch && selectedDepartment) {
       fetchClassesAndSemester();
-    } else {
-      setClasses([]);
-      setCurrentSemester(null);
     }
-  }, [selectedBatch, selectedDepartment, session]);
-  // Load subjects when department and semester are known
+  }, [selectedBatch, selectedDepartment]);
+
   useEffect(() => {
     const fetchSubjects = async () => {
-      if (!selectedDepartment || !selectedSemester || !session?.accessToken)
-        return;
-
+      if (!selectedSemester || !selectedDepartment) return;
       setLoadingSubjects(true);
       setSelectedSubjects([]);
       setSubjects([]);
-
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/departments/${selectedDepartment}/subjects?semester=${selectedSemester}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.accessToken}`,
-            },
-          }
+        const response = await axiosInstance.get(
+          `/api/subjects?departmentId=${selectedDepartment}&semester=${selectedSemester}`
         );
-
-        if (response.ok) {
-          const data = await response.json();
-          setSubjects(data);
-        } else {
-          setError(
-            "Failed to load subjects for selected department and semester"
-          );
-        }
+        setSubjects(response.data);
       } catch (error) {
         console.error("Error fetching subjects:", error);
         setError("Failed to load subjects. Please try again.");
@@ -308,12 +222,10 @@ export default function CreateReviewPage() {
       }
     };
 
-    if (selectedDepartment && selectedSemester) {
+    if (selectedSemester && selectedDepartment) {
       fetchSubjects();
-    } else {
-      setSubjects([]);
     }
-  }, [selectedDepartment, selectedSemester, session]);
+  }, [selectedSemester, selectedDepartment]);
 
   const handleClassToggle = (classId: string) => {
     setSelectedClasses((prev) =>
@@ -361,6 +273,7 @@ export default function CreateReviewPage() {
       setCustomRubrics([...template.rubrics]);
     }
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -385,48 +298,33 @@ export default function CreateReviewPage() {
       setError("End date must be after start date");
       return;
     }
+    setIsSubmitting(true);
+
+    const finalRubrics =
+      selectedRubricTemplate === "custom"
+        ? customRubrics
+        : rubricTemplates.find((t) => t.id === selectedRubricTemplate)?.rubrics;
+
+    const reviewData = {
+      name: reviewName,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+      departmentId: selectedDepartment,
+      batchId: selectedBatch,
+      classIds: selectedClasses,
+      semester: parseInt(selectedSemester),
+      subjectIds: selectedSubjects,
+      rubrics: finalRubrics,
+      rubricTemplateId: selectedRubricTemplate || null,
+    };
+
     try {
-      setIsSubmitting(true);
-
-      // Prepare review data for submission
-      const reviewData = {
-        name: reviewName,
-        startDate: startDate?.toISOString(),
-        endDate: endDate?.toISOString(),
-        departmentId: selectedDepartment,
-        batchId: selectedBatch,
-        classIds: selectedClasses,
-        semester: parseInt(selectedSemester),
-        subjectIds: selectedSubjects,
-        rubrics: customRubrics,
-        rubricTemplateId: selectedRubricTemplate || null,
-      };
-
-      // Submit the review
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/reviews`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.accessToken}`,
-          },
-          body: JSON.stringify(reviewData),
-        }
-      );
-
-      if (response.ok) {
-        setSuccess("Review created successfully!");
-        // Redirect to reviews page after successful creation
-        setTimeout(() => {
-          router.push("/reviews");
-        }, 2000);
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || "Failed to create review");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      await axiosInstance.post("/api/reviews", reviewData);
+      setSuccess("Review created successfully!");
+      setTimeout(() => router.push("/reviews"), 2000);
+    } catch (error) {
+      console.error("Error creating review:", error);
+      setError("Failed to create review. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

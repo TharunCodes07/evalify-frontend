@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import departmentQueries from "@/components/admin/department/queries/department-queries";
+import { useDeleteDepartment } from "@/components/admin/department/queries/department-queries";
 import { Loader2 } from "lucide-react";
 
 interface DeleteDepartmentDialogProps {
@@ -21,10 +21,14 @@ interface DeleteDepartmentDialogProps {
   onClose: () => void;
 }
 
-export function DeleteDepartmentDialog({ departmentId, isOpen, onClose }: DeleteDepartmentDialogProps) {
+export function DeleteDepartmentDialog({
+  departmentId,
+  isOpen,
+  onClose,
+}: DeleteDepartmentDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const { error, success } = useToast();
-  const deleteDepartmentMutation = departmentQueries.deleteDepartment();
+  const deleteDepartmentMutation = useDeleteDepartment();
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -46,8 +50,8 @@ export function DeleteDepartmentDialog({ departmentId, isOpen, onClose }: Delete
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Department</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this department? This action cannot be undone.
-            All associated batches will also be deleted.
+            Are you sure you want to delete this department? This action cannot
+            be undone. All associated batches will also be deleted.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -72,4 +76,4 @@ export function DeleteDepartmentDialog({ departmentId, isOpen, onClose }: Delete
       </AlertDialogContent>
     </AlertDialog>
   );
-} 
+}

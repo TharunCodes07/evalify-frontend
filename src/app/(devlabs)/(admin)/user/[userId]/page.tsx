@@ -22,8 +22,7 @@ export default function UserProfilePage() {
     error,
   } = useQuery({
     queryKey: ["user", userId],
-    queryFn: () =>
-      userQueries.fetchUserById(userId, session?.accessToken as string),
+    queryFn: () => userQueries.fetchUserById(userId),
     enabled: !!session?.accessToken && !!userId,
   });
 

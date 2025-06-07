@@ -30,7 +30,7 @@ const TeamDetailsSkeleton = () => (
 
 export default function TeamDetailsPage() {
   const { teamId } = useParams();
-  const { data: session, status: sessionStatus } = useSession();
+  const { status: sessionStatus } = useSession();
 
   if (sessionStatus === "loading") {
     return <TeamDetailsSkeleton />;

@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import teamQueries from "@/components/teams/queries/team-queries";
-import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { TeamForm } from "@/components/teams/team-form";
 import {
@@ -34,7 +33,6 @@ export default function TeamsPage() {
   const [teamToEdit, setTeamToEdit] = useState<Team | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
 
   const handleMutationSuccess = (action: "created" | "updated") => {
     toast.success(`Team ${action} successfully`);
@@ -49,8 +47,7 @@ export default function TeamsPage() {
 
   const createMutation = useMutation({
     mutationFn: (team: CreateTeamRequest) => {
-      if (!session?.accessToken) throw new Error("Not authenticated");
-      return teamQueries.createTeam(team, session.accessToken);
+      return teamQueries.createTeam(team);
     },
     onSuccess: () => handleMutationSuccess("created"),
     onError: (error) => handleMutationError(error, "create"),
@@ -58,12 +55,7 @@ export default function TeamsPage() {
 
   const updateMutation = useMutation({
     mutationFn: (data: { teamId: string; team: UpdateTeamRequest }) => {
-      if (!session?.accessToken) throw new Error("Not authenticated");
-      return teamQueries.updateTeam(
-        data.teamId,
-        data.team,
-        session.accessToken
-      );
+      return teamQueries.updateTeam(data.teamId, data.team);
     },
     onSuccess: () => handleMutationSuccess("updated"),
     onError: (error) => handleMutationError(error, "update"),
@@ -71,10 +63,7 @@ export default function TeamsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (teamId: string) => {
-      if (!session?.accessToken) {
-        throw new Error("Not authenticated");
-      }
-      return teamQueries.deleteTeam(teamId, session.accessToken);
+      return teamQueries.deleteTeam(teamId);
     },
     onSuccess: () => {
       toast.success("Team deleted successfully");

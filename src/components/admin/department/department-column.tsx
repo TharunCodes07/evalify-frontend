@@ -11,11 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Department } from "@/types/types";
 
-interface DepartmentColumnProps {
-  onEdit?: (department: Department) => void;
-  onDelete?: (departmentId: string) => void;
-}
-
 export const getColumns = (
   onEdit?: (department: Department) => void,
   onDelete?: (departmentId: string) => void

@@ -32,6 +32,7 @@ interface ComboboxProps {
   searchPlaceholder?: string;
   emptyPlaceholder?: string;
   disabled?: boolean;
+  filter?: (value: string, search: string) => number;
 }
 
 export function Combobox({
@@ -42,6 +43,7 @@ export function Combobox({
   searchPlaceholder = "Search...",
   emptyPlaceholder = "No options found.",
   disabled = false,
+  filter,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -65,7 +67,7 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
-        <Command>
+        <Command filter={filter}>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
             <CommandEmpty>{emptyPlaceholder}</CommandEmpty>

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +26,6 @@ export function AddTaskModal({ columnId, projectId }: AddTaskModalProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const { data: session } = useSession();
   const queryClient = useQueryClient();
 
   const createTaskMutation = useMutation({
@@ -36,7 +34,7 @@ export function AddTaskModal({ columnId, projectId }: AddTaskModalProps) {
       description?: string;
       columnId: string;
       userId: string;
-    }) => kanbanAPI.createTask(taskData, session?.accessToken as string),
+    }) => kanbanAPI.createTask(taskData),
     onSuccess: () => {
       // Invalidate and refetch kanban data
       queryClient.invalidateQueries({ queryKey: ["kanbanBoard", projectId] });
@@ -54,7 +52,7 @@ export function AddTaskModal({ columnId, projectId }: AddTaskModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title.trim() || !session?.user?.id) {
+    if (!title.trim()) {
       return;
     }
 
@@ -62,7 +60,7 @@ export function AddTaskModal({ columnId, projectId }: AddTaskModalProps) {
       title: title.trim(),
       description: description.trim() || undefined,
       columnId,
-      userId: session.user.id,
+      userId: "user-id-placeholder", // Replace with actual user ID if needed
     });
   };
 

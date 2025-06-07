@@ -1,7 +1,6 @@
 "use client";
-import React from "react";
-import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import React, { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   useBatchById,
@@ -10,26 +9,29 @@ import {
 import { getStudentColumns } from "@/components/admin/batch/batch-student-column";
 import { User } from "@/types/types";
 import { ColumnDef } from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
+import { AssignStudentToBatchDialog } from "@/components/admin/batch/assign-student-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function BatchDetailsPage() {
   const params = useParams();
+  const router = useRouter();
   const batchId = params.batchId as string;
-  const { status: sessionStatus } = useSession();
+  const queryClient = useQueryClient();
 
-  const {
-    data: batch,
-    isLoading: isBatchLoading,
-    isError: isBatchError,
-  } = useBatchById(batchId);
+  const [isAssignStudentDialogOpen, setIsAssignStudentDialogOpen] =
+    useState(false);
+
+  const { data: batch, isError: isBatchError } = useBatchById(batchId);
 
   function useBatchStudentsForDataTable(
     page: number,
     pageSize: number,
     search: string,
-    dateRange: { from_date: string; to_date: string },
-    sortBy: string,
-    sortOrder: string,
-    columnFilters?: Record<string, string[]>
+    _dateRange: { from_date: string; to_date: string },
+    _sortBy: string,
+    _sortOrder: string,
+    _columnFilters?: Record<string, string[]>
   ) {
     return useBatchStudents(batchId, search, page - 1, pageSize);
   }
@@ -37,6 +39,10 @@ export default function BatchDetailsPage() {
 
   const columnsWrapper = (): ColumnDef<User>[] => {
     return getStudentColumns();
+  };
+
+  const handleRowClick = (row: User) => {
+    router.push(`/user/${row.id}`);
   };
 
   if (isBatchError) {
@@ -53,6 +59,9 @@ export default function BatchDetailsPage() {
         <h1 className="text-2xl font-bold">
           Students in {batch ? batch.name : "..."}
         </h1>
+        <Button onClick={() => setIsAssignStudentDialogOpen(true)}>
+          Assign Student
+        </Button>
       </div>
 
       <div>
@@ -77,8 +86,21 @@ export default function BatchDetailsPage() {
           getColumns={columnsWrapper}
           fetchDataFn={useBatchStudentsForDataTable}
           idField="id"
+          onRowClick={handleRowClick}
         />
       </div>
+      {batchId && (
+        <AssignStudentToBatchDialog
+          isOpen={isAssignStudentDialogOpen}
+          onClose={() => setIsAssignStudentDialogOpen(false)}
+          batchId={batchId}
+          onSuccess={() => {
+            queryClient.invalidateQueries({
+              queryKey: ["batchStudents", batchId],
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

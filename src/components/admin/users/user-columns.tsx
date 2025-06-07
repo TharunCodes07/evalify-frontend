@@ -3,16 +3,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import React from "react";
 import { DataTableColumnHeader } from "@/components/data-table/column-header";
 import { Button } from "@/components/ui/button";
-import {
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Mail,
-  Phone,
-  User as UserIcon,
-  Pencil,
-  Trash,
-} from "lucide-react";
+import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,15 +17,12 @@ import { User } from "@/types/types";
 import { useState } from "react";
 import { UserDialog } from "./user-dialog";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
-import { useSession } from "next-auth/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import userQueries from "./queries/user-queries";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 
-export const getColumns = (
-  handleClick?: (user: User) => void
-): ColumnDef<User>[] => {
+export const getColumns = (): ColumnDef<User>[] => {
   return [
     {
       id: "select",
@@ -172,16 +160,12 @@ export const getColumns = (
       cell: ({ row }) => {
         const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
         const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-        const { data: session } = useSession();
         const queryClient = useQueryClient();
         const { error, success } = useToast();
 
         const deleteUserMutation = useMutation({
           mutationFn: () =>
-            userQueries.deleteUser(
-              row.original.id,
-              session?.accessToken as string
-            ),
+            userQueries.deleteUser(row.original.id),
           onSuccess: () => {
             success("User deleted successfully!");
             queryClient.invalidateQueries({ queryKey: ["users"] });

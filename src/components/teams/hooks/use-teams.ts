@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { Team } from "@/types/types";
+import axiosInstance from "@/lib/axios/axios-client";
 
 interface DataTableResponse {
   data: Team[];
@@ -28,65 +29,40 @@ export const useTeams = (
       if (!user) throw new Error("User not authenticated");
 
       let endpoint = "/teams";
-      const params = new URLSearchParams();
+      const params: { [key: string]: string } = {};
 
       if (searchQuery) {
         endpoint = `/teams/search`;
-        params.append("query", searchQuery);
+        params.query = searchQuery;
       } else {
-        params.append("page", page.toString());
-        params.append("size", size.toString());
+        params.page = page.toString();
+        params.size = size.toString();
 
         if (user.role === "STUDENT") {
           endpoint = `/teams/user/${user.id}`;
         }
       }
 
-      const url = `${API_BASE_URL}${endpoint}?${params.toString()}`;
+      const response = await axiosInstance.get(endpoint, { params });
+      const backendResponse = response.data;
 
-      const response = await fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.accessToken}`,
+      if (backendResponse.pagination) {
+        return backendResponse as DataTableResponse;
+      }
+
+      const teams = Array.isArray(backendResponse)
+        ? backendResponse
+        : backendResponse.data || [];
+
+      return {
+        data: teams,
+        pagination: {
+          total_pages: 1,
+          current_page: 1,
+          per_page: teams.length,
+          total_count: teams.length,
         },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      try {
-        const backendResponse = await response.json();
-
-        if (backendResponse.pagination) {
-          return backendResponse as DataTableResponse;
-        }
-
-        const teams = Array.isArray(backendResponse)
-          ? backendResponse
-          : backendResponse.data || [];
-
-        return {
-          data: teams,
-          pagination: {
-            total_pages: 1,
-            current_page: 1,
-            per_page: teams.length,
-            total_count: teams.length,
-          },
-        };
-      } catch (error) {
-        console.error("Error parsing response:", error);
-        return {
-          data: [],
-          pagination: {
-            total_pages: 0,
-            current_page: 0,
-            per_page: size,
-            total_count: 0,
-          },
-        };
-      }
+      };
     },
     enabled: !!user,
     refetchOnMount: true,

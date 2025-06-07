@@ -168,3 +168,13 @@ export interface Department {
   name: string;
   batches?: Batch[];
 }
+
+export interface DataTableResponse<T> {
+  data: T[];
+  pagination: {
+    total_pages: number;
+    current_page: number;
+    per_page: number;
+    total_count: number;
+  };
+}

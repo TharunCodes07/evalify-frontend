@@ -1,3 +1,5 @@
+import axiosInstance from "@/lib/axios/axios-client";
+
 interface CreateBatchRequest {
   name: string;
   graduationYear: number;
@@ -10,103 +12,58 @@ interface UpdateBatchRequest extends Partial<CreateBatchRequest> {
   id: string;
 }
 
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/batch`;
-
 const batchQueries = {
-  createBatch: async (data: CreateBatchRequest, accessToken: string) => {
-    const response = await fetch(API_BASE_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to create batch");
-    }
-    return response.json();
+  createBatch: async (data: CreateBatchRequest) => {
+    const response = await axiosInstance.post("/api/batch", data);
+    return response.data;
   },
 
-  updateBatch: async (data: UpdateBatchRequest, accessToken: string) => {
+  updateBatch: async (data: UpdateBatchRequest) => {
     const { id, ...updateData } = data;
-    const response = await fetch(`${API_BASE_URL}/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(updateData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to update batch");
-    }
-    return response.json();
+    const response = await axiosInstance.put(`/api/batch/${id}`, updateData);
+    return response.data;
   },
 
-  deleteBatch: async (batchId: string, accessToken: string) => {
-    const response = await fetch(`${API_BASE_URL}/${batchId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to delete batch");
-    }
-    return response.json();
+  deleteBatch: async (batchId: string) => {
+    const response = await axiosInstance.delete(`/api/batch/${batchId}`);
+    return response.data;
   },
 
-  getBatchById: async (batchId: string, accessToken: string) => {
-    const response = await fetch(`${API_BASE_URL}/${batchId}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to fetch batch");
-    }
-    return response.json();
+  getBatchById: async (batchId: string) => {
+    const response = await axiosInstance.get(`/api/batch/${batchId}`);
+    return response.data;
   },
 
   getBatchStudents: async (
     batchId: string,
-    accessToken: string,
     page: number,
     size: number,
     searchQuery?: string
   ) => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
-    });
+    const params: { [key: string]: string | number } = {
+      page,
+      size,
+    };
 
-    let url = `${API_BASE_URL}/${batchId}/students`;
+    let url = `/api/batch/${batchId}/students`;
 
     if (searchQuery && searchQuery.trim() !== "") {
-      params.append("query", searchQuery);
-      url = `${API_BASE_URL}/${batchId}/students/search`;
+      params.query = searchQuery;
+      url = `/api/batch/${batchId}/students/search`;
     }
 
-    const response = await fetch(`${url}?${params.toString()}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const response = await axiosInstance.get(url, { params });
+    return response.data;
+  },
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to fetch students");
-    }
-    return response.json();
+  assignUsersToBatch: async (data: {
+    userIds: (string | number)[];
+    batchId: string;
+  }) => {
+    await axiosInstance.put(
+      `/api/batch/${data.batchId}/add-students`,
+      data.userIds
+    );
   },
 };
 

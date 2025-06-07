@@ -14,8 +14,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useSession } from "next-auth/react";
-import departmentQueries from "./queries/department-queries";
+import {
+  useCreateDepartment,
+  useUpdateDepartment,
+} from "./queries/department-queries";
 import { Department } from "@/types/types";
 
 interface DepartmentFormData {
@@ -29,7 +31,12 @@ interface DepartmentDialogProps {
   mode?: "create" | "edit";
 }
 
-export function DepartmentDialog({ department, isOpen: controlledIsOpen, onClose, mode = "create" }: DepartmentDialogProps) {
+export function DepartmentDialog({
+  department,
+  isOpen: controlledIsOpen,
+  onClose,
+  mode = "create",
+}: DepartmentDialogProps) {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
   const isOpen = controlledIsOpen ?? uncontrolledIsOpen;
   const setIsOpen = onClose ?? setUncontrolledIsOpen;
@@ -48,11 +55,10 @@ export function DepartmentDialog({ department, isOpen: controlledIsOpen, onClose
     }
   }, [department, mode]);
 
-  const { data: session } = useSession();
   const { error, success } = useToast();
 
-  const createDepartmentMutation = departmentQueries.createDepartment();
-  const updateDepartmentMutation = departmentQueries.updateDepartment();
+  const createDepartmentMutation = useCreateDepartment();
+  const updateDepartmentMutation = useUpdateDepartment();
 
   const resetForm = () => {
     setFormData({
@@ -62,7 +68,7 @@ export function DepartmentDialog({ department, isOpen: controlledIsOpen, onClose
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (mode === "create") {
       createDepartmentMutation.mutate(formData, {
         onSuccess: () => {
@@ -101,7 +107,9 @@ export function DepartmentDialog({ department, isOpen: controlledIsOpen, onClose
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{mode === "create" ? "Add New Department" : "Edit Department"}</DialogTitle>
+          <DialogTitle>
+            {mode === "create" ? "Add New Department" : "Edit Department"}
+          </DialogTitle>
           <DialogDescription>
             {mode === "create"
               ? "Fill in the details to create a new department."
@@ -114,7 +122,9 @@ export function DepartmentDialog({ department, isOpen: controlledIsOpen, onClose
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               required
             />
           </div>
@@ -126,7 +136,10 @@ export function DepartmentDialog({ department, isOpen: controlledIsOpen, onClose
             </DialogClose>
             <Button
               type="submit"
-              disabled={createDepartmentMutation.isPending || updateDepartmentMutation.isPending}
+              disabled={
+                createDepartmentMutation.isPending ||
+                updateDepartmentMutation.isPending
+              }
             >
               {mode === "create" ? "Create Department" : "Update Department"}
             </Button>
@@ -135,4 +148,4 @@ export function DepartmentDialog({ department, isOpen: controlledIsOpen, onClose
       </DialogContent>
     </Dialog>
   );
-} 
+}

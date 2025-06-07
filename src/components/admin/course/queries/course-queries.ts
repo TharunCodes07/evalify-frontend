@@ -1,194 +1,92 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Course } from "@/types/types";
-import { useSession } from "next-auth/react";
-
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api`;
-
-interface HalResponse {
-  _embedded: {
-    courses: Course[];
-  };
-  _links: {
-    self: { href: string };
-    profile: { href: string };
-  };
-  page: {
-    size: number;
-    totalElements: number;
-    totalPages: number;
-    number: number;
-  };
-}
+import { Course, Batch, User } from "@/types/types";
+import axiosInstance from "@/lib/axios/axios-client";
 
 export const courseQueries = {
-  useGetCourses: (
-    searchQuery?: string,
-    page: number = 0,
-    size: number = 10,
-    columnFilters?: Record<string, string[]>
+  getCourseById: async (id: string): Promise<Course> => {
+    const response = await axiosInstance.get(`/api/course/${id}`);
+    return response.data;
+  },
+
+  getCourseBatches: async (id: string): Promise<Batch[]> => {
+    const response = await axiosInstance.get(`/api/course/${id}/batches`);
+    const paginatedResponse = response.data;
+    return paginatedResponse.data || [];
+  },
+
+  getCourseStudents: async (id: string): Promise<User[]> => {
+    const response = await axiosInstance.get(`/api/course/${id}/students`);
+    const paginatedResponse = response.data;
+    return paginatedResponse.data || [];
+  },
+
+  getCourseInstructors: async (id: string): Promise<User[]> => {
+    const response = await axiosInstance.get(`/api/course/${id}/instructors`);
+    const instructors = response.data;
+    return instructors || [];
+  },
+
+  assignBatchesToCourse: async (courseId: string, batchIds: string[]) => {
+    const response = await axiosInstance.post(
+      `/api/course/${courseId}/batches`,
+      { batchIds }
+    );
+    return response.data;
+  },
+
+  removeBatchFromCourse: async (courseId: string, batchId: string) => {
+    const response = await axiosInstance.delete(
+      `/api/course/${courseId}/batches/${batchId}`
+    );
+    return response.data;
+  },
+
+  assignStudentsToCourse: async (courseId: string, studentIds: string[]) => {
+    const response = await axiosInstance.post(
+      `/api/course/${courseId}/students`,
+      { studentIds }
+    );
+    return response.data;
+  },
+
+  removeStudentFromCourse: async (courseId: string, studentId: string) => {
+    const response = await axiosInstance.delete(
+      `/api/course/${courseId}/students/${studentId}`
+    );
+    return response.data;
+  },
+
+  assignInstructorsToCourse: async (
+    courseId: string,
+    instructorIds: string[]
   ) => {
-    const { data: session } = useSession();
-    const user = session?.user;
-
-    const isActiveFilter = columnFilters?.isActive?.[0];
-
-    return useQuery({
-      queryKey: ["courses", user?.id, searchQuery, page, size, columnFilters],
-      queryFn: async () => {
-        if (!user) throw new Error("User not authenticated");
-
-        let endpoint = "/course";
-        const params = new URLSearchParams();
-
-        if (searchQuery) {
-          endpoint = `/course/search`;
-          params.append("query", searchQuery);
-          params.append("page", page.toString());
-          params.append("size", size.toString());
-        } else {
-          params.append("page", page.toString());
-          params.append("size", size.toString());
-        }
-
-        const url = `${API_BASE_URL}${endpoint}?${params.toString()}`;
-        const response = await fetch(url, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.accessToken}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json() as HalResponse;
-        let filteredData = data._embedded.courses;
-
-        return {
-          data: filteredData,
-          pagination: {
-            total_pages: data.page.totalPages,
-            current_page: data.page.number,
-            per_page: data.page.size,
-            total_count: data.page.totalElements,
-          },
-        };
-      },
-      enabled: !!user,
-    });
+    const response = await axiosInstance.post(
+      `/api/course/${courseId}/instructors`,
+      { instructorIds }
+    );
+    return response.data;
   },
 
-  useGetCourse: (id: string) => {
-    const { data: session } = useSession();
-    const user = session?.user;
-
-    return useQuery({
-      queryKey: ["course", id],
-      queryFn: async (): Promise<Course> => {
-        if (!user) throw new Error("User not authenticated");
-
-        const response = await fetch(`${API_BASE_URL}/course/${id}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.accessToken}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        return response.json();
-      },
-      enabled: !!user && !!id,
-    });
+  removeInstructorFromCourse: async (
+    courseId: string,
+    instructorId: string
+  ) => {
+    const response = await axiosInstance.delete(
+      `/api/course/${courseId}/instructors/${instructorId}`
+    );
+    return response.data;
   },
 
-  useCreateCourse: () => {
-    const { data: session } = useSession();
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async (course: Omit<Course, "id">) => {
-        if (!session?.accessToken) throw new Error("User not authenticated");
-
-        const response = await fetch(`${API_BASE_URL}/course`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.accessToken}`,
-          },
-          body: JSON.stringify(course),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        return response.json();
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["courses"] });
-      },
-    });
+  getFaculty: async (): Promise<User[]> => {
+    const response = await axiosInstance.get(`/api/user/faculty`);
+    const faculty = response.data;
+    return faculty.data || [];
   },
 
-  useUpdateCourse: () => {
-    const { data: session } = useSession();
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async (course: Course) => {
-        if (!session?.accessToken) throw new Error("User not authenticated");
-
-        const response = await fetch(`${API_BASE_URL}/course/${course.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.accessToken}`,
-          },
-          body: JSON.stringify(course),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        return response.json();
-      },
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: ["courses"] });
-        queryClient.invalidateQueries({ queryKey: ["course", data.id] });
-      },
-    });
+  getUnassignedStudents: async (courseId: string): Promise<User[]> => {
+    const response = await axiosInstance.get(
+      `/api/course/${courseId}/unassigned-students`
+    );
+    const paginatedResponse = response.data;
+    return paginatedResponse.data || [];
   },
-
-  useDeleteCourse: () => {
-    const { data: session } = useSession();
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async (id: string) => {
-        if (!session?.accessToken) throw new Error("User not authenticated");
-
-        const response = await fetch(`${API_BASE_URL}/course/${id}`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.accessToken}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        return response.json();
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["courses"] });
-      },
-    });
-  },
-}; 
+};

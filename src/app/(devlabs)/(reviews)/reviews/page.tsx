@@ -1,10 +1,9 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import axiosInstance from "@/lib/axios/axios-client";
 
 type Review = {
   id: string;
@@ -16,24 +15,15 @@ type Review = {
 export default function DevlabsReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
 
-  const {data: session} = useSession();
-
   useEffect(() => {
     const fetchReviews = async () => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.accessToken}`,
-          },
-        }
-      );
-      const data = await response.json();
+      const response = await axiosInstance.get("/api/reviews");
+      const data = response.data;
       setReviews(data);
     };
 
     fetchReviews();
-  }, [session]);
+  }, []);
 
   return (
     <div className="container py-6 max-w-6xl">
@@ -50,14 +40,15 @@ export default function DevlabsReviewsPage() {
       <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
         <div className="flex flex-col items-center justify-center text-center p-8">
           <p className="text-muted-foreground mb-4">
-            {reviews.length === 0 ?  "No reviews created yet. Create your first review to get started." : 
-            reviews.map((review) => (
-              <div key={review.id} className="mb-4">
-                <h3 className="text-lg font-semibold">{review.name}</h3>
-                <p className="text-muted-foreground">{review.startDate}</p>
-                <p className="text-muted-foreground">{review.endDate}</p>
-              </div>
-            ))}
+            {reviews.length === 0
+              ? "No reviews created yet. Create your first review to get started."
+              : reviews.map((review) => (
+                  <div key={review.id} className="mb-4">
+                    <h3 className="text-lg font-semibold">{review.name}</h3>
+                    <p className="text-muted-foreground">{review.startDate}</p>
+                    <p className="text-muted-foreground">{review.endDate}</p>
+                  </div>
+                ))}
           </p>
         </div>
       </div>

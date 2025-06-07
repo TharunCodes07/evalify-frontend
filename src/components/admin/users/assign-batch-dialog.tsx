@@ -31,8 +31,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import axiosInstance from "@/lib/axios/axios-client";
 
 interface Department {
   id: string;
@@ -51,8 +51,6 @@ interface AssignBatchDialogProps {
   isAssigning: boolean;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
 export function AssignBatchDialog({
   isOpen,
   onClose,
@@ -64,8 +62,6 @@ export function AssignBatchDialog({
   >(null);
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [isDepartmentPopoverOpen, setIsDepartmentPopoverOpen] = useState(false);
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken as string;
 
   const {
     data: departments,
@@ -74,14 +70,11 @@ export function AssignBatchDialog({
   } = useQuery<Department[]>({
     queryKey: ["departments"],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/api/department/all`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!response.ok) throw new Error("Failed to fetch departments");
-      const data = await response.json();
+      const response = await axiosInstance.get("/api/department/all");
+      const data = response.data;
       return Array.isArray(data) ? data : data.data || [];
     },
-    enabled: isOpen && !!accessToken,
+    enabled: isOpen,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -93,15 +86,13 @@ export function AssignBatchDialog({
   } = useQuery<Batch[]>({
     queryKey: ["batches", selectedDepartmentId],
     queryFn: async () => {
-      const response = await fetch(
-        `${API_BASE_URL}/api/department/${selectedDepartmentId}/batches`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+      const response = await axiosInstance.get(
+        `/api/department/${selectedDepartmentId}/batches`
       );
-      if (!response.ok) throw new Error("Failed to fetch batches");
-      const data = await response.json();
+      const data = response.data;
       return Array.isArray(data) ? data : data.data || [];
     },
-    enabled: isOpen && !!accessToken && !!selectedDepartmentId,
+    enabled: isOpen && !!selectedDepartmentId,
     staleTime: 5 * 60 * 1000,
   });
 

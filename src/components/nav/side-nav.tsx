@@ -53,7 +53,6 @@ const navItems = [
       { title: "User", url: "/users" },
       { title: "Semester", url: "/semester" },
       { title: "Batch", url: "/batch" },
-      { title: "Course", url: "/course" },
       { title: "Department", url: "/department" },
     ],
   },

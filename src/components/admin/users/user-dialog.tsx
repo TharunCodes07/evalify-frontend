@@ -11,17 +11,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -35,7 +24,6 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { useSession } from "next-auth/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import userQueries from "@/components/admin/users/queries/user-queries";
 import { User } from "@/types/types";
@@ -56,7 +44,12 @@ interface UserDialogProps {
   mode?: "create" | "edit";
 }
 
-export function UserDialog({ user, isOpen: controlledIsOpen, onClose, mode = "create" }: UserDialogProps) {
+export function UserDialog({
+  user,
+  isOpen: controlledIsOpen,
+  onClose,
+  mode = "create",
+}: UserDialogProps) {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
   const isOpen = controlledIsOpen ?? uncontrolledIsOpen;
   const setIsOpen = onClose ?? setUncontrolledIsOpen;
@@ -84,22 +77,18 @@ export function UserDialog({ user, isOpen: controlledIsOpen, onClose, mode = "cr
     }
   }, [user, mode]);
 
-  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const { error, success } = useToast();
 
   const createUserMutation = useMutation({
     mutationFn: (data: UserFormData) => {
-      if (!session?.accessToken) {
-        throw new Error("No access token available");
-      }
-      return userQueries.createUser(data as Required<UserFormData>, session.accessToken);
+      return userQueries.createUser(data as Required<UserFormData>);
     },
     onSuccess: () => {
       success("User created successfully!");
       resetForm();
       setIsOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
     onError: (e: Error) => {
       console.error("Error creating user:", e);
@@ -112,16 +101,13 @@ export function UserDialog({ user, isOpen: controlledIsOpen, onClose, mode = "cr
       if (!user?.id) {
         throw new Error("User ID is required for update");
       }
-      if (!session?.accessToken) {
-        throw new Error("No access token available");
-      }
-      return userQueries.updateUser({ ...data, id: user.id }, session.accessToken);
+      return userQueries.updateUser({ ...data, id: user.id });
     },
     onSuccess: () => {
       success("User updated successfully!");
       resetForm();
       setIsOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
     onError: (e: Error) => {
       console.error("Error updating user:", e);
@@ -196,7 +182,8 @@ export function UserDialog({ user, isOpen: controlledIsOpen, onClose, mode = "cr
     }));
   };
 
-  const isLoading = createUserMutation.isPending || updateUserMutation.isPending;
+  const isLoading =
+    createUserMutation.isPending || updateUserMutation.isPending;
   const isEditMode = mode === "edit";
 
   return (
@@ -248,7 +235,9 @@ export function UserDialog({ user, isOpen: controlledIsOpen, onClose, mode = "cr
                 id="phone-1"
                 name="phone"
                 value={formData.phoneNumber}
-                onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("phoneNumber", e.target.value)
+                }
                 disabled={isLoading}
                 required
               />

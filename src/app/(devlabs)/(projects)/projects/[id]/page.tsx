@@ -6,11 +6,9 @@ import { Project } from "@/types/types";
 import { Badge } from "@/components/ui/badge";
 import { FaGithub } from "react-icons/fa";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import KanbanBoardPage from "@/components/projects/kanban-board/kanban";
 
 export default function DevlabsProjectPage() {
-  const { data: session } = useSession();
   const params = useParams();
   const {
     data: project,
@@ -18,11 +16,7 @@ export default function DevlabsProjectPage() {
     error,
   } = useQuery<Project>({
     queryKey: ["project", params.id],
-    queryFn: () =>
-      projectQueries.fetchProjectByProjectId(
-        params.id as string,
-        session?.accessToken as string
-      ),
+    queryFn: () => projectQueries.fetchProjectByProjectId(params.id as string),
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 2 * 60 * 1000,

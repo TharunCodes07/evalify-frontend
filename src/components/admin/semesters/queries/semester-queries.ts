@@ -1,7 +1,5 @@
 import { Course, Semester } from "@/types/types";
-import { Session } from "next-auth";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import axiosInstance from "@/lib/axios/axios-client";
 
 export interface DataTableResponse {
   data: Semester[];
@@ -14,41 +12,27 @@ export interface DataTableResponse {
 }
 const semesterQueries = {
   getSemesters: async (
-    session: Session,
     searchQuery?: string,
     page: number = 0,
     size: number = 10,
     columnFilters?: Record<string, string[]>
   ): Promise<DataTableResponse> => {
-    if (!session.user) throw new Error("User not authenticated");
-
     const isActiveFilter = columnFilters?.isActive?.[0];
     let endpoint = "/semester";
-    const params = new URLSearchParams();
+    const params: { [key: string]: string } = {};
 
     if (searchQuery) {
       endpoint = `/semester/search`;
-      params.append("query", searchQuery);
-      params.append("page", page.toString());
-      params.append("size", size.toString());
+      params.query = searchQuery;
+      params.page = page.toString();
+      params.size = size.toString();
     } else {
-      params.append("page", page.toString());
-      params.append("size", size.toString());
+      params.page = page.toString();
+      params.size = size.toString();
     }
 
-    const url = `${API_BASE_URL}${endpoint}?${params.toString()}`;
-    const response = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
+    const response = await axiosInstance.get(endpoint, { params });
+    const data = response.data;
 
     if (Array.isArray(data)) {
       let filteredData = data;
@@ -98,123 +82,51 @@ const semesterQueries = {
     };
   },
 
-  getSemester: async (session: Session, id: string): Promise<Semester> => {
-    if (!session.user) throw new Error("User not authenticated");
-
-    const response = await fetch(`${API_BASE_URL}/semester/${id}`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
+  getSemester: async (id: string): Promise<Semester> => {
+    const response = await axiosInstance.get(`/semester/${id}`);
+    return response.data;
   },
 
-  createSemester: async (
-    session: Session,
-    semester: Omit<Semester, "id">
-  ): Promise<Semester> => {
-    if (!session.accessToken) throw new Error("User not authenticated");
-
-    const response = await fetch(`${API_BASE_URL}/api/semester`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-      body: JSON.stringify(semester),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
+  createSemester: async (semester: Omit<Semester, "id">): Promise<Semester> => {
+    const response = await axiosInstance.post("/api/semester", semester);
+    return response.data;
   },
 
-  updateSemester: async (
-    session: Session,
-    semester: Semester
-  ): Promise<Semester> => {
-    if (!session.accessToken) throw new Error("User not authenticated");
-
-    const response = await fetch(
-      `${API_BASE_URL}/api/semester/${semester.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-        body: JSON.stringify(semester),
-      }
+  updateSemester: async (semester: Semester): Promise<Semester> => {
+    const response = await axiosInstance.put(
+      `/api/semester/${semester.id}`,
+      semester
     );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
+    return response.data;
   },
 
-  deleteSemester: async (session: Session, id: string): Promise<any> => {
-    if (!session.accessToken) throw new Error("User not authenticated");
-
-    const response = await fetch(`${API_BASE_URL}/api/semester/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
+  deleteSemester: async (id: string) => {
+    const response = await axiosInstance.delete(`/api/semester/${id}`);
+    return response.data;
   },
 
-  getSemesterById: async (session: Session, id: string): Promise<Semester> => {
-    if (!session.accessToken) throw new Error("User not authenticated");
-
-    const response = await fetch(`${API_BASE_URL}/semester/${id}`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
+  getSemesterById: async (id: string): Promise<Semester> => {
+    const response = await axiosInstance.get(`/semester/${id}`);
+    return response.data;
   },
 
-  getCourseBySemesterId: async (
-    session: Session,
-    id: string
-  ): Promise<Course[]> => {
-    if (!session.accessToken) throw new Error("User not authenticated");
+  getCourseBySemesterId: async (id: string): Promise<Course[]> => {
+    const response = await axiosInstance.get(`/semester/${id}/courses`);
+    return response.data;
+  },
 
-    const response = await fetch(`${API_BASE_URL}/semester/${id}/courses`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
+  createCourseForSemester: async (semesterId: string, course: Course) => {
+    const response = await axiosInstance.post(
+      `/semester/${semesterId}/courses`,
+      course
+    );
+    return response.data;
+  },
+  deleteCourseFromSemester: async (semesterId: string, courseId: string) => {
+    const response = await axiosInstance.delete(
+      `/semester/${semesterId}/courses/${courseId}`
+    );
+    return response.data;
   },
 };
 

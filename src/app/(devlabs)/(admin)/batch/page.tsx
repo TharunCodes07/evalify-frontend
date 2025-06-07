@@ -40,7 +40,7 @@ export default function BatchesPage() {
       if (!accessToken) {
         return Promise.reject(new Error("Not authenticated"));
       }
-      return batchQueries.deleteBatch(String(batchIds[0]), accessToken);
+      return batchQueries.deleteBatch(String(batchIds[0]));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["batches"] });

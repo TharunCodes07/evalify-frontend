@@ -69,7 +69,6 @@ export function TeamForm({
   team,
   isLoading,
 }: TeamFormProps) {
-  const { data: session } = useSession();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -87,13 +86,9 @@ export function TeamForm({
     useQuery({
       queryKey: ["studentSearch", debouncedSearchQuery],
       queryFn: () => {
-        if (!session?.accessToken) throw new Error("Not authenticated");
-        return userQueries.searchStudents(
-          debouncedSearchQuery,
-          session.accessToken
-        );
+        return userQueries.searchStudents(debouncedSearchQuery);
       },
-      enabled: !!debouncedSearchQuery && !!session?.accessToken,
+      enabled: !!debouncedSearchQuery,
     });
 
   const memberIds = form.watch("memberIds");
@@ -135,8 +130,7 @@ export function TeamForm({
     if (team) {
       onSubmit({ ...values });
     } else {
-      if (!session?.user?.id) return;
-      onSubmit({ ...values, creatorId: session.user.id });
+      onSubmit({ ...values, creatorId: "user-id-placeholder" });
     }
   };
 

@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { useSession } from "next-auth/react";
 import batchQueries from "@/components/admin/batch/queries/batch-queries";
 import { Batch } from "@/types/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -53,8 +52,6 @@ export function BatchDialog({
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
   const isOpen = controlledIsOpen ?? uncontrolledIsOpen;
   const setIsOpen = onClose ?? setUncontrolledIsOpen;
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken;
   const queryClient = useQueryClient();
   const toast = useToast();
 
@@ -117,8 +114,7 @@ export function BatchDialog({
 
   const { mutate: createBatch, isPending: isCreating } = useMutation({
     mutationFn: (data: BatchFormData) => {
-      if (!accessToken) throw new Error("Not authenticated");
-      return batchQueries.createBatch(data, accessToken);
+      return batchQueries.createBatch(data);
     },
     onSuccess: () => {
       toast.success("Batch created successfully!");
@@ -133,8 +129,7 @@ export function BatchDialog({
 
   const { mutate: updateBatch, isPending: isUpdating } = useMutation({
     mutationFn: (data: BatchFormData & { id: string }) => {
-      if (!accessToken) throw new Error("Not authenticated");
-      return batchQueries.updateBatch(data, accessToken);
+      return batchQueries.updateBatch(data);
     },
     onSuccess: () => {
       toast.success("Batch updated successfully!");

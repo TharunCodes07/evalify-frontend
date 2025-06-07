@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Batch, User } from "@/types/types";
 import { useSession } from "next-auth/react";
 import batchQueries from "@/components/admin/batch/queries/batch-queries";
+import axiosInstance from "@/lib/axios/axios-client";
 
 interface BatchDataTableResponse {
   data: Batch[];
@@ -23,7 +24,24 @@ interface StudentDataTableResponse {
   };
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+export const useAssignStudentsToBatch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { batchId: string; userIds: (string | number)[] }) => {
+      return batchQueries.assignUsersToBatch({
+        batchId: data.batchId,
+        userIds: data.userIds,
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["batchStudents", variables.batchId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+};
 
 export const useBatches = (
   searchQuery?: string,
@@ -38,28 +56,21 @@ export const useBatches = (
   const query = useQuery({
     queryKey: ["batches", user?.id, searchQuery, page, size, isActiveFilter],
     queryFn: async (): Promise<BatchDataTableResponse> => {
-      if (!user || !session?.accessToken)
-        throw new Error("User not authenticated");
+      if (!user) throw new Error("User not authenticated");
 
-      const params = new URLSearchParams({
-        page: page.toString(),
-        size: size.toString(),
-      });
+      const params: { [key: string]: string | number } = {
+        page: page,
+        size: size,
+      };
 
       if (searchQuery) {
-        params.append("query", searchQuery);
+        params.query = searchQuery;
       }
 
-      const url = `${API_BASE_URL}/api/batch?${params.toString()}`;
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${session.accessToken}` },
-      });
+      const endpoint = searchQuery ? "/api/batch/search" : "/api/batch";
+      const response = await axiosInstance.get(endpoint, { params });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const backendResponse = await response.json();
+      const backendResponse = response.data;
       if (backendResponse.data && backendResponse.pagination) {
         return backendResponse as BatchDataTableResponse;
       }
@@ -86,23 +97,19 @@ export const useBatches = (
         },
       };
     },
-    enabled: !!user && !!session?.accessToken,
+    enabled: !!user,
   });
 
   return { ...query, isQueryHook: true };
 };
 
 export const useBatchById = (batchId: string) => {
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken;
-
   return useQuery({
     queryKey: ["batch", batchId],
     queryFn: async (): Promise<Batch> => {
-      if (!accessToken) throw new Error("User not authenticated");
-      return batchQueries.getBatchById(batchId, accessToken);
+      return batchQueries.getBatchById(batchId);
     },
-    enabled: !!accessToken && !!batchId,
+    enabled: !!batchId,
   });
 };
 
@@ -112,24 +119,18 @@ export const useBatchStudents = (
   page: number = 0,
   size: number = 10
 ) => {
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken;
-
   const query = useQuery({
     queryKey: ["batchStudents", batchId, searchQuery, page, size],
     queryFn: async (): Promise<StudentDataTableResponse> => {
-      if (!accessToken) throw new Error("User not authenticated");
-
       const response = await batchQueries.getBatchStudents(
         batchId,
-        accessToken,
         page,
         size,
         searchQuery
       );
       return response;
     },
-    enabled: !!accessToken && !!batchId,
+    enabled: !!batchId,
   });
 
   return { ...query, isQueryHook: true };

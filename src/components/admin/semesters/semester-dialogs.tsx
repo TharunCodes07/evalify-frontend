@@ -31,7 +31,6 @@ export function SemesterDialogs({
   setIsEditDialogOpen,
   isDeleteDialogOpen,
   setIsDeleteDialogOpen,
-  semesterToDelete,
   isDeleting,
   onUpdateSemester,
   onDeleteSemester,
@@ -43,9 +42,7 @@ export function SemesterDialogs({
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Semester</DialogTitle>
-              <DialogDescription>
-                Update semester information
-              </DialogDescription>
+              <DialogDescription>Update semester information</DialogDescription>
             </DialogHeader>
             <SemesterForm
               semester={selectedSemester}
@@ -60,7 +57,8 @@ export function SemesterDialogs({
           <DialogHeader>
             <DialogTitle>Delete Semester</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this semester? This action cannot be undone.
+              Are you sure you want to delete this semester? This action cannot
+              be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -89,4 +87,4 @@ export function SemesterDialogs({
       </Dialog>
     </>
   );
-} 
+}
