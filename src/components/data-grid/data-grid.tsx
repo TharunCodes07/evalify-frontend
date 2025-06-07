@@ -79,7 +79,9 @@ interface DataGridProps<TData, TValue> {
     item: TData,
     index: number,
     isSelected: boolean,
-    onToggleSelect: () => void
+    onToggleSelect: () => void,
+    onEdit?: (item: TData) => void,
+    onDelete?: (item: TData) => void
   ) => React.ReactNode;
 
   // Data fetching function
@@ -144,6 +146,10 @@ interface DataGridProps<TData, TValue> {
     };
     gap?: number;
   };
+
+  // Optional edit and delete functions
+  onEdit?: (item: TData) => void;
+  onDelete?: (item: TData) => void;
 }
 
 export function DataGrid<TData, TValue>({
@@ -162,6 +168,8 @@ export function DataGrid<TData, TValue>({
     columns: { default: 1, md: 2, lg: 3, xl: 4 },
     gap: 6,
   },
+  onEdit,
+  onDelete,
 }: DataGridProps<TData, TValue>) {
   // Load table configuration with any overrides
   const tableConfig = useTableConfig(config);
@@ -206,7 +214,7 @@ export function DataGrid<TData, TValue>({
       total_pages: number;
       total_items: number;
     };
-  } | null>(null);  // PERFORMANCE FIX: Use only one selection state as the source of truth
+  } | null>(null); // PERFORMANCE FIX: Use only one selection state as the source of truth
   const [selectedItemIds, setSelectedItemIds] = useState<
     Record<string | number, boolean>
   >({});
@@ -497,7 +505,8 @@ export function DataGrid<TData, TValue>({
     // Only pass deselection handler if row selection is enabled
     return getColumns(
       tableConfig.enableRowSelection ? handleRowDeselection : null
-    );  }, [getColumns, handleRowDeselection, tableConfig.enableRowSelection]);
+    );
+  }, [getColumns, handleRowDeselection, tableConfig.enableRowSelection]);
 
   const handleColumnFiltersChange = useCallback(
     (
@@ -604,7 +613,10 @@ export function DataGrid<TData, TValue>({
       columnFilters,
       pagination,
       columnSizing,
-    },    pageCount: data?.pagination?.total_pages || 0,    enableRowSelection: tableConfig.enableRowSelection,    manualPagination: true,
+    },
+    pageCount: data?.pagination?.total_pages || 0,
+    enableRowSelection: tableConfig.enableRowSelection,
+    manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
     onRowSelectionChange: handleRowSelectionChange,
@@ -713,25 +725,22 @@ export function DataGrid<TData, TValue>({
         ) : dataItems.length > 0 ? (
           // Data items
           <div className={gridClasses}>
-            {dataItems.map((item, index) => {
-              const itemId = String(item[idField]);
-              const isSelected = selectedItemIds[itemId] || false;
-
+            {table.getRowModel().rows.map((row, index) => {
+              const item = row.original;
+              const isSelected = row.getIsSelected();
               const onToggleSelect = () => {
-                setSelectedItemIds((prev) => {
-                  const next = { ...prev };
-                  if (isSelected) {
-                    delete next[itemId];
-                  } else {
-                    next[itemId] = true;
-                  }
-                  return next;
-                });
+                row.toggleSelected(!isSelected);
               };
-
               return (
-                <div key={itemId}>
-                  {renderGridItem(item, index, isSelected, onToggleSelect)}
+                <div key={String(item[idField])}>
+                  {renderGridItem(
+                    item,
+                    index,
+                    isSelected,
+                    onToggleSelect,
+                    onEdit,
+                    onDelete
+                  )}
                 </div>
               );
             })}

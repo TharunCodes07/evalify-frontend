@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@/types/types";
 import { useSession } from "next-auth/react";
+import userQueries from "@/components/admin/users/queries/user-queries";
 
 interface DataTableResponse {
   data: User[];
@@ -128,4 +129,20 @@ export const useUsers = (
   const queryWithFlag = query as typeof query & { isQueryHook: boolean };
   queryWithFlag.isQueryHook = true;
   return queryWithFlag;
+};
+
+export const useUsersByRole = (role: string) => {
+  const { data: session } = useSession();
+  const user = session?.user;
+
+  return useQuery({
+    queryKey: ["users", role],
+    queryFn: async () => {
+      if (!user || !session?.accessToken) {
+        throw new Error("User not authenticated");
+      }
+      return userQueries.fetchUsersByRole(role, session.accessToken);
+    },
+    enabled: !!user && !!role,
+  });
 };

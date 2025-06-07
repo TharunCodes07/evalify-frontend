@@ -206,14 +206,13 @@ export default function CreateReviewPage() {
       setBatches([]);
     }
   }, [selectedDepartment, session]);
-  // Determine current semester and load classes when batch changes
+
   useEffect(() => {
     const fetchClassesAndSemester = async () => {
       if (!selectedBatch || !selectedDepartment || !session?.accessToken)
         return;
 
       setLoadingClasses(true);
-      // Reset dependent selections
       setSelectedClasses([]);
       setSelectedSemester("");
       setSelectedSubjects([]);

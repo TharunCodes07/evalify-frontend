@@ -1,5 +1,5 @@
 "use client";
-import { fetchProject } from "@/components/projects/queries/project-queries";
+import { projectQueries } from "@/components/projects/queries/project-queries";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { Project } from "@/types/types";
@@ -19,7 +19,10 @@ export default function DevlabsProjectPage() {
   } = useQuery<Project>({
     queryKey: ["project", params.id],
     queryFn: () =>
-      fetchProject(params.id as string, session?.accessToken as string),
+      projectQueries.fetchProjectByProjectId(
+        params.id as string,
+        session?.accessToken as string
+      ),
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 2 * 60 * 1000,

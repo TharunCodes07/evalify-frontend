@@ -54,6 +54,7 @@ const navItems = [
       { title: "Semester", url: "/semester" },
       { title: "Batch", url: "/batch" },
       { title: "Course", url: "/course" },
+      { title: "Department", url: "/department" },
     ],
   },
   {
@@ -61,10 +62,19 @@ const navItems = [
     icon: Folder,
     items: [
       { title: "Reviews", url: "/reviews" },
-      {title: "Evaluation", url: "/evaluation" },
+      { title: "Evaluation", url: "/evaluation" },
+      { title: "Teams", url: "/teams" },
+      { title: "Projects", url: "/projects" },
     ],
   },
 ];
+
+interface NavItem {
+  title: string;
+  icon: React.ElementType;
+  items?: { title: string; url: string }[];
+  url?: string;
+}
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
@@ -99,7 +109,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           <SidebarGroup>
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {navItems.map((item: NavItem) => (
                 <SidebarMenuItem key={item.title}>
                   {item.items ? (
                     <Collapsible className="group/collapsible">
@@ -112,7 +122,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                          {item.items.map((subItem) => (
+                          {item.items?.map((subItem) => (
                             <SidebarMenuSubItem key={subItem.title}>
                               <SidebarMenuSubButton asChild>
                                 <Link href={subItem.url}>{subItem.title}</Link>
@@ -124,7 +134,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                     </Collapsible>
                   ) : (
                     <SidebarMenuButton tooltip={item.title} asChild>
-                      <Link href={(item as any).url}>
+                      <Link href={item.url || ""}>
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>

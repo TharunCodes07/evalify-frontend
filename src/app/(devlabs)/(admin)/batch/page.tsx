@@ -1,9 +1,15 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table/data-table";
 import { useBatches } from "@/components/admin/batch/hooks/use-batch";
-import {getColumns} from "@/components/admin/batch/batch-column"
-import { Columns } from "lucide-react";
+import { getColumns } from "@/components/admin/batch/batch-column";
+import { BatchDialog } from "@/components/admin/batch/batch-dialog";
+import { DeleteBatchDialog } from "@/components/admin/batch/delete-batch-dialog";
+import { Batch } from "@/types/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import batchQueries from "@/components/admin/batch/queries/batch-queries";
 
 function useBatchesForDataTable(
   page: number,
@@ -14,14 +20,49 @@ function useBatchesForDataTable(
   sortOrder: string,
   columnFilters?: Record<string, string[]>
 ) {
-  return useBatches(search, page - 1, pageSize, columnFilters, sortBy, sortOrder);
+  return useBatches(search, page - 1, pageSize, columnFilters);
 }
 
 useBatchesForDataTable.isQueryHook = true;
 
 export default function BatchesPage() {
-  const columsWrapper = () => {
-    return getColumns();
+  const [selectedBatch, setSelectedBatch] = useState<Batch | undefined>();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [batchToDelete, setBatchToDelete] = useState<string | null>(null);
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken;
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const { mutate: bulkDelete } = useMutation({
+    mutationFn: (batchIds: (string | number)[]) => {
+      if (!accessToken) {
+        return Promise.reject(new Error("Not authenticated"));
+      }
+      return batchQueries.deleteBatch(String(batchIds[0]), accessToken);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["batches"] });
+    },
+  });
+
+  const handleEdit = (batch: Batch) => {
+    setSelectedBatch(batch);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleRowClick = (batch: Batch) => {
+    router.push(`/batch/${batch.id}`);
+  };
+
+  const handleDelete = (batchId: string) => {
+    setBatchToDelete(batchId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const columnsWrapper = () => {
+    return getColumns(handleEdit, handleDelete);
   };
 
   const columnFilterOptions = [
@@ -39,6 +80,7 @@ export default function BatchesPage() {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Batches Management</h1>
+        <BatchDialog mode="create" />
       </div>
 
       <div>
@@ -47,25 +89,59 @@ export default function BatchesPage() {
             enableUrlState: true,
             enableDateFilter: true,
             enableColumnFilters: true,
+            enableDelete: true,
           }}
           exportConfig={{
             entityName: "batches",
             columnMapping: {
               name: "Batch Name",
-              batch: "Batch",
+              graduationYear: "Graduation Year",
               department: "Department",
               section: "Section",
               isActive: "Status",
             },
             columnWidths: [{ wch: 30 }, { wch: 15 }, { wch: 15 }],
-            headers: ["Batch Name", "Batch", "Department", "Section", "Status"],
+            headers: [
+              "Batch Name",
+              "Graduation Year",
+              "Department",
+              "Section",
+              "Status",
+            ],
           }}
-          getColumns={columsWrapper}
+          getColumns={columnsWrapper}
           fetchDataFn={useBatchesForDataTable}
           idField="id"
           columnFilterOptions={columnFilterOptions}
+          deleteFn={
+            bulkDelete as (batchIds: (string | number)[]) => Promise<void>
+          }
+          onRowClick={handleRowClick}
         />
       </div>
+
+      {selectedBatch && (
+        <BatchDialog
+          batch={selectedBatch}
+          isOpen={isEditDialogOpen}
+          onClose={() => {
+            setIsEditDialogOpen(false);
+            setSelectedBatch(undefined);
+          }}
+          mode="edit"
+        />
+      )}
+
+      {batchToDelete && (
+        <DeleteBatchDialog
+          batchId={batchToDelete}
+          isOpen={isDeleteDialogOpen}
+          onClose={() => {
+            setIsDeleteDialogOpen(false);
+            setBatchToDelete(null);
+          }}
+        />
+      )}
     </div>
   );
 }

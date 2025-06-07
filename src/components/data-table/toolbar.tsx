@@ -10,7 +10,10 @@ import {
   CheckSquare,
   MoveHorizontal,
   X,
+  Trash2,
+  UserPlus,
 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,6 +94,9 @@ interface DataTableToolbarProps<TData> {
       icon?: React.ComponentType<{ className?: string }>;
     }>;
   }>;
+  deleteFn?: (ids: (string | number)[]) => Promise<any>;
+  assignFn?: (ids: (string | number)[]) => Promise<any>;
+  getSelectedIds?: () => (string | number)[];
 }
 
 export function DataTableToolbar<TData>({
@@ -110,11 +116,15 @@ export function DataTableToolbar<TData>({
   headers,
   customToolbarComponent,
   columnFilterOptions,
+  deleteFn,
+  assignFn,
+  getSelectedIds,
 }: DataTableToolbarProps<TData>) {
   // Get router and pathname for URL state reset
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   const tableFiltered = table.getState().columnFilters.length > 0;
 
@@ -342,6 +352,48 @@ export function DataTableToolbar<TData>({
   // Get all available items data for export
   const allItems = getAllItems ? getAllItems() : [];
 
+  const deleteMutation = useMutation({
+    mutationFn: deleteFn,
+    onSuccess: () => {
+      // toast.success("Items deleted successfully.");
+      table.resetRowSelection();
+      queryClient.invalidateQueries(); // Invalidate relevant queries
+    },
+    onError: (error: any) => {
+      // toast.error(error.message || "Failed to delete items.");
+      console.error("Failed to delete items:", error);
+    },
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: assignFn,
+    onSuccess: () => {
+      // toast.success("Items assigned successfully.");
+      table.resetRowSelection();
+      queryClient.invalidateQueries(); // Invalidate relevant queries
+    },
+    onError: (error: any) => {
+      // toast.error(error.message || "Failed to assign items.");
+      console.error("Failed to assign items:", error);
+    },
+  });
+
+  const handleDelete = () => {
+    if (!getSelectedIds) return;
+    const ids = getSelectedIds();
+    if (ids.length > 0) {
+      deleteMutation.mutate(ids);
+    }
+  };
+
+  const handleAssign = () => {
+    if (!getSelectedIds) return;
+    const ids = getSelectedIds();
+    if (ids.length > 0) {
+      assignMutation.mutate(ids);
+    }
+  };
+
   return (
     <div className="flex flex-wrap items-center justify-between">
       <div className="flex flex-1 flex-wrap items-center gap-2">
@@ -350,9 +402,9 @@ export function DataTableToolbar<TData>({
             placeholder={`Search ${entityName}...`}
             value={localSearch}
             onChange={handleSearchChange}
-            className={`w-[150px] lg:w-[250px] ${getInputSizeClass(
+            className={`${getInputSizeClass(
               config.size
-            )}`}
+            )} h-8 w-[150px] lg:w-[250px]`}
           />
         )}
         {/* Date filter disabled as per requirement */}
@@ -372,6 +424,32 @@ export function DataTableToolbar<TData>({
               />
             );
           })}
+        {totalSelectedItems > 0 && (
+          <>
+            {config.enableDelete && deleteFn && (
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleteMutation.isPending}
+                className={getButtonSizeClass(config.size)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete ({totalSelectedItems})
+              </Button>
+            )}
+            {config.enableAssign && assignFn && (
+              <Button
+                variant="outline"
+                onClick={handleAssign}
+                disabled={assignMutation.isPending}
+                className={getButtonSizeClass(config.size)}
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
+                Assign ({totalSelectedItems})
+              </Button>
+            )}
+          </>
+        )}
         {isFiltered && (
           <Button
             variant="ghost"

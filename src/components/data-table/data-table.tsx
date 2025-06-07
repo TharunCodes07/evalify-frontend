@@ -138,6 +138,10 @@ interface DataTableProps<TData, TValue> {
 
   // Row click handler
   onRowClick?: (data: TData) => void;
+
+  // New props
+  deleteFn?: (ids: (string | number)[]) => Promise<any>;
+  assignFn?: (ids: (string | number)[]) => Promise<any>;
 }
 
 export function DataTable<TData, TValue>({
@@ -152,6 +156,8 @@ export function DataTable<TData, TValue>({
   columnFilterOptions,
   onRowClick,
   onSearch,
+  deleteFn,
+  assignFn,
 }: DataTableProps<TData, TValue>) {
   // Load table configuration with any overrides
   const tableConfig = useTableConfig(config);
@@ -199,7 +205,7 @@ export function DataTable<TData, TValue>({
   } | null>(null);
 
   // Column order state (in-memory only)
-  const [columnOrder, setColumnOrder] = useState<string[]>([]);  // PERFORMANCE FIX: Use only one selection state as the source of truth
+  const [columnOrder, setColumnOrder] = useState<string[]>([]); // PERFORMANCE FIX: Use only one selection state as the source of truth
   const [selectedItemIds, setSelectedItemIds] = useState<
     Record<string | number, boolean>
   >({});
@@ -508,7 +514,8 @@ export function DataTable<TData, TValue>({
     // Only pass deselection handler if row selection is enabled
     return getColumns(
       tableConfig.enableRowSelection ? handleRowDeselection : null
-    );  }, [getColumns, handleRowDeselection, tableConfig.enableRowSelection]);
+    );
+  }, [getColumns, handleRowDeselection, tableConfig.enableRowSelection]);
 
   const handleColumnFiltersChange = useCallback(
     (
@@ -627,8 +634,11 @@ export function DataTable<TData, TValue>({
     },
     columnResizeMode: "onChange" as ColumnResizeMode,
     onColumnSizingChange: handleColumnSizingChange,
-    onColumnOrderChange: handleColumnOrderChange,    pageCount: data?.pagination?.total_pages || 0,    enableRowSelection: tableConfig.enableRowSelection,
-    enableColumnResizing: tableConfig.enableColumnResizing,    manualPagination: true,
+    onColumnOrderChange: handleColumnOrderChange,
+    pageCount: data?.pagination?.total_pages || 0,
+    enableRowSelection: tableConfig.enableRowSelection,
+    enableColumnResizing: tableConfig.enableColumnResizing,
+    manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
     onRowSelectionChange: handleRowSelectionChange,
@@ -702,34 +712,31 @@ export function DataTable<TData, TValue>({
       {tableConfig.enableToolbar && (
         <DataTableToolbar
           table={table}
-          setSearch={setSearchWithCallback}
+          setSearch={setSearch}
           setDateRange={setDateRange}
           totalSelectedItems={totalSelectedItems}
-          deleteSelection={clearAllSelections}
-          getSelectedItems={getSelectedItems}
-          getAllItems={getAllItems}
           config={tableConfig}
-          resetColumnSizing={() => {
-            resetColumnSizing();
-            // Force a small delay and then refresh the UI
-            setTimeout(() => {
-              window.dispatchEvent(new Event("resize"));
-            }, 100);
-          }}
+          resetColumnSizing={resetColumnSizing}
           resetColumnOrder={resetColumnOrder}
           entityName={exportConfig.entityName}
           columnMapping={exportConfig.columnMapping}
           columnWidths={exportConfig.columnWidths}
           headers={exportConfig.headers}
+          customToolbarComponent={
+            renderToolbarContent &&
+            renderToolbarContent({
+              selectedRows: dataItems.filter(
+                (item) => selectedItemIds[String(item[idField])]
+              ),
+              allSelectedIds: Object.keys(selectedItemIds),
+              totalSelectedCount: totalSelectedItems,
+              resetSelection: clearAllSelections,
+            })
+          }
           columnFilterOptions={columnFilterOptions}
-          customToolbarComponent={renderToolbarContent?.({
-            selectedRows: dataItems.filter(
-              (item) => selectedItemIds[String(item[idField])]
-            ),
-            allSelectedIds: Object.keys(selectedItemIds),
-            totalSelectedCount: totalSelectedItems,
-            resetSelection: clearAllSelections,
-          })}
+          deleteFn={deleteFn}
+          assignFn={assignFn}
+          getSelectedIds={() => Object.keys(selectedItemIds)}
         />
       )}
       <div

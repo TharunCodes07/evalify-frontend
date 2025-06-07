@@ -11,11 +11,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Batch } from "@/types/types";
+import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 
-function handleDelete(batchId: string) {}
+interface BatchColumnProps {
+  onEdit?: (batch: Batch) => void;
+  onDelete?: (batchId: string) => void;
+}
 
 export const getColumns = (
-  handleClick?: (batch: Batch) => void
+  onEdit?: (batch: Batch) => void,
+  onDelete?: (batchId: string) => void
 ): ColumnDef<Batch>[] => {
   return [
     {
@@ -48,44 +53,33 @@ export const getColumns = (
       ),
       enableSorting: false,
       enableHiding: false,
-      size: 50,
     },
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title="Batch Name"
-          className="text-center"
-        />
+        <DataTableColumnHeader column={column} title="Batch Name" />
       ),
       cell: ({ row }) => {
         const batch = row.original;
-        const name = batch.name as string;
-
-        return (
-          <div className="items-center space-x-3">
-            <div className="font-medium">{name}</div>
-          </div>
-        );
+        return <div>{batch.name}</div>;
       },
       meta: { label: "Batch Name" },
       size: 200,
     },
     {
-      accessorKey: "batch",
+      accessorKey: "graduationYear",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title="Batch"
+          title="Graduation Year"
           className="text-center"
         />
       ),
       cell: ({ row }) => {
-        const batch = row.getValue("batch") as string;
-        return <div className="text-center font-medium">{batch}</div>;
+        const graduationYear = row.getValue("graduationYear") as number;
+        return <div className="text-center font-medium">{graduationYear}</div>;
       },
-      meta: { label: "Batch" },
+      meta: { label: "Graduation Year" },
       size: 100,
     },
     {
@@ -98,11 +92,13 @@ export const getColumns = (
         />
       ),
       cell: ({ row }) => {
-        const department = row.getValue("department") as string;
-        return <div className="text-center font-medium">{department}</div>;
+        const department = row.original.department?.name;
+        return (
+          <div className="text-center font-medium">{department || "-"}</div>
+        );
       },
       meta: { label: "Department" },
-      size: 100,
+      size: 150,
     },
     {
       accessorKey: "section",
@@ -155,13 +151,13 @@ export const getColumns = (
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit?.(batch)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Batch
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-red-600"
-                onClick={() => handleDelete(batch.id)}
+                onClick={() => onDelete?.(batch.id)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Batch

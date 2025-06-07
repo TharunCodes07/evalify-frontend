@@ -30,6 +30,7 @@ import { useSession } from "next-auth/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import userQueries from "./queries/user-queries";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 export const getColumns = (
   handleClick?: (user: User) => void
@@ -38,7 +39,7 @@ export const getColumns = (
     {
       id: "select",
       header: ({ table }) => (
-        <div className="flex justify-center p-2">
+        <div className="flex justify-center p-4">
           <input
             type="checkbox"
             checked={table.getIsAllPageRowsSelected()}
@@ -51,7 +52,7 @@ export const getColumns = (
       ),
       cell: ({ row }) => (
         <div
-          className="flex justify-center p-2"
+          className="flex justify-center p-4"
           onClick={(e) => e.stopPropagation()}
         >
           <input
@@ -82,12 +83,14 @@ export const getColumns = (
         const email = user.email as string;
 
         return (
-          <div className="items-center">
-            <div>
-              <div className="font-medium">{name}</div>
-              <div className="text-sm">{email}</div>
+          <Link href={`/user/${user.id}`}>
+            <div className="items-center">
+              <div>
+                <div className="font-medium">{name}</div>
+                <div className="text-sm">{email}</div>
+              </div>
             </div>
-          </div>
+          </Link>
         );
       },
       meta: { label: "User" },
@@ -106,9 +109,7 @@ export const getColumns = (
         const phoneNumber = row.getValue("phoneNumber") as string | undefined;
         return (
           <div className="flex items-center justify-center">
-            <span className="text-sm">
-              {phoneNumber || "N/A"}
-            </span>
+            <span className="text-sm">{phoneNumber || "N/A"}</span>
           </div>
         );
       },
@@ -177,10 +178,13 @@ export const getColumns = (
 
         const deleteUserMutation = useMutation({
           mutationFn: () =>
-            userQueries.deleteUser(row.original.id, session?.accessToken as string),
+            userQueries.deleteUser(
+              row.original.id,
+              session?.accessToken as string
+            ),
           onSuccess: () => {
             success("User deleted successfully!");
-            queryClient.invalidateQueries({ queryKey: ['users'] });
+            queryClient.invalidateQueries({ queryKey: ["users"] });
           },
           onError: (e: Error) => {
             console.error("Error deleting user:", e);
@@ -189,7 +193,7 @@ export const getColumns = (
         });
 
         return (
-          <>
+          <div className="p-2" onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -229,7 +233,7 @@ export const getColumns = (
               description={`Are you sure you want to delete ${row.original.name}? This action cannot be undone.`}
               isLoading={deleteUserMutation.isPending}
             />
-          </>
+          </div>
         );
       },
       enableSorting: false,

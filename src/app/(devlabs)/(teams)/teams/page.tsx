@@ -6,9 +6,20 @@ import { DataTable } from "@/components/data-table/data-table";
 import { DataGrid } from "@/components/data-grid/data-grid";
 import { GridItem } from "@/components/data-grid/grid-item";
 import { Team } from "@/types/types";
-import { Users } from "lucide-react";
+import { Users, PlusCircle } from "lucide-react";
 import { getColumns } from "@/components/teams/team-columns";
 import { useTeams } from "@/components/teams/hooks/use-teams";
+import { Button } from "@/components/ui/button";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import teamQueries from "@/components/teams/queries/team-queries";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
+import { TeamForm } from "@/components/teams/team-form";
+import {
+  CreateTeamRequest,
+  UpdateTeamRequest,
+} from "@/components/teams/types/types";
 
 function useTeamsForDataTable(page: number, pageSize: number, search: string) {
   return useTeams(search, page - 1, pageSize);
@@ -18,7 +29,63 @@ useTeamsForDataTable.isQueryHook = true;
 
 export default function TeamsPage() {
   const [viewmode, setViewMode] = useState<ViewMode>("table");
+  const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [teamToEdit, setTeamToEdit] = useState<Team | null>(null);
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { data: session } = useSession();
+
+  const handleMutationSuccess = (action: "created" | "updated") => {
+    toast.success(`Team ${action} successfully`);
+    queryClient.invalidateQueries({ queryKey: ["teams"] });
+    setIsFormOpen(false);
+    setTeamToEdit(null);
+  };
+
+  const handleMutationError = (error: Error, action: "create" | "update") => {
+    toast.error(`Failed to ${action} team: ${error.message}`);
+  };
+
+  const createMutation = useMutation({
+    mutationFn: (team: CreateTeamRequest) => {
+      if (!session?.accessToken) throw new Error("Not authenticated");
+      return teamQueries.createTeam(team, session.accessToken);
+    },
+    onSuccess: () => handleMutationSuccess("created"),
+    onError: (error) => handleMutationError(error, "create"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: { teamId: string; team: UpdateTeamRequest }) => {
+      if (!session?.accessToken) throw new Error("Not authenticated");
+      return teamQueries.updateTeam(
+        data.teamId,
+        data.team,
+        session.accessToken
+      );
+    },
+    onSuccess: () => handleMutationSuccess("updated"),
+    onError: (error) => handleMutationError(error, "update"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (teamId: string) => {
+      if (!session?.accessToken) {
+        throw new Error("Not authenticated");
+      }
+      return teamQueries.deleteTeam(teamId, session.accessToken);
+    },
+    onSuccess: () => {
+      toast.success("Team deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      setTeamToDelete(null);
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete team: ${error.message}`);
+      setTeamToDelete(null);
+    },
+  });
 
   useEffect(() => {
     const saved = localStorage.getItem("team-view") as ViewMode;
@@ -31,12 +98,37 @@ export default function TeamsPage() {
     setViewMode(newViewMode);
     localStorage.setItem("team-view", newViewMode);
   };
-  const handleClick = (team: Team) => {
+  const handleView = (team: Team) => {
     router.push(`/teams/${team.id}`);
   };
 
+  const handleDelete = (team: Team) => {
+    setTeamToDelete(team);
+  };
+
+  const handleEdit = (team: Team) => {
+    setTeamToEdit(team);
+    setIsFormOpen(true);
+  };
+
+  const handleCreate = () => {
+    setTeamToEdit(null);
+    setIsFormOpen(true);
+  };
+
+  const handleSubmit = (data: CreateTeamRequest | UpdateTeamRequest) => {
+    if (teamToEdit) {
+      updateMutation.mutate({
+        teamId: teamToEdit.id,
+        team: data as UpdateTeamRequest,
+      });
+    } else {
+      createMutation.mutate(data as CreateTeamRequest);
+    }
+  };
+
   const columnsWrapper = () => {
-    return getColumns(handleClick);
+    return getColumns(handleView, handleEdit, handleDelete);
   };
 
   const renderTeamGrid = (
@@ -51,7 +143,9 @@ export default function TeamsPage() {
         item={team}
         isSelected={isSelected}
         onToggleSelect={onToggleSelect}
-        onCardClick={handleClick}
+        onCardClick={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
         fieldConfig={{
           id: "id",
           title: "name",
@@ -79,8 +173,12 @@ export default function TeamsPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h1>Teams Page</h1>
+        <h1 className="text-2xl font-semibold">Teams</h1>
         <div className="flex items-center gap-4">
+          <Button onClick={handleCreate}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create Team
+          </Button>
           <ViewToggle
             view={viewmode}
             onViewChange={handleViewModeChange}
@@ -106,7 +204,7 @@ export default function TeamsPage() {
             getColumns={columnsWrapper}
             fetchDataFn={useTeamsForDataTable}
             idField="id"
-            onRowClick={handleClick}
+            onRowClick={handleView}
           />
         ) : (
           <DataGrid
@@ -128,9 +226,31 @@ export default function TeamsPage() {
               gap: 6,
             }}
             pageSizeOptions={[12, 24, 36, 48]}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         )}
       </div>
+      <DeleteDialog
+        isOpen={!!teamToDelete}
+        onClose={() => setTeamToDelete(null)}
+        onConfirm={() => teamToDelete && deleteMutation.mutate(teamToDelete.id)}
+        title="Delete Team"
+        description={`Are you sure you want to delete the team "${teamToDelete?.name}"? This action cannot be undone.`}
+        isLoading={deleteMutation.isPending}
+      />
+      {isFormOpen && (
+        <TeamForm
+          isOpen={isFormOpen}
+          onClose={() => {
+            setIsFormOpen(false);
+            setTeamToEdit(null);
+          }}
+          onSubmit={handleSubmit}
+          team={teamToEdit}
+          isLoading={createMutation.isPending || updateMutation.isPending}
+        />
+      )}
     </div>
   );
 }

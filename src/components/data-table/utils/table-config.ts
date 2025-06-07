@@ -36,6 +36,12 @@ export interface TableConfig {
   // Enable/disable toolbar
   enableToolbar: boolean;
 
+  // Enable/disable assign action
+  enableAssign: boolean;
+
+  // Enable/disable delete action
+  enableDelete: boolean;
+
   // Control the size of buttons and inputs throughout the table
   // sm: small, default: standard, lg: large
   size: "sm" | "default" | "lg";
@@ -54,6 +60,8 @@ const defaultConfig: TableConfig = {
   enableUrlState: true, // URL state persistence enabled by default
   enableColumnResizing: true, // Column resizing enabled by default
   enableToolbar: true, // Toolbar enabled by default
+  enableAssign: false, // Assign action disabled by default
+  enableDelete: false, // Delete action disabled by default
   size: "default", // Default size for buttons and inputs
 };
 

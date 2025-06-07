@@ -20,7 +20,7 @@ export interface User extends Record<string, unknown> {
   id: string;
   name: string;
   email: string;
-  profileId: string;
+  profileId?: string;
   role: "STUDENT" | "ADMIN" | "FACULTY" | "MANAGER";
   phoneNumber?: string;
   image?: string;
@@ -54,18 +54,22 @@ export interface Semester extends Record<string, unknown> {
   isActive: boolean;
 }
 
-export interface Batch extends Record<string, unknown> {
+export interface Batch {
   id: string;
   name: string;
-  batch: string;
-  department: string;
+  graduationYear: number;
   section: string;
   isActive: boolean;
+  students?: User[];
+  managers?: User[];
+  semester?: Semester[];
+  department?: Department;
 }
 
 export interface Course {
   id: string;
   name: string;
+  code?: string;
   description: string;
   type: CourseType;
   _links?: {
@@ -75,7 +79,7 @@ export interface Course {
   };
 }
 
-enum CourseType {
+export enum CourseType {
   CORE,
   ELECTIVE,
   MICRO_CREDENTIAL,
@@ -130,31 +134,37 @@ export interface MoveTaskRequest {
   userId: string;
 }
 
-
 export interface Review {
-  reviewId: string
-  reviewName: string
-  reviewDate: string
-  averageScore: number
-  maxPossibleScore: number
+  reviewId: string;
+  reviewName: string;
+  reviewDate: string;
+  averageScore: number;
+  maxPossibleScore: number;
   criteriaBreakdown: {
-    criterionName: string
-    averageScore: number
-    maxScore: number
-  }[]
+    criterionName: string;
+    averageScore: number;
+    maxScore: number;
+  }[];
 }
 
 export interface CourseData {
-  id: string
-  name: string
-  description: string
-  type: "CORE" | "ELECTIVE" | "MICRO_CREDENTIAL"
-  progressPercentage: number
-  totalProjects: number
-  activeProjects: number
-  completedProjects: number
-  projects: Project[]
-  reviewHistory: Review[]
-  lastReviewDate: string | null
-  totalReviews: number
+  id: string;
+  name: string;
+  code?: string;
+  description: string;
+  type: "CORE" | "ELECTIVE" | "MICRO_CREDENTIAL";
+  progressPercentage: number;
+  totalProjects: number;
+  activeProjects: number;
+  completedProjects: number;
+  projects: Project[];
+  reviewHistory: Review[];
+  lastReviewDate: string | null;
+  totalReviews: number;
+}
+
+export interface Department {
+  id: string;
+  name: string;
+  batches?: Batch[];
 }

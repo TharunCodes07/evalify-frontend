@@ -24,7 +24,6 @@ export const useCourses = (
   const user = session?.user;
 
   const role = columnFilters?.role?.[0];
-  const isActiveFilter = columnFilters?.isActive?.[0];
   const query = useQuery({
     queryKey: [
       "courses ",
@@ -34,7 +33,6 @@ export const useCourses = (
       page,
       size,
       columnFilters,
-      isActiveFilter,
     ],
     queryFn: async (): Promise<DataTableResponse> => {
       if (!user) throw new Error("User not authenticated");
@@ -68,21 +66,13 @@ export const useCourses = (
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       try {
-        const backendResponse = await response.json();        if (Array.isArray(backendResponse)) {
+        const backendResponse = await response.json();
+        if (Array.isArray(backendResponse)) {
           let filteredData = backendResponse;
 
           if (searchQuery && role && role !== "ALL") {
-            filteredData = backendResponse.filter(
-              (course: Course) =>
-                course.name?.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-          }
-
-          // Apply isActive filter
-          if (isActiveFilter !== undefined) {
-            const isActiveValue = isActiveFilter === "true";
-            filteredData = filteredData.filter(
-              (course: Course) => course.isActive === isActiveValue
+            filteredData = backendResponse.filter((course: Course) =>
+              course.name?.toLowerCase().includes(searchQuery.toLowerCase())
             );
           }
 

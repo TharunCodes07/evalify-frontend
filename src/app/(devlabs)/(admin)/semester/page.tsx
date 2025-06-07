@@ -1,50 +1,66 @@
 "use client";
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { semesterQueries } from "@/components/admin/semesters/queries/semester-queries";
 import { DataTable } from "@/components/data-table/data-table";
 import { getColumns } from "@/components/admin/semesters/semester-columns";
 import { Semester } from "@/types/types";
 import { SemesterHeader } from "@/components/admin/semesters/semester-header";
 import { SemesterAlerts } from "@/components/admin/semesters/semester-alerts";
 import { SemesterDialogs } from "@/components/admin/semesters/semester-dialogs";
-
-function useSemestersForDataTable(
-  page: number,
-  pageSize: number,
-  search: string,
-  dateRange: { from_date: string; to_date: string },
-  sortBy: string,
-  sortOrder: string,
-  columnFilters?: Record<string, string[]>
-) {
-  return semesterQueries.useGetSemesters(
-    search,
-    page - 1,
-    pageSize,
-    columnFilters
-  );
-}
-
-useSemestersForDataTable.isQueryHook = true;
+import { useSemestersForDataTable } from "@/components/admin/semesters/hook/use-semesters-for-data-table";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import semesterQueries from "@/components/admin/semesters/queries/semester-queries";
 
 export default function SemesterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedSemester, setSelectedSemester] = React.useState<Semester | null>(null);
+  const [selectedSemester, setSelectedSemester] =
+    React.useState<Semester | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
-  const [semesterToDelete, setSemesterToDelete] = React.useState<Semester | null>(null);
+  const [semesterToDelete, setSemesterToDelete] =
+    React.useState<Semester | null>(null);
 
-  const createSemester = semesterQueries.useCreateSemester();
-  const updateSemester = semesterQueries.useUpdateSemester();
-  const deleteSemester = semesterQueries.useDeleteSemester();
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+
+  const createSemester = useMutation({
+    mutationFn: (semester: Omit<Semester, "id">) => {
+      if (!session) throw new Error("User not authenticated");
+      return semesterQueries.createSemester(session, semester);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["semesters"] });
+    },
+  });
+
+  const updateSemester = useMutation({
+    mutationFn: (semester: Semester) => {
+      if (!session) throw new Error("User not authenticated");
+      return semesterQueries.updateSemester(session, semester);
+    },
+    onSuccess: (data: Semester) => {
+      queryClient.invalidateQueries({ queryKey: ["semesters"] });
+      queryClient.invalidateQueries({ queryKey: ["semester", data.id] });
+    },
+  });
+
+  const deleteSemester = useMutation({
+    mutationFn: (id: string) => {
+      if (!session) throw new Error("User not authenticated");
+      return semesterQueries.deleteSemester(session, id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["semesters"] });
+    },
+  });
 
   const handleAction = (semester: Semester, action: string) => {
     switch (action) {
       case "view":
-        router.push(`/semester/${semester.id}`);
+        router.push(`/semester/${semester.id}/courses`);
         break;
       case "schedules":
         router.push(`/semester/${semester.id}/schedules`);
@@ -61,6 +77,10 @@ export default function SemesterPage() {
         setIsDeleteDialogOpen(true);
         break;
     }
+  };
+
+  const handleRowClick = (semester: Semester) => {
+    router.push(`/semester/${semester.id}/courses`);
   };
 
   const handleCreateSemester = async (data: Omit<Semester, "id">) => {
@@ -131,6 +151,7 @@ export default function SemesterPage() {
         getColumns={(handleRowDeselection) => getColumns(handleAction)}
         fetchDataFn={useSemestersForDataTable}
         idField="id"
+        onRowClick={handleRowClick}
         exportConfig={{
           entityName: "semesters",
           columnMapping: {

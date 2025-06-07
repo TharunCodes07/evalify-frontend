@@ -1,9 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
-import { Batch } from "@/types/types";
+import { Batch, User } from "@/types/types";
 import { useSession } from "next-auth/react";
+import batchQueries from "@/components/admin/batch/queries/batch-queries";
 
-interface DataTableResponse {
+interface BatchDataTableResponse {
   data: Batch[];
+  pagination: {
+    total_pages: number;
+    current_page: number;
+    per_page: number;
+    total_count: number;
+  };
+}
+
+interface StudentDataTableResponse {
+  data: User[];
   pagination: {
     total_pages: number;
     current_page: number;
@@ -18,131 +29,108 @@ export const useBatches = (
   searchQuery?: string,
   page: number = 0,
   size: number = 10,
-  columnFilters?: Record<string, string[]>,
-  sortBy?: string,
-  sortOrder?: string
+  columnFilters?: Record<string, string[]>
 ) => {
   const { data: session } = useSession();
   const user = session?.user;
-
-  const role = columnFilters?.role?.[0];
   const isActiveFilter = columnFilters?.isActive?.[0];
+
   const query = useQuery({
-    queryKey: [
-      "batches",
-      user?.id,
-      user?.role,
-      searchQuery,
-      page,
-      size,
-      columnFilters,
-      isActiveFilter,
-      sortBy,
-      sortOrder,
-    ],
-    queryFn: async (): Promise<DataTableResponse> => {
-      if (!user) throw new Error("User not authenticated");
+    queryKey: ["batches", user?.id, searchQuery, page, size, isActiveFilter],
+    queryFn: async (): Promise<BatchDataTableResponse> => {
+      if (!user || !session?.accessToken)
+        throw new Error("User not authenticated");
 
-      let endpoint = "/batch";
-      const params = new URLSearchParams();
-
-      if (sortBy) {
-        params.append("sort_by", sortBy);
-      }
-      if (sortOrder) {
-        params.append("sort_order", sortOrder);
-      }
-
-      if (role && role !== "ALL") {
-        params.append("role", role);
-      }
+      const params = new URLSearchParams({
+        page: page.toString(),
+        size: size.toString(),
+      });
 
       if (searchQuery) {
-        if (role && role !== "ALL") {
-        } else {
-          endpoint = `/batch/search`;
-          params.append("query", searchQuery);
-          params.append("page", page.toString());
-          params.append("size", size.toString());
-        }
-      } else if (!role || role === "ALL") {
-        params.append("page", page.toString());
-        params.append("size", size.toString());
+        params.append("query", searchQuery);
       }
-      const url = `${API_BASE_URL}${endpoint}?${params.toString()}`;
+
+      const url = `${API_BASE_URL}/api/batch?${params.toString()}`;
       const response = await fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${session.accessToken}` },
       });
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      try {
-        const backendResponse = await response.json();
-        if (Array.isArray(backendResponse)) {
-          let filteredData = backendResponse;
 
-          if (searchQuery && role && role !== "ALL") {
-            filteredData = backendResponse.filter((batch: Batch) =>
-              batch.name?.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-          }
-
-          // Apply isActive filter
-          if (isActiveFilter !== undefined) {
-            const isActiveValue = isActiveFilter === "true";
-            filteredData = filteredData.filter(
-              (batch: Batch) => batch.isActive === isActiveValue
-            );
-          }
-
-          return {
-            data: filteredData,
-            pagination: {
-              total_pages: 1,
-              current_page: 0,
-              per_page: filteredData.length,
-              total_count: filteredData.length,
-            },
-          };
-        }
-
-        if (backendResponse.pagination) {
-          return backendResponse as DataTableResponse;
-        } else {
-          const users = backendResponse.data || [];
-          return {
-            data: users,
-            pagination: {
-              total_pages: 1,
-              current_page: 0,
-              per_page: users.length,
-              total_count: users.length,
-            },
-          };
-        }
-      } catch (error) {
-        console.error("Error parsing response:", error);
-        return {
-          data: [],
-          pagination: {
-            total_pages: 0,
-            current_page: 0,
-            per_page: size,
-            total_count: 0,
-          },
-        };
+      const backendResponse = await response.json();
+      if (backendResponse.data && backendResponse.pagination) {
+        return backendResponse as BatchDataTableResponse;
       }
+
+      const batches = Array.isArray(backendResponse)
+        ? backendResponse
+        : backendResponse.data || [];
+      let filteredData = batches;
+
+      if (isActiveFilter !== undefined) {
+        const isActiveValue = isActiveFilter === "true";
+        filteredData = filteredData.filter(
+          (batch: Batch) => batch.isActive === isActiveValue
+        );
+      }
+
+      return {
+        data: filteredData,
+        pagination: {
+          total_pages: 1,
+          current_page: 0,
+          per_page: filteredData.length,
+          total_count: filteredData.length,
+        },
+      };
     },
-    enabled: !!user,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    staleTime: 2 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+    enabled: !!user && !!session?.accessToken,
   });
-  const queryWithFlag = query as typeof query & { isQueryHook: boolean };
-  queryWithFlag.isQueryHook = true;
-  return queryWithFlag;
+
+  return { ...query, isQueryHook: true };
+};
+
+export const useBatchById = (batchId: string) => {
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken;
+
+  return useQuery({
+    queryKey: ["batch", batchId],
+    queryFn: async (): Promise<Batch> => {
+      if (!accessToken) throw new Error("User not authenticated");
+      return batchQueries.getBatchById(batchId, accessToken);
+    },
+    enabled: !!accessToken && !!batchId,
+  });
+};
+
+export const useBatchStudents = (
+  batchId: string,
+  searchQuery?: string,
+  page: number = 0,
+  size: number = 10
+) => {
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken;
+
+  const query = useQuery({
+    queryKey: ["batchStudents", batchId, searchQuery, page, size],
+    queryFn: async (): Promise<StudentDataTableResponse> => {
+      if (!accessToken) throw new Error("User not authenticated");
+
+      const response = await batchQueries.getBatchStudents(
+        batchId,
+        accessToken,
+        page,
+        size,
+        searchQuery
+      );
+      return response;
+    },
+    enabled: !!accessToken && !!batchId,
+  });
+
+  return { ...query, isQueryHook: true };
 };

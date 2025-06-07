@@ -26,7 +26,8 @@ export const kanbanAPI = {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return await response.json();
+    const data = response.json();
+    return data;
   },
 
   createTask: async (

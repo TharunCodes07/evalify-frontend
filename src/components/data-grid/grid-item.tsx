@@ -1,7 +1,14 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,6 +19,7 @@ import {
   Calendar,
   User,
   LucideIcon,
+  MoreVertical,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -72,6 +80,8 @@ export interface GridItemProps<T extends Record<string, unknown>> {
   onToggleSelect: () => void;
   enableSelection?: boolean;
   onCardClick?: (item: T) => void;
+  onEdit?: (item: T) => void;
+  onDelete?: (item: T) => void;
 
   fieldConfig: GridItemFieldConfig<T>;
   actions?: GridItemAction<T>[];
@@ -87,6 +97,8 @@ export function GridItem<T extends Record<string, unknown>>({
   onToggleSelect,
   enableSelection = true,
   onCardClick,
+  onEdit,
+  onDelete,
   fieldConfig,
   actions = [],
   customBadge,
@@ -125,7 +137,9 @@ export function GridItem<T extends Record<string, unknown>>({
       icon: Edit,
       onClick: (item, e) => {
         e.stopPropagation();
-        // Implement edit logic
+        if (onEdit) {
+          onEdit(item);
+        }
       },
     },
     {
@@ -134,7 +148,9 @@ export function GridItem<T extends Record<string, unknown>>({
       variant: "destructive",
       onClick: (item, e) => {
         e.stopPropagation();
-        // Implement delete logic
+        if (onDelete) {
+          onDelete(item);
+        }
       },
     },
   ];
@@ -202,7 +218,7 @@ export function GridItem<T extends Record<string, unknown>>({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
