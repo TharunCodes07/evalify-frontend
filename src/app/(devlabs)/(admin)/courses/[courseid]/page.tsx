@@ -13,7 +13,7 @@ import { CourseStudentsTable } from "@/components/admin/course/student-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Batch, User } from "@/types/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { courseQueries } from "@/components/admin/course/queries/course-queries";
+import { courseQueries } from "@/repo/course-queries/course-queries";
 import { toast } from "sonner";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { AssignBatchDialog } from "@/components/admin/course/assign-batch-dialog";
@@ -23,10 +23,12 @@ import { useCourseInstructors } from "@/components/admin/course/hooks/use-course
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { TrashIcon } from "lucide-react";
+import { getStudentColumns } from "@/components/admin/batch/batch-student-column";
+import { getInstructorColumns } from "@/components/admin/course/instructor-columns";
 
 export default function CoursePage() {
   const params = useParams();
-  const courseId = params.courceid as string;
+  const courseId = params.courseid as string;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

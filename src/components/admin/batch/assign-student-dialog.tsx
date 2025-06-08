@@ -90,7 +90,7 @@ export function AssignStudentToBatchDialog({
         <div className="space-y-4 py-2">
           <Input
             placeholder="Search students..."
-            value={searchQuery}
+            value={searchQuery || ""}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <div

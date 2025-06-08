@@ -36,7 +36,7 @@ export const useProjects = (
       return response.data;
     },
     enabled: !!teamId,
-    refetchOnMount: true,
+    refetchOnMount: "always",
     refetchOnWindowFocus: true,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

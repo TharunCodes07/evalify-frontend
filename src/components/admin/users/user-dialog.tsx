@@ -25,7 +25,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import userQueries from "@/components/admin/users/queries/user-queries";
+import userQueries from "@/repo/user-queries/user-queries";
 import { User } from "@/types/types";
 
 interface UserFormData {

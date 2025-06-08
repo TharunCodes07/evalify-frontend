@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   KanbanProvider,
   KanbanBoard,
@@ -10,7 +10,10 @@ import {
   type KanbanItemProps,
   type KanbanColumnProps,
 } from "@/components/kanban/kanban";
-import { kanbanAPI } from "@/components/projects/queries/kanban-queries";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { Toaster, toast } from "sonner";
+import { kanbanAPI } from "@/repo/project-queries/kanban-queries";
 import { useState, useEffect } from "react";
 import { AddTaskModal } from "./add-task-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -50,7 +53,7 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
     queryKey: ["kanbanBoard", id],
     queryFn: () => kanbanAPI.getKanbanBoard(id as string),
     enabled: !!id,
-    refetchOnMount: true,
+    refetchOnMount: "always",
     refetchOnWindowFocus: true,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

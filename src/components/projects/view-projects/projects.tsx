@@ -22,7 +22,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Project, ProjectStatus } from "@/types/types";
-import { projectQueries } from "@/components/projects/queries/project-queries";
+import { projectQueries } from "@/repo/project-queries/project-queries";
 import { CreateProjectRequest } from "@/components/projects/types/types";
 import { ProjectForm } from "@/components/projects/view-projects/project-form";
 
@@ -123,7 +123,7 @@ export function Projects({ teamId }: ProjectsProps) {
   };
 
   const filterProjects = (status: ProjectStatus[]) => {
-    return projects?.filter((p) => status.includes(p.status)) || [];
+    return projects?.filter((p: Project) => status.includes(p.status)) || [];
   };
 
   const liveProjects = filterProjects([

@@ -9,7 +9,9 @@ import { DeleteBatchDialog } from "@/components/admin/batch/delete-batch-dialog"
 import { Batch } from "@/types/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import batchQueries from "@/components/admin/batch/queries/batch-queries";
+import batchQueries from "@/repo/batch-queries/batch-queries";
+import { getBatchColumns } from "@/components/admin/batch/batch-columns";
+import { useToast } from "@/hooks/use-toast";
 
 function useBatchesForDataTable(
   page: number,
@@ -34,6 +36,7 @@ export default function BatchesPage() {
   const accessToken = session?.accessToken;
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { toast } = useToast();
 
   const { mutate: bulkDelete } = useMutation({
     mutationFn: (batchIds: (string | number)[]) => {
@@ -44,6 +47,10 @@ export default function BatchesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["batches"] });
+      toast({
+        title: "Batch deleted successfully",
+        description: "The batch has been successfully deleted.",
+      });
     },
   });
 

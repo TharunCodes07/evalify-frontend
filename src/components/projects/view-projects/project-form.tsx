@@ -24,9 +24,16 @@ import { Course, Project } from "@/types/types";
 import { useCourses } from "@/components/admin/course/hooks/use-course";
 import { CreateProjectRequest } from "@/components/projects/types/types";
 import { Combobox } from "@/components/ui/combobox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const projectSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+const projectFormSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters long"),
   description: z.string().min(1, "Description is required"),
   objectives: z.string().optional(),
   courseId: z.string().optional(),
@@ -49,8 +56,8 @@ export function ProjectForm({
   project,
   teamId,
 }: ProjectFormProps) {
-  const form = useForm<z.infer<typeof projectSchema>>({
-    resolver: zodResolver(projectSchema),
+  const form = useForm<z.infer<typeof projectFormSchema>>({
+    resolver: zodResolver(projectFormSchema),
     defaultValues: {
       title: project?.title || "",
       description: project?.description || "",
@@ -61,7 +68,7 @@ export function ProjectForm({
 
   const { data: courses, isLoading: coursesLoading } = useCourses();
 
-  const handleSubmit = (values: z.infer<typeof projectSchema>) => {
+  const handleSubmit = (values: z.infer<typeof projectFormSchema>) => {
     onSubmit({
       ...values,
       teamId,

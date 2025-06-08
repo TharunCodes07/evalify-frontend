@@ -89,4 +89,11 @@ export const courseQueries = {
     const paginatedResponse = response.data;
     return paginatedResponse.data || [];
   },
+
+  getMyCourses: async (): Promise<Course[]> => {
+    const response = await axiosInstance.get(`/api/course/my-courses`);
+    const paginatedResponse = response.data;
+    return paginatedResponse.data || [];
+  },
+  
 };

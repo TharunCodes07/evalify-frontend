@@ -11,7 +11,18 @@ import { User } from "@/types/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { AssignStudentToBatchDialog } from "@/components/admin/batch/assign-student-dialog";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
+import batchQueries from "@/repo/batch-queries/batch-queries";
+import { toast } from "sonner";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function BatchDetailsPage() {
   const params = useParams();
@@ -21,8 +32,23 @@ export default function BatchDetailsPage() {
 
   const [isAssignStudentDialogOpen, setIsAssignStudentDialogOpen] =
     useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<User | null>(null);
 
   const { data: batch, isError: isBatchError } = useBatchById(batchId);
+
+  const deleteStudentMutation = useMutation({
+    mutationFn: (studentId: string) => {
+      return batchQueries.removeStudentFromBatch(batchId, studentId);
+    },
+    onSuccess: () => {
+      toast.success("Student removed successfully");
+      queryClient.invalidateQueries({ queryKey: ["batchStudents", batchId] });
+      setStudentToDelete(null);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to remove student");
+    },
+  });
 
   function useBatchStudentsForDataTable(
     page: number,
@@ -38,7 +64,11 @@ export default function BatchDetailsPage() {
   useBatchStudentsForDataTable.isQueryHook = true;
 
   const columnsWrapper = (): ColumnDef<User>[] => {
-    return getStudentColumns();
+    return getStudentColumns(handleDeleteStudent);
+  };
+
+  const handleDeleteStudent = (student: User) => {
+    setStudentToDelete(student);
   };
 
   const handleRowClick = (row: User) => {
@@ -101,6 +131,18 @@ export default function BatchDetailsPage() {
           }}
         />
       )}
+      <DeleteDialog
+        isOpen={!!studentToDelete}
+        onClose={() => setStudentToDelete(null)}
+        onConfirm={() =>
+          studentToDelete && deleteStudentMutation.mutate(studentToDelete.id)
+        }
+        title="Remove Student"
+        description={`Are you sure you want to remove ${
+          studentToDelete?.name || "this student"
+        } from the batch?`}
+        isLoading={deleteStudentMutation.isPending}
+      />
     </div>
   );
 }

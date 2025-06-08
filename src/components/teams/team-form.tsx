@@ -24,7 +24,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Team } from "@/types/types";
-import { User } from "@/components/admin/users/types/types";
+import { User } from "@/types/types";
 import {
   CreateTeamRequest,
   UpdateTeamRequest,
@@ -39,9 +39,9 @@ import {
 } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { X, Loader2 } from "lucide-react";
-import { useSession } from "next-auth/react";
-import { useDebounce } from "@uidotdev/usehooks";
-import userQueries from "@/components/admin/users/queries/user-queries";
+
+import { useDebounce } from "@/hooks/use-debounce";
+import userQueries from "@/repo/user-queries/user-queries";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@/lib/utils";
@@ -116,7 +116,9 @@ export function TeamForm({
     }
   }, [team]);
 
-  const students = (debouncedSearchQuery ? searchedStudents : []) as User[];
+  const students = (debouncedSearchQuery
+    ? searchedStudents
+    : []) as unknown as User[];
   const listRef = useRef<HTMLDivElement>(null);
 
   const rowVirtualizer = useVirtualizer({

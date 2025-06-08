@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@/types/types";
-import userQueries from "@/components/admin/users/queries/user-queries";
+import userQueries from "@/repo/user-queries/user-queries";
 import axiosInstance from "@/lib/axios/axios-client";
 
 interface DataTableResponse {
@@ -82,7 +82,7 @@ export const useUsers = (
         };
       }
     },
-    refetchOnMount: true,
+    refetchOnMount: "always",
     refetchOnWindowFocus: true,
     refetchOnReconnect: false,
     refetchInterval: false,

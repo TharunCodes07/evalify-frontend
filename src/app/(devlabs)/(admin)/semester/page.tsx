@@ -9,8 +9,9 @@ import { SemesterAlerts } from "@/components/admin/semesters/semester-alerts";
 import { SemesterDialogs } from "@/components/admin/semesters/semester-dialogs";
 import { useSemestersForDataTable } from "@/components/admin/semesters/hook/use-semesters-for-data-table";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
-import semesterQueries from "@/components/admin/semesters/queries/semester-queries";
+import semesterQueries from "@/repo/semester-queries/semester-queries";
+import { useToast } from "@/hooks/use-toast";
+import { SemesterDialog } from "@/components/admin/semesters/semester-dialog";
 
 export default function SemesterPage() {
   const router = useRouter();
@@ -22,7 +23,6 @@ export default function SemesterPage() {
   const [semesterToDelete, setSemesterToDelete] =
     React.useState<Semester | null>(null);
 
-  const { data: session } = useSession();
   const queryClient = useQueryClient();
 
   const createSemester = useMutation({
@@ -55,15 +55,6 @@ export default function SemesterPage() {
 
   const handleAction = (semester: Semester, action: string) => {
     switch (action) {
-      case "view":
-        router.push(`/semester/${semester.id}/courses`);
-        break;
-      case "schedules":
-        router.push(`/semester/${semester.id}/schedules`);
-        break;
-      case "settings":
-        router.push(`/semester/${semester.id}/settings`);
-        break;
       case "edit":
         setSelectedSemester(semester);
         setIsEditDialogOpen(true);

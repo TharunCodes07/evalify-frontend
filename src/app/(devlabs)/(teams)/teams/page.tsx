@@ -12,13 +12,16 @@ import { useTeams } from "@/components/teams/hooks/use-teams";
 import { Button } from "@/components/ui/button";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import teamQueries from "@/components/teams/queries/team-queries";
+import teamQueries from "@/repo/team-queries/team-queries";
 import { toast } from "sonner";
 import { TeamForm } from "@/components/teams/team-form";
 import {
   CreateTeamRequest,
   UpdateTeamRequest,
 } from "@/components/teams/types/types";
+import { useSession } from "next-auth/react";
+import { TeamDialog } from "@/components/teams/team-dialog";
+import { TeamCard } from "@/components/teams/team-card";
 
 function useTeamsForDataTable(page: number, pageSize: number, search: string) {
   return useTeams(search, page - 1, pageSize);
@@ -27,6 +30,7 @@ function useTeamsForDataTable(page: number, pageSize: number, search: string) {
 useTeamsForDataTable.isQueryHook = true;
 
 export default function TeamsPage() {
+  const { data: session } = useSession();
   const [viewmode, setViewMode] = useState<ViewMode>("table");
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);

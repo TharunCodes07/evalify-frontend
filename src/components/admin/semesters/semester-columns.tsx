@@ -2,14 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import React from "react";
 import { DataTableColumnHeader } from "@/components/data-table/column-header";
 import { Button } from "@/components/ui/button";
-import {
-  MoreHorizontal,
-  Calendar,
-  Eye,
-  Settings,
-  Pencil,
-  Trash,
-} from "lucide-react";
+import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,11 +73,7 @@ export const getColumns = (onAction: SemesterAction): ColumnDef<Semester>[] => {
       ),
       cell: ({ row }) => {
         const year = row.getValue("year") as number;
-        return (
-          <div className="text-center font-medium">
-            {year}
-          </div>
-        );
+        return <div className="text-center font-medium">{year}</div>;
       },
       meta: { label: "Year" },
       size: 100,
@@ -125,30 +114,11 @@ export const getColumns = (onAction: SemesterAction): ColumnDef<Semester>[] => {
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent
+              align="end"
+              onClick={(e) => e.stopPropagation()}
+            >
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => onAction(semester, "view")}
-                className="cursor-pointer"
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onAction(semester, "schedule")}
-                className="cursor-pointer"
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                Manage Schedule
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onAction(semester, "configure")}
-                className="cursor-pointer"
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Configure
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => onAction(semester, "edit")}
                 className="cursor-pointer"

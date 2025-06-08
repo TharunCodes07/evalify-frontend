@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useDeleteDepartment } from "@/components/admin/department/queries/department-queries";
+import { useDeleteDepartment } from "@/repo/department-queries/department-queries";
 import { Loader2 } from "lucide-react";
 
 interface DeleteDepartmentDialogProps {

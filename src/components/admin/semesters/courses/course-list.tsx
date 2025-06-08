@@ -26,7 +26,7 @@ const CourseList: React.FC<CourseListProps> = ({ courses, onDelete }) => {
   }
 
   const handleCardClick = (courseId: string) => {
-    router.push(`/cources/${courseId}`);
+    router.push(`/courses/${courseId}`);
   };
 
   return (

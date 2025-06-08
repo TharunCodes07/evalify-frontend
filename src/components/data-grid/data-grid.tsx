@@ -32,6 +32,7 @@ import {
   createSortingState,
 } from "@/components/data-table/utils/table-state-handlers";
 import { createConditionalStateHook } from "@/components/data-table/utils/conditional-state";
+import { GridItemSkeleton } from "./grid-item";
 
 // Define types for the data fetching function params and result
 interface DataFetchParams {
@@ -165,8 +166,8 @@ export function DataGrid<TData, TValue>({
   renderToolbarContent,
   columnFilterOptions,
   gridConfig = {
-    columns: { default: 1, md: 2, lg: 3, xl: 4 },
-    gap: 6,
+    columns: { default: 1, sm: 2, lg: 3, "2xl": 4 },
+    gap: 4,
   },
   onEdit,
   onDelete,
@@ -644,7 +645,7 @@ export function DataGrid<TData, TValue>({
   // Generate grid class names based on configuration
   const gridClasses = useMemo(() => {
     const baseClass = "grid";
-    const gapClass = `gap-${gridConfig.gap || 6}`;
+    const gapClass = `gap-${gridConfig.gap || 4}`;
 
     const colClasses = [];
     if (gridConfig.columns?.default) {
@@ -712,14 +713,12 @@ export function DataGrid<TData, TValue>({
           })}
         />
       )}
-      <div className="rounded-md border p-4" aria-label="Data grid">
+      <div aria-label="Data grid">
         {isLoading ? (
           // Loading state
           <div className={gridClasses}>
             {Array.from({ length: pageSize }).map((_, index) => (
-              <div key={`loading-item-${index}`}>
-                <Skeleton className="h-48 w-full rounded-lg" />
-              </div>
+              <GridItemSkeleton key={`loading-item-${index}`} />
             ))}
           </div>
         ) : dataItems.length > 0 ? (

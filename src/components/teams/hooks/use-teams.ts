@@ -13,8 +13,6 @@ interface DataTableResponse {
   };
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
 export const useTeams = (
   searchQuery?: string,
   page: number = 0,
@@ -65,7 +63,7 @@ export const useTeams = (
       };
     },
     enabled: !!user,
-    refetchOnMount: true,
+    refetchOnMount: "always",
     refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

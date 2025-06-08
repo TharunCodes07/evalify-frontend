@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Course } from "@/types/types";
 import { useSession } from "next-auth/react";
-import { courseQueries } from "../queries/course-queries";
+import { courseQueries } from "@/repo/course-queries/course-queries";
 import axiosInstance from "@/lib/axios/axios-client";
 
 interface DataTableResponse {
@@ -93,7 +93,7 @@ export const useCourses = (
       }
     },
     enabled: !!user,
-    refetchOnMount: true,
+    refetchOnMount: "always",
     refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

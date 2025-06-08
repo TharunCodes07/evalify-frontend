@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Department } from "@/types/types";
-import * as departmentQueries from "@/components/admin/department/queries/department-queries";
+import * as departmentQueries from "@/repo/department-queries/department-queries";
 import axiosInstance from "@/lib/axios/axios-client";
 
 interface DataTableResponse {
@@ -106,7 +106,7 @@ export const useDepartments = (
         };
       }
     },
-    refetchOnMount: true,
+    refetchOnMount: "always",
     refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

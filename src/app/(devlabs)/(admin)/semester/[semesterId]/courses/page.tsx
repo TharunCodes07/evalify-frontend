@@ -8,26 +8,40 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Terminal } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import semesterQueries from "@/components/admin/semesters/queries/semester-queries";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import semesterQueries from "@/repo/semester-queries/semester-queries";
 import { Course } from "@/types/types";
 import { toast } from "sonner";
 import { CourseDialog } from "@/components/admin/semesters/courses/course-dialog";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
+import SemesterDetailsHeader from "@/components/admin/semesters/semester-details-header";
+import { getCourseColumns } from "@/components/admin/semesters/course-columns";
+import { DataTable } from "@/components/data-table/data-table";
 
 export default function SemesterCoursesPage() {
   const params = useParams();
   const semesterId = params.semesterId as string;
   const {
     data: courses,
-    isLoading,
-    isError,
-    error,
+    isLoading: isLoadingCourses,
+    isError: isErrorCourses,
+    error: errorCourses,
   } = useSemesterCourses(semesterId);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
 
   const queryClient = useQueryClient();
+
+  const {
+    data: semester,
+    isLoading: isLoadingSemester,
+    isError: isErrorSemester,
+    error: errorSemester,
+  } = useQuery({
+    queryKey: ["semester", semesterId],
+    queryFn: () => semesterQueries.getSemesterById(semesterId),
+    enabled: !!semesterId,
+  });
 
   const handleMutationSuccess = (action: "created" | "deleted") => {
     toast.success(`Course ${action} successfully`);
@@ -69,23 +83,28 @@ export default function SemesterCoursesPage() {
     createMutation.mutate(data as Omit<Course, "id">);
   };
 
-  if (isLoading) {
+  if (isLoadingCourses || isLoadingSemester) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-40 w-full" />
-        ))}
+      <div className="container mx-auto py-10">
+        <Skeleton className="h-24 w-full mb-4" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-40 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (isError) {
+  if (isErrorCourses || isErrorSemester) {
     return (
       <Alert variant="destructive">
         <Terminal className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
-          {error?.message || "Failed to fetch courses."}
+          {errorCourses?.message ||
+            errorSemester?.message ||
+            "Failed to fetch data."}
         </AlertDescription>
       </Alert>
     );
@@ -93,6 +112,7 @@ export default function SemesterCoursesPage() {
 
   return (
     <div className="container mx-auto py-10">
+      {semester && <SemesterDetailsHeader semester={semester} />}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-semibold">Courses</h1>
         <Button onClick={handleCreate}>

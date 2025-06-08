@@ -11,12 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Batch } from "@/types/types";
-import { DotsHorizontalIcon } from "@radix-ui/react-icons";
-
-interface BatchColumnProps {
-  onEdit?: (batch: Batch) => void;
-  onDelete?: (batchId: string) => void;
-}
 
 export const getColumns = (
   onEdit?: (batch: Batch) => void,
@@ -166,9 +160,9 @@ export const getColumns = (
           </DropdownMenu>
         );
       },
+      meta: { label: "Actions" },
       enableSorting: false,
       enableHiding: false,
-      meta: { label: "Actions" },
     },
   ];
 };

@@ -65,6 +65,14 @@ const batchQueries = {
       data.userIds
     );
   },
+
+  removeStudentFromBatch: async (batchId: string, studentId: string) => {
+    const response = await axiosInstance.put(
+      `/api/batch/${batchId}/delete-students`,
+      [studentId]
+    );
+    return response.data;
+  },
 };
 
 export default batchQueries;

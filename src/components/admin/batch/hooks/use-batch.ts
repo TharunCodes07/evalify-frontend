@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Batch, User } from "@/types/types";
 import { useSession } from "next-auth/react";
-import batchQueries from "@/components/admin/batch/queries/batch-queries";
+import batchQueries from "@/repo/batch-queries/batch-queries";
 import axiosInstance from "@/lib/axios/axios-client";
 
 interface BatchDataTableResponse {

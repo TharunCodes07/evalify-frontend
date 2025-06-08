@@ -1,13 +1,15 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { DataTable } from "@/components/data-table/data-table";
 import { getColumns } from "@/components/admin/users/user-columns";
 import { useUsers } from "@/components/admin/users/hooks/use-users";
 import { UserDialog } from "@/components/admin/users/user-dialog";
-import userQueries from "@/components/admin/users/queries/user-queries";
+import userQueries from "@/repo/user-queries/user-queries";
 import { AssignBatchDialog } from "@/components/admin/users/assign-batch-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import batchQueries from "@/components/admin/batch/queries/batch-queries";
+import batchQueries from "@/repo/batch-queries/batch-queries";
+import { useToast } from "@/hooks/use-toast";
+import { User } from "@/types/types";
 
 function useUsersForDataTable(
   page: number,
@@ -25,6 +27,7 @@ useUsersForDataTable.isQueryHook = true;
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
+  const { success, error } = useToast();
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>(
     []
@@ -50,10 +53,10 @@ export default function UsersPage() {
     mutationFn: (userIds) => userQueries.bulkDeleteUsers(userIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      // toast.success("Users deleted successfully");
+      success("Users deleted successfully");
     },
-    onError: (_error) => {
-      // toast.error(error.message || "Failed to delete users");
+    onError: (err) => {
+      error(err.message || "Failed to delete users");
     },
   });
 
@@ -65,11 +68,11 @@ export default function UsersPage() {
     mutationFn: (data) => batchQueries.assignUsersToBatch(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      // toast.success("Users assigned successfully");
+      success("Users assigned successfully");
       setIsAssignDialogOpen(false);
     },
-    onError: (_error) => {
-      // toast.error(error.message || "Failed to assign users");
+    onError: (err) => {
+      error(err.message || "Failed to assign users");
     },
   });
 

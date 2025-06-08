@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   useCreateDepartment,
   useUpdateDepartment,
-} from "./queries/department-queries";
+} from "@/repo/department-queries/department-queries";
 import { Department } from "@/types/types";
 
 interface DepartmentFormData {

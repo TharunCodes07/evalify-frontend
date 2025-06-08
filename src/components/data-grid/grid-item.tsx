@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Base interface that all data items should extend
 export interface BaseGridItem {
@@ -160,8 +161,8 @@ export function GridItem<T extends Record<string, unknown>>({
   return (
     <Card
       className={cn(
-        "group hover:shadow-lg transition-all duration-200 cursor-pointer",
-        isSelected && "ring-2 ring-primary shadow-lg"
+        "group relative flex h-full flex-col overflow-hidden rounded-lg border bg-card text-card-foreground transition-all duration-200 hover:border-primary/40 hover:shadow-lg",
+        isSelected && "border-primary ring-2 ring-primary ring-offset-2"
       )}
       onClick={handleCardClick}
     >
@@ -323,3 +324,36 @@ export function GridItem<T extends Record<string, unknown>>({
     </Card>
   );
 }
+
+export const GridItemSkeleton = () => {
+  return (
+    <div className="flex h-full flex-col overflow-hidden rounded-lg border bg-card p-4">
+      <div className="space-y-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3">
+            <Skeleton className="h-6 w-6 rounded" />
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+          <Skeleton className="h-8 w-8" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+        <div className="flex justify-between pt-2">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-4 w-4" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-4 w-4" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

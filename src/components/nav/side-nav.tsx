@@ -50,7 +50,7 @@ const navItems = [
     title: "Admin",
     icon: Settings2,
     items: [
-      { title: "User", url: "/users" },
+      { title: "User", url: "/user" },
       { title: "Semester", url: "/semester" },
       { title: "Batch", url: "/batch" },
       { title: "Department", url: "/department" },
@@ -64,6 +64,7 @@ const navItems = [
       { title: "Evaluation", url: "/evaluation" },
       { title: "Teams", url: "/teams" },
       { title: "Projects", url: "/projects" },
+      { title: "Courses", url: "/courses" },
     ],
   },
 ];

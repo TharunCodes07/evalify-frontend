@@ -1,5 +1,5 @@
 "use client";
-import { projectQueries } from "@/components/projects/queries/project-queries";
+import { projectQueries } from "@/repo/project-queries/project-queries";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { Project } from "@/types/types";
@@ -17,7 +17,7 @@ export default function DevlabsProjectPage() {
   } = useQuery<Project>({
     queryKey: ["project", params.id],
     queryFn: () => projectQueries.fetchProjectByProjectId(params.id as string),
-    refetchOnMount: true,
+    refetchOnMount: "always",
     refetchOnWindowFocus: true,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

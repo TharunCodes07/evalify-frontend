@@ -1,5 +1,5 @@
+import teamQueries from "@/repo/team-queries/team-queries";
 import { useQuery } from "@tanstack/react-query";
-import teamQueries from "@/components/teams/queries/team-queries";
 
 export const useTeam = (teamId: string) => {
   return useQuery({

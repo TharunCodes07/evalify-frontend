@@ -1,5 +1,5 @@
 "use client";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import React from "react";
 import { DataTableColumnHeader } from "@/components/data-table/column-header";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,73 @@ import { useState } from "react";
 import { UserDialog } from "./user-dialog";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import userQueries from "./queries/user-queries";
+import userQueries from "@/repo/user-queries/user-queries";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+
+const UserActionsCell = ({ row }: { row: Row<User> }) => {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { error, success } = useToast();
+
+  const deleteUserMutation = useMutation({
+    mutationFn: () => userQueries.deleteUser(row.original.id),
+    onSuccess: () => {
+      success("User deleted successfully!");
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (e: Error) => {
+      console.error("Error deleting user:", e);
+      error("Failed to delete user. Please try again later.");
+    },
+  });
+
+  return (
+    <div className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setIsDeleteDialogOpen(true)}
+            className="text-red-600"
+          >
+            <Trash className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <UserDialog
+        user={row.original}
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        mode="edit"
+      />
+
+      <DeleteDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={() => deleteUserMutation.mutate()}
+        title="Delete User"
+        description={`Are you sure you want to delete ${row.original.name}? This action cannot be undone.`}
+        isLoading={deleteUserMutation.isPending}
+      />
+    </div>
+  );
+};
 
 export const getColumns = (): ColumnDef<User>[] => {
   return [
@@ -157,69 +221,7 @@ export const getColumns = (): ColumnDef<User>[] => {
     {
       id: "actions",
       header: () => <div className="text-center">Actions</div>,
-      cell: ({ row }) => {
-        const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-        const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-        const queryClient = useQueryClient();
-        const { error, success } = useToast();
-
-        const deleteUserMutation = useMutation({
-          mutationFn: () =>
-            userQueries.deleteUser(row.original.id),
-          onSuccess: () => {
-            success("User deleted successfully!");
-            queryClient.invalidateQueries({ queryKey: ["users"] });
-          },
-          onError: (e: Error) => {
-            console.error("Error deleting user:", e);
-            error("Failed to delete user. Please try again later.");
-          },
-        });
-
-        return (
-          <div className="p-2" onClick={(e) => e.stopPropagation()}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  className="text-red-600"
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <UserDialog
-              user={row.original}
-              isOpen={isEditDialogOpen}
-              onClose={() => setIsEditDialogOpen(false)}
-              mode="edit"
-            />
-
-            <DeleteDialog
-              isOpen={isDeleteDialogOpen}
-              onClose={() => setIsDeleteDialogOpen(false)}
-              onConfirm={() => deleteUserMutation.mutate()}
-              title="Delete User"
-              description={`Are you sure you want to delete ${row.original.name}? This action cannot be undone.`}
-              isLoading={deleteUserMutation.isPending}
-            />
-          </div>
-        );
-      },
+      cell: ({ row }) => <UserActionsCell row={row} />,
       enableSorting: false,
       enableHiding: false,
       meta: { label: "Actions" },

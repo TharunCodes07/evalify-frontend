@@ -63,7 +63,10 @@ export const getBatchColumns = (
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent
+              align="end"
+              onClick={(e) => e.stopPropagation()}
+            >
               <DropdownMenuItem
                 onClick={() => onDelete(batch)}
                 className="text-red-600"

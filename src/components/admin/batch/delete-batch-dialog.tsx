@@ -12,9 +12,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import batchQueries from "./queries/batch-queries";
+import batchQueries from "@/repo/batch-queries/batch-queries";
 import { Loader2 } from "lucide-react";
-import { useSession } from "next-auth/react";
 
 interface DeleteBatchDialogProps {
   batchId: string;
@@ -28,14 +27,11 @@ export function DeleteBatchDialog({
   onClose,
 }: DeleteBatchDialogProps) {
   const toast = useToast();
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken;
   const queryClient = useQueryClient();
 
   const { mutate: deleteBatch, isPending: isDeleting } = useMutation({
     mutationFn: () => {
-      if (!accessToken) throw new Error("Not authenticated");
-      return batchQueries.deleteBatch(batchId, accessToken);
+      return batchQueries.deleteBatch(batchId);
     },
     onSuccess: () => {
       toast.success("Batch deleted successfully!");
