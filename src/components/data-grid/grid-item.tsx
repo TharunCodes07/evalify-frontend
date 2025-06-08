@@ -1,19 +1,11 @@
 "use client";
 
 import { ReactNode } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  MoreHorizontal,
   Edit,
   Trash2,
   Calendar,
@@ -32,7 +24,6 @@ import {
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Base interface that all data items should extend
 export interface BaseGridItem {
   id: string | number;
   name: string;
@@ -43,9 +34,7 @@ export interface BaseGridItem {
   };
 }
 
-// Configuration for field mapping
 export interface GridItemFieldConfig<T> {
-  // Required fields
   id: keyof T;
   title: keyof T;
   description?: keyof T;
@@ -113,7 +102,6 @@ export function GridItem<T extends Record<string, unknown>>({
     }
   };
 
-  // Get field values safely
   const getId = () => item[fieldConfig.id];
   const getTitle = () => item[fieldConfig.title];
   const getDescription = () =>
@@ -123,7 +111,6 @@ export function GridItem<T extends Record<string, unknown>>({
   const getCreatedBy = () =>
     fieldConfig.createdBy ? item[fieldConfig.createdBy] : null;
 
-  // Default actions
   const defaultActions: GridItemAction<T>[] = [
     {
       label: `Copy ${entityName} ID`,

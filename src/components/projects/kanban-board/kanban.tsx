@@ -53,8 +53,8 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
     queryKey: ["kanbanBoard", id],
     queryFn: () => kanbanAPI.getKanbanBoard(id as string),
     enabled: !!id,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });

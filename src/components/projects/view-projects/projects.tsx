@@ -25,6 +25,7 @@ import { Project, ProjectStatus } from "@/types/types";
 import { projectQueries } from "@/repo/project-queries/project-queries";
 import { CreateProjectRequest } from "@/components/projects/types/types";
 import { ProjectForm } from "@/components/projects/view-projects/project-form";
+import { useSession } from "next-auth/react";
 
 export const ProjectsSkeleton = () => (
   <Card>
@@ -76,6 +77,7 @@ const getStatusVariant = (status: ProjectStatus) => {
 };
 
 export function Projects({ teamId }: ProjectsProps) {
+  const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab") || "live";
@@ -263,8 +265,8 @@ export function Projects({ teamId }: ProjectsProps) {
           </Tabs>
         </CardContent>
       </Card>
-
       <ProjectForm
+        userId={session?.user?.id ?? ""}
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         onSubmit={handleSubmit}

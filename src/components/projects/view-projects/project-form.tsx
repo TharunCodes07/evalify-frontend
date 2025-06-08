@@ -7,39 +7,17 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useState, useEffect } from "react";
 import { Course, Project } from "@/types/types";
-import { useCourses } from "@/components/admin/course/hooks/use-course";
 import { CreateProjectRequest } from "@/components/projects/types/types";
-import { Combobox } from "@/components/ui/combobox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-const projectFormSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters long"),
-  description: z.string().min(1, "Description is required"),
-  objectives: z.string().optional(),
-  courseId: z.string().optional(),
-});
+import { MultiSelect, OptionType } from "@/components/ui/multi-select";
+import { courseQueries } from "@/repo/course-queries/course-queries";
+import { useQuery } from "@tanstack/react-query";
 
 interface ProjectFormProps {
+  userId: string;
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CreateProjectRequest) => void;
@@ -49,6 +27,7 @@ interface ProjectFormProps {
 }
 
 export function ProjectForm({
+  userId,
   isOpen,
   onClose,
   onSubmit,
@@ -56,36 +35,47 @@ export function ProjectForm({
   project,
   teamId,
 }: ProjectFormProps) {
-  const form = useForm<z.infer<typeof projectFormSchema>>({
-    resolver: zodResolver(projectFormSchema),
-    defaultValues: {
-      title: project?.title || "",
-      description: project?.description || "",
-      objectives: project?.objectives || "",
-      courseId: project?.courseId || "",
-    },
+  // Form state
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [objectives, setObjectives] = useState("");
+  const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
+
+  // Set default values when editing
+  useEffect(() => {
+    setTitle(project?.title || "");
+    setDescription(project?.description || "");
+    setObjectives(project?.objectives || "");
+    setSelectedCourseIds(
+      Array.isArray(project?.courseIds) ? project?.courseIds : []
+    );
+  }, [project, isOpen]);
+
+  const { data: courses } = useQuery({
+    queryKey: ["courses"],
+    queryFn: () => courseQueries.getActiveCourses(userId),
+    enabled: isOpen,
+    refetchOnMount: true,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
-  const { data: courses, isLoading: coursesLoading } = useCourses();
-
-  const handleSubmit = (values: z.infer<typeof projectFormSchema>) => {
-    onSubmit({
-      ...values,
-      teamId,
-      courseId:
-        !values.courseId || values.courseId === "none"
-          ? undefined
-          : values.courseId,
-    });
-  };
-
-  const courseOptions = [
-    { value: "none", label: "None" },
-    ...(courses?.data?.map((course: Course) => ({
+  const courseOptions: OptionType[] =
+    courses?.map((course: Course) => ({
       value: course.id,
       label: course.name,
-    })) || []),
-  ];
+    })) || [];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      title,
+      description,
+      objectives,
+      teamId,
+      courseIds: selectedCourseIds.length > 0 ? selectedCourseIds : undefined,
+    });
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -100,81 +90,57 @@ export function ProjectForm({
               : "Fill in the form to create a new project."}
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
-          >
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Project title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Title</label>
+            <Input
+              placeholder="Project title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              minLength={3}
             />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Project description" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Description
+            </label>
+            <Textarea
+              placeholder="Project description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
             />
-            <FormField
-              control={form.control}
-              name="objectives"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Objectives</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Project objectives" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Objectives</label>
+            <Textarea
+              placeholder="Project objectives"
+              value={objectives}
+              onChange={(e) => setObjectives(e.target.value)}
             />
-            <FormField
-              control={form.control}
-              name="courseId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Course (Optional)</FormLabel>
-                  <FormControl>
-                    <Combobox
-                      options={courseOptions}
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select a course"
-                      searchPlaceholder="Search courses..."
-                      emptyPlaceholder="No courses found."
-                      disabled={coursesLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Courses (Multi-select)
+            </label>
+            <MultiSelect
+              options={courseOptions}
+              selected={selectedCourseIds}
+              onChange={setSelectedCourseIds}
+              placeholder="Select courses"
+              className="w-full"
             />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

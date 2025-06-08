@@ -82,18 +82,15 @@ export const courseQueries = {
     return faculty.data || [];
   },
 
-  getUnassignedStudents: async (courseId: string): Promise<User[]> => {
-    const response = await axiosInstance.get(
-      `/api/course/${courseId}/unassigned-students`
-    );
-    const paginatedResponse = response.data;
-    return paginatedResponse.data || [];
-  },
-
   getMyCourses: async (): Promise<Course[]> => {
     const response = await axiosInstance.get(`/api/course/my-courses`);
     const paginatedResponse = response.data;
     return paginatedResponse.data || [];
   },
-  
+
+  getActiveCourses: async (userId: string): Promise<Course[]> => {
+    const response = await axiosInstance.post(`/api/course/active`, { userId });
+    const courses = response.data;
+    return courses.data || [];
+  },
 };

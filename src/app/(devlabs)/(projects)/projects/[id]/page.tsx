@@ -17,8 +17,8 @@ export default function DevlabsProjectPage() {
   } = useQuery<Project>({
     queryKey: ["project", params.id],
     queryFn: () => projectQueries.fetchProjectByProjectId(params.id as string),
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });

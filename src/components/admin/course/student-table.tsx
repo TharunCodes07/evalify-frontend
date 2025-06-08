@@ -19,18 +19,20 @@ export function CourseStudentsTable({
   onDelete,
 }: CourseStudentsTableProps) {
   const router = useRouter();
-  const useStudentsForDataTable = React.useCallback(
-    function (page: number, pageSize: number, search: string) {
-      return useCourseStudents(
-        courseId,
-        search,
-        page > 0 ? page - 1 : 0,
-        pageSize
-      );
-    },
-    [courseId]
-  );
-  (useStudentsForDataTable as any).isQueryHook = true;
+  
+  function useStudentsForDataTable(
+    page: number,
+    pageSize: number,
+    search: string
+  ) {
+    return useCourseStudents(
+      courseId,
+      search,
+      page > 0 ? page - 1 : 0,
+      pageSize
+    );
+  }
+  useStudentsForDataTable.isQueryHook = true;
   const columns = React.useMemo(() => getStudentColumns(onDelete), [onDelete]);
 
   const handleRowClick = (row: User) => {

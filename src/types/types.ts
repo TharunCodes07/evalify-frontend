@@ -34,7 +34,7 @@ export interface Project extends Record<string, unknown> {
   objectives: string | null;
   status: ProjectStatus;
   teamId: string;
-  courseId: string;
+  courseId: string[];
   createdAt: string;
   updatedAt: string;
   githubUrl?: string | null;
@@ -66,12 +66,14 @@ export interface Batch {
   department?: Department;
 }
 
-export interface Course {
+export interface Course extends Record<string, unknown> {
   id: string;
   name: string;
   code?: string;
   description: string;
   type: CourseType;
+  createdAt: string;
+  updatedAt: string;
   _links?: {
     self: {
       href: string;

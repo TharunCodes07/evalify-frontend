@@ -1,6 +1,6 @@
 import axiosInstance from "@/lib/axios/axios-client";
 import { Project } from "@/types/types";
-import { CreateProjectRequest } from "../types/types";
+import { CreateProjectRequest } from "@/components/projects/types/types";
 
 export const projectQueries = {
   fetchProjectByTeamId: async (teamId: string): Promise<Project[]> => {
@@ -12,6 +12,12 @@ export const projectQueries = {
     const response = await axiosInstance.get(`/projects/${projectId}`);
     return response.data.data || response.data;
   },
+
+  fetchProjectsByCourseId: async (courseId: string): Promise<Project[]> => {
+    const response = await axiosInstance.get(`/projects/course/${courseId}`);
+    return response.data.data || response.data;
+  },
+
   createProject: async (project: CreateProjectRequest) => {
     const response = await axiosInstance.post("/projects", project);
     return response.data;

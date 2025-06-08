@@ -82,8 +82,8 @@ export const useUsers = (
         };
       }
     },
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchInterval: false,
     staleTime: 2 * 60 * 1000,

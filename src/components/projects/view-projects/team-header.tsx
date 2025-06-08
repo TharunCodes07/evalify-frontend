@@ -1,6 +1,6 @@
 "use client";
 
-import { useTeam } from "@/components/teams/hooks/use-team";
+import { useTeam } from "@/components/teams/hooks/use-team-projects";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -88,7 +88,7 @@ export function TeamHeader({ teamId }: TeamHeaderProps) {
 
         {/* Team Members Card */}
         <Card className="border-0 shadow-none">
-          <CardHeader >
+          <CardHeader>
             <div className="flex items-center space-x-2">
               <Users className="h-5 w-5 text-muted-foreground" />
               <h3 className="text-md font-semibold">

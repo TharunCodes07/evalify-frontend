@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useTeam } from "@/components/teams/hooks/use-team"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Users, AlertTriangle } from "lucide-react"
-import type { User } from "@/types/types"
+import { useTeam } from "@/components/teams/hooks/use-team-projects";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Users, AlertTriangle } from "lucide-react";
+import type { User } from "@/types/types";
 
 export const TeamMembersSkeleton = () => (
   <Card className="h-fit">
@@ -25,17 +25,17 @@ export const TeamMembersSkeleton = () => (
       ))}
     </CardContent>
   </Card>
-)
+);
 
 interface TeamMembersProps {
-  teamId: string
+  teamId: string;
 }
 
 export function TeamMembers({ teamId }: TeamMembersProps) {
-  const { data: team, isLoading, isError, isSuccess } = useTeam(teamId)
+  const { data: team, isLoading, isError, isSuccess } = useTeam(teamId);
 
   if (isLoading) {
-    return <TeamMembersSkeleton />
+    return <TeamMembersSkeleton />;
   }
 
   if (isError) {
@@ -45,7 +45,7 @@ export function TeamMembers({ teamId }: TeamMembersProps) {
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>Unable to load team members.</AlertDescription>
       </Alert>
-    )
+    );
   }
 
   if (isSuccess && team) {
@@ -55,28 +55,37 @@ export function TeamMembers({ teamId }: TeamMembersProps) {
           <CardTitle className="flex items-center text-lg font-semibold">
             <Users className="mr-2 h-5 w-5 text-muted-foreground" />
             Team Members
-            <span className="ml-2 text-sm font-normal text-muted-foreground">({team.members.length})</span>
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              ({team.members.length})
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {team.members.map((member: User) => (
             <div key={member.id} className="flex items-center space-x-3 group">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={(member.profileImage as string) || "/placeholder.svg"} alt={member.name} />
+                <AvatarImage
+                  src={(member.profileImage as string) || "/placeholder.svg"}
+                  alt={member.name}
+                />
                 <AvatarFallback className="bg-primary/10 text-primary font-medium">
                   {member.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-foreground truncate">{member.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                <p className="font-medium text-sm text-foreground truncate">
+                  {member.name}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {member.email}
+                </p>
               </div>
             </div>
           ))}
         </CardContent>
       </Card>
-    )
+    );
   }
 
-  return <TeamMembersSkeleton />
+  return <TeamMembersSkeleton />;
 }

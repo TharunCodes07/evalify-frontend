@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
-import { Team } from "@/types/types";
 import axiosInstance from "@/lib/axios/axios-client";
+import { Project } from "@/types/types";
+import { useSession } from "next-auth/react";
 
 interface DataTableResponse {
-  data: Team[];
+  data: Project[];
   pagination: {
     total_pages: number;
     current_page: number;
@@ -13,7 +13,8 @@ interface DataTableResponse {
   };
 }
 
-export const useTeams = (
+export const useProjectsByCourse = (
+  courseId: string,
   searchQuery?: string,
   page: number = 0,
   size: number = 10
@@ -22,23 +23,17 @@ export const useTeams = (
   const user = session?.user;
 
   const query = useQuery({
-    queryKey: ["teams", user?.id, user?.role, searchQuery, page, size],
+    queryKey: ["projects", courseId, user?.id, searchQuery, page, size],
     queryFn: async (): Promise<DataTableResponse> => {
-      if (!user) throw new Error("User not authenticated");
-
-      let endpoint = "/teams";
+      let endpoint = `/projects/course/${courseId}`;
       const params: { [key: string]: string } = {};
 
-      if (searchQuery) {
-        endpoint = `/teams/search`;
+      if (searchQuery && searchQuery.length > 0) {
+        endpoint = `/projects/course/${courseId}/search`;
         params.query = searchQuery;
       } else {
         params.page = page.toString();
         params.size = size.toString();
-
-        if (user.role === "STUDENT") {
-          endpoint = `/teams/user/${user.id}`;
-        }
       }
 
       const response = await axiosInstance.get(endpoint, { params });
@@ -48,17 +43,17 @@ export const useTeams = (
         return backendResponse as DataTableResponse;
       }
 
-      const teams = Array.isArray(backendResponse)
+      const projects = Array.isArray(backendResponse)
         ? backendResponse
         : backendResponse.data || [];
 
       return {
-        data: teams,
+        data: projects,
         pagination: {
           total_pages: 1,
           current_page: 1,
-          per_page: teams.length,
-          total_count: teams.length,
+          per_page: projects.length,
+          total_count: projects.length,
         },
       };
     },
@@ -70,6 +65,5 @@ export const useTeams = (
   });
   const queryWithFlag = query as typeof query & { isQueryHook: boolean };
   queryWithFlag.isQueryHook = true;
-
   return queryWithFlag;
 };

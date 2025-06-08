@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { Team } from "@/types/types";
+import { Course } from "@/types/types";
 import axiosInstance from "@/lib/axios/axios-client";
 
 interface DataTableResponse {
-  data: Team[];
+  data: Course[];
   pagination: {
     total_pages: number;
     current_page: number;
@@ -13,52 +13,64 @@ interface DataTableResponse {
   };
 }
 
-export const useTeams = (
+export const useMyCourses = (
   searchQuery?: string,
   page: number = 0,
-  size: number = 10
+  size: number = 10,
+  sortBy: string = "name",
+  sortOrder: "asc" | "desc" = "asc"
 ) => {
   const { data: session } = useSession();
   const user = session?.user;
 
   const query = useQuery({
-    queryKey: ["teams", user?.id, user?.role, searchQuery, page, size],
+    queryKey: [
+      "my-courses",
+      user?.id,
+      searchQuery,
+      page,
+      size,
+      sortBy,
+      sortOrder,
+    ],
     queryFn: async (): Promise<DataTableResponse> => {
       if (!user) throw new Error("User not authenticated");
 
-      let endpoint = "/teams";
-      const params: { [key: string]: string } = {};
+      let endpoint = "/api/course/my-courses";
+      const params: { [key: string]: string } = {
+        page: page.toString(),
+        size: size.toString(),
+        sort_by: sortBy,
+        sort_order: sortOrder,
+      };
+
+      const body: { [key: string]: string } = {
+        userId: user.id,
+      };
 
       if (searchQuery) {
-        endpoint = `/teams/search`;
-        params.query = searchQuery;
-      } else {
-        params.page = page.toString();
-        params.size = size.toString();
-
-        if (user.role === "STUDENT") {
-          endpoint = `/teams/user/${user.id}`;
-        }
+        endpoint = `/api/course/my-courses/search`;
+        body.query = searchQuery;
       }
 
-      const response = await axiosInstance.get(endpoint, { params });
+      const response = await axiosInstance.post(endpoint, body, { params });
       const backendResponse = response.data;
 
       if (backendResponse.pagination) {
         return backendResponse as DataTableResponse;
       }
 
-      const teams = Array.isArray(backendResponse)
+      const courses = Array.isArray(backendResponse)
         ? backendResponse
         : backendResponse.data || [];
 
       return {
-        data: teams,
+        data: courses,
         pagination: {
           total_pages: 1,
           current_page: 1,
-          per_page: teams.length,
-          total_count: teams.length,
+          per_page: courses.length,
+          total_count: courses.length,
         },
       };
     },
@@ -68,6 +80,7 @@ export const useTeams = (
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
+
   const queryWithFlag = query as typeof query & { isQueryHook: boolean };
   queryWithFlag.isQueryHook = true;
 

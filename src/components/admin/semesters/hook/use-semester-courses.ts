@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import semesterQueries from "../queries/semester-queries";
+import  semesterQueries  from "@/repo/semester-queries/semester-queries";
 
 export const useSemesterCourses = (semesterId: string) => {
   return useQuery({

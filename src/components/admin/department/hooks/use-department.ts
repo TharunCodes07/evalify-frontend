@@ -106,7 +106,7 @@ export const useDepartments = (
         };
       }
     },
-    refetchOnMount: "always",
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

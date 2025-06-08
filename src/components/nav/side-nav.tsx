@@ -64,7 +64,7 @@ const navItems = [
       { title: "Evaluation", url: "/evaluation" },
       { title: "Teams", url: "/teams" },
       { title: "Projects", url: "/projects" },
-      { title: "Courses", url: "/courses" },
+      { title: "Courses", url: "/courses/mine" },
     ],
   },
 ];

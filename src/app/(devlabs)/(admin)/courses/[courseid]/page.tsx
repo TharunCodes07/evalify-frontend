@@ -23,8 +23,6 @@ import { useCourseInstructors } from "@/components/admin/course/hooks/use-course
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { TrashIcon } from "lucide-react";
-import { getStudentColumns } from "@/components/admin/batch/batch-student-column";
-import { getInstructorColumns } from "@/components/admin/course/instructor-columns";
 
 export default function CoursePage() {
   const params = useParams();

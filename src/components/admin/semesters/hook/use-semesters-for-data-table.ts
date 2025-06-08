@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axios/axios-client";
 import { Semester } from "@/types/types";
-import { DataTableResponse } from "../queries/semester-queries";
+import { DataTableResponse } from "@/repo/semester-queries/semester-queries";
 
 const useGetSemesters = (
   searchQuery?: string,
@@ -14,7 +14,7 @@ const useGetSemesters = (
     queryFn: async (): Promise<DataTableResponse> => {
       const isActiveFilter = columnFilters?.isActive?.[0];
       let endpoint = "/semester";
-      const params: { [key: string]: any } = {
+      const params: { [key: string]: string | number } = {
         page: page.toString(),
         size: size.toString(),
       };
