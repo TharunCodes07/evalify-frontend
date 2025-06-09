@@ -3,7 +3,6 @@
 import type * as React from "react";
 import {
   type ColumnSizingState,
-  type SortingState,
   flexRender,
   getCoreRowModel,
   getFacetedRowModel,
@@ -99,9 +98,6 @@ interface DataTableProps<TData, TValue> {
         sortOrder: string
       ) => unknown);
 
-  // Function to fetch specific items by their IDs
-  fetchByIdsFn?: (ids: number[] | string[]) => Promise<TData[]>;
-
   // Export configuration
   exportConfig: {
     entityName: string;
@@ -115,9 +111,6 @@ interface DataTableProps<TData, TValue> {
 
   // Custom page size options
   pageSizeOptions?: number[];
-
-  // Callback when search changes
-  onSearch?: (searchValue: string) => void;
 
   // Custom toolbar content render function
   renderToolbarContent?: (props: {
@@ -139,23 +132,21 @@ interface DataTableProps<TData, TValue> {
   // Row click handler
   onRowClick?: (data: TData) => void;
 
-  // New props
-  deleteFn?: (ids: (string | number)[]) => Promise<any>;
-  assignFn?: (ids: (string | number)[]) => Promise<any>;
+  // New props with proper types
+  deleteFn?: (ids: (string | number)[]) => Promise<unknown>;
+  assignFn?: (ids: (string | number)[]) => Promise<unknown>;
 }
 
 export function DataTable<TData, TValue>({
   config = {},
   getColumns,
   fetchDataFn,
-  fetchByIdsFn,
   exportConfig,
   idField = "id" as keyof TData,
   pageSizeOptions,
   renderToolbarContent,
   columnFilterOptions,
   onRowClick,
-  onSearch,
   deleteFn,
   assignFn,
 }: DataTableProps<TData, TValue>) {
@@ -277,22 +268,6 @@ export function DataTable<TData, TValue>({
     },
     [dataItems, idField]
   );
-  // Create a custom setter for search that also triggers the onSearch callback
-  const setSearchWithCallback = useCallback(
-    (valueOrUpdater: string | ((prev: string) => string)) => {
-      // Handle both direct values and updater functions
-      const newValue =
-        typeof valueOrUpdater === "function"
-          ? valueOrUpdater(search)
-          : valueOrUpdater;
-
-      setSearch(newValue);
-      if (onSearch) {
-        onSearch(newValue);
-      }
-    },
-    [search, setSearch, onSearch]
-  );
 
   // Clear all selections
   const clearAllSelections = useCallback(() => {
@@ -346,56 +321,6 @@ export function DataTable<TData, TValue>({
     },
     [dataItems, rowSelection, idField]
   );
-
-  // Get selected items data
-  const getSelectedItems = useCallback(async () => {
-    // If nothing is selected, return empty array
-    if (totalSelectedItems === 0) {
-      return [];
-    }
-
-    // Get IDs of selected items
-    const selectedIdsArray = Object.keys(selectedItemIds).map((id) =>
-      typeof id === "string" ? Number.parseInt(id, 10) : (id as number)
-    );
-
-    // Find items from current page that are selected
-    const itemsInCurrentPage = dataItems.filter(
-      (item) => selectedItemIds[String(item[idField])]
-    );
-
-    // Get IDs of items on current page
-    const idsInCurrentPage = itemsInCurrentPage.map(
-      (item) => item[idField] as unknown as number
-    );
-
-    // Find IDs that need to be fetched (not on current page)
-    const idsToFetch = selectedIdsArray.filter(
-      (id) => !idsInCurrentPage.includes(id)
-    );
-
-    // If all selected items are on current page or we can't fetch by IDs
-    if (idsToFetch.length === 0 || !fetchByIdsFn) {
-      return itemsInCurrentPage;
-    }
-
-    try {
-      // Fetch missing items in a single batch
-      const fetchedItems = await fetchByIdsFn(idsToFetch);
-
-      // Combine current page items with fetched items
-      return [...itemsInCurrentPage, ...fetchedItems];
-    } catch (error) {
-      console.error("Error fetching selected items:", error);
-      return itemsInCurrentPage;
-    }
-  }, [dataItems, selectedItemIds, totalSelectedItems, fetchByIdsFn, idField]);
-
-  // Get all items on current page
-  const getAllItems = useCallback((): TData[] => {
-    // Return current page data
-    return dataItems;
-  }, [dataItems]);
 
   // Fetch data
   useEffect(() => {

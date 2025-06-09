@@ -3,7 +3,6 @@
 import type * as React from "react";
 import {
   type ColumnSizingState,
-  type SortingState,
   getCoreRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
@@ -17,7 +16,6 @@ import { useEffect, useCallback, useMemo, useState } from "react";
 
 import { DataTablePagination } from "@/components/data-table/pagination";
 import { DataTableToolbar } from "@/components/data-table/toolbar";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import {
@@ -34,7 +32,6 @@ import {
 import { createConditionalStateHook } from "@/components/data-table/utils/conditional-state";
 import { GridItemSkeleton } from "./grid-item";
 
-// Define types for the data fetching function params and result
 interface DataFetchParams {
   page: number;
   limit: number;

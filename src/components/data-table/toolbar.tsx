@@ -94,8 +94,8 @@ interface DataTableToolbarProps<TData> {
       icon?: React.ComponentType<{ className?: string }>;
     }>;
   }>;
-  deleteFn?: (ids: (string | number)[]) => Promise<any>;
-  assignFn?: (ids: (string | number)[]) => Promise<any>;
+  deleteFn?: (ids: (string | number)[]) => Promise<unknown>;
+  assignFn?: (ids: (string | number)[]) => Promise<unknown>;
   getSelectedIds?: () => (string | number)[];
 }
 
@@ -359,7 +359,7 @@ export function DataTableToolbar<TData>({
       table.resetRowSelection();
       queryClient.invalidateQueries(); // Invalidate relevant queries
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       // toast.error(error.message || "Failed to delete items.");
       console.error("Failed to delete items:", error);
     },
@@ -372,7 +372,7 @@ export function DataTableToolbar<TData>({
       table.resetRowSelection();
       queryClient.invalidateQueries(); // Invalidate relevant queries
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       // toast.error(error.message || "Failed to assign items.");
       console.error("Failed to assign items:", error);
     },

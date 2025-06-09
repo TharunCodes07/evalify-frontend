@@ -10,7 +10,6 @@ import { Batch } from "@/types/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import batchQueries from "@/repo/batch-queries/batch-queries";
-import { getBatchColumns } from "@/components/admin/batch/batch-columns";
 import { useToast } from "@/hooks/use-toast";
 
 function useBatchesForDataTable(

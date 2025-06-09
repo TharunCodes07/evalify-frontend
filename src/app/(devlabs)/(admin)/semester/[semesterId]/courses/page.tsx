@@ -15,8 +15,6 @@ import { toast } from "sonner";
 import { CourseDialog } from "@/components/admin/semesters/courses/course-dialog";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import SemesterDetailsHeader from "@/components/admin/semesters/semester-details-header";
-import { getCourseColumns } from "@/components/admin/semesters/course-columns";
-import { DataTable } from "@/components/data-table/data-table";
 
 export default function SemesterCoursesPage() {
   const params = useParams();

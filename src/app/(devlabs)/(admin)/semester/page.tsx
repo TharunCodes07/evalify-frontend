@@ -10,8 +10,6 @@ import { SemesterDialogs } from "@/components/admin/semesters/semester-dialogs";
 import { useSemestersForDataTable } from "@/components/admin/semesters/hook/use-semesters-for-data-table";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import semesterQueries from "@/repo/semester-queries/semester-queries";
-import { useToast } from "@/hooks/use-toast";
-import { SemesterDialog } from "@/components/admin/semesters/semester-dialog";
 
 export default function SemesterPage() {
   const router = useRouter();

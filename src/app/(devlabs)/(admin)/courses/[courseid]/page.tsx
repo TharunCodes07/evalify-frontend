@@ -6,7 +6,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import React from "react";
-import { useCourse } from "@/components/admin/course/hooks/use-course";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CourseBatchesTable } from "@/components/admin/course/batch-table";
 import { CourseStudentsTable } from "@/components/admin/course/student-table";
@@ -32,7 +32,17 @@ export default function CoursePage() {
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab") || "batches";
 
-  const { data: course, isLoading, isError } = useCourse(courseId);
+  const {
+    data: course,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: [courseId],
+    queryFn: () => {
+      return courseQueries.getCourseById(courseId);
+    },
+    refetchOnMount: true,
+  });
   const { data: instructors, isLoading: instructorsLoading } =
     useCourseInstructors(courseId);
   const queryClient = useQueryClient();
