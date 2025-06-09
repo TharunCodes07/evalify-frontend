@@ -20,8 +20,15 @@ import {
   UpdateTeamRequest,
 } from "@/components/teams/types/types";
 
-function useTeamsForDataTable(page: number, pageSize: number, search: string) {
-  return useTeams(search, page - 1, pageSize);
+function useTeamsForDataTable(
+  page: number,
+  pageSize: number,
+  search: string,
+  dateRange: { from_date: string; to_date: string },
+  sortBy: string,
+  sortOrder: string
+) {
+  return useTeams(search, page - 1, pageSize, sortBy, sortOrder);
 }
 
 useTeamsForDataTable.isQueryHook = true;

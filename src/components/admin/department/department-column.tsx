@@ -68,6 +68,7 @@ export const getColumns = (
       },
       meta: { label: "Department Name" },
       size: 200,
+      enableSorting: true,
     },
     {
       accessorKey: "batches",
@@ -84,6 +85,7 @@ export const getColumns = (
       },
       meta: { label: "Number of Batches" },
       size: 150,
+      enableSorting: true,
     },
     {
       id: "actions",
@@ -118,4 +120,4 @@ export const getColumns = (
       meta: { label: "Actions" },
     },
   ];
-}; 
+};

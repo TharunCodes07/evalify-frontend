@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { DataTable } from "@/components/data-table/data-table";
 import { getColumns } from "@/components/admin/users/user-columns";
 import { useUsers } from "@/components/admin/users/hooks/use-users";
@@ -9,7 +9,6 @@ import { AssignBatchDialog } from "@/components/admin/users/assign-batch-dialog"
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import batchQueries from "@/repo/batch-queries/batch-queries";
 import { useToast } from "@/hooks/use-toast";
-import { User } from "@/types/types";
 
 function useUsersForDataTable(
   page: number,
@@ -20,7 +19,7 @@ function useUsersForDataTable(
   sortOrder: string,
   columnFilters?: Record<string, string[]>
 ) {
-  return useUsers(search, page - 1, pageSize, columnFilters);
+  return useUsers(search, page - 1, pageSize, columnFilters, sortBy, sortOrder);
 }
 
 useUsersForDataTable.isQueryHook = true;

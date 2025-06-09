@@ -17,16 +17,34 @@ export const useProjectsByCourse = (
   courseId: string,
   searchQuery?: string,
   page: number = 0,
-  size: number = 10
+  size: number = 10,
+  sortBy?: string,
+  sortOrder?: "asc" | "desc"
 ) => {
   const { data: session } = useSession();
   const user = session?.user;
 
   const query = useQuery({
-    queryKey: ["projects", courseId, user?.id, searchQuery, page, size],
+    queryKey: [
+      "projects",
+      courseId,
+      user?.id,
+      searchQuery,
+      page,
+      size,
+      sortBy,
+      sortOrder,
+    ],
     queryFn: async (): Promise<DataTableResponse> => {
       let endpoint = `/projects/course/${courseId}`;
       const params: { [key: string]: string } = {};
+
+      if (sortBy) {
+        params.sort_by = sortBy;
+      }
+      if (sortOrder) {
+        params.sort_order = sortOrder;
+      }
 
       if (searchQuery && searchQuery.length > 0) {
         endpoint = `/projects/course/${courseId}/search`;

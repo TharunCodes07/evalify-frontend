@@ -73,6 +73,7 @@ export const getColumns = (
       },
       meta: { label: "Team" },
       size: 250,
+      enableSorting: true,
     },
     {
       accessorKey: "members",
@@ -115,6 +116,7 @@ export const getColumns = (
         );
       },
       meta: { label: "Projects" },
+      enableSorting: true,
     },
     {
       accessorKey: "createdAt",
@@ -134,6 +136,7 @@ export const getColumns = (
         );
       },
       meta: { label: "Created" },
+      enableSorting: true,
     },
     {
       accessorKey: "updatedAt",
@@ -153,6 +156,7 @@ export const getColumns = (
         );
       },
       meta: { label: "Last Updated" },
+      enableSorting: true,
     },
     {
       id: "actions",

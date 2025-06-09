@@ -53,8 +53,15 @@ export default function SemesterCoursesPage() {
   };
 
   const createMutation = useMutation({
-    mutationFn: (course: Omit<Course, "id">) => {
-      const newCourse: Course = { ...course, id: "" };
+    mutationFn: (course: Course) => {
+      const newCourse: Course = {
+        id: "",
+        name: course.name,
+        description: course.description,
+        type: course.type,
+        createdAt: course.createdAt,
+        updatedAt: course.updatedAt,
+      };
       return semesterQueries.createCourseForSemester(semesterId, newCourse);
     },
     onSuccess: () => handleMutationSuccess("created"),
@@ -78,7 +85,7 @@ export default function SemesterCoursesPage() {
   };
 
   const handleSubmit = (data: unknown) => {
-    createMutation.mutate(data as Omit<Course, "id">);
+    createMutation.mutate(data as Course);
   };
 
   if (isLoadingCourses || isLoadingSemester) {

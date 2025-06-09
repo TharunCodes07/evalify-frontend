@@ -21,7 +21,14 @@ function useBatchesForDataTable(
   sortOrder: string,
   columnFilters?: Record<string, string[]>
 ) {
-  return useBatches(search, page - 1, pageSize, columnFilters);
+  return useBatches(
+    search,
+    page - 1,
+    pageSize,
+    columnFilters,
+    sortBy,
+    sortOrder
+  );
 }
 
 useBatchesForDataTable.isQueryHook = true;
@@ -46,8 +53,7 @@ export default function BatchesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["batches"] });
-      toast({
-        title: "Batch deleted successfully",
+      toast("Batch deleted successfully", {
         description: "The batch has been successfully deleted.",
       });
     },

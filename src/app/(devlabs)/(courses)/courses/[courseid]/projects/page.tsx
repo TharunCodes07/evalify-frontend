@@ -21,11 +21,18 @@ export default function CourseProjects() {
     pageSize: number,
     search: string,
     _dateRange: { from_date: string; to_date: string },
-    _sortBy: string,
-    _sortOrder: string
+    sortBy: string,
+    sortOrder: string
   ) {
     const courseId = params.courseid as string;
-    return useProjectsByCourse(courseId, search, page - 1, pageSize);
+    return useProjectsByCourse(
+      courseId,
+      search,
+      page - 1,
+      pageSize,
+      sortBy,
+      sortOrder as "asc" | "desc"
+    );
   }
 
   useProjectsForDataTable.isQueryHook = true;

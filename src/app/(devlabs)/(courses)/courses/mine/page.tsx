@@ -12,9 +12,18 @@ import { useMyCourses } from "@/components/my-courses/hooks/use-mycourses";
 function useMyCoursesForDataTable(
   page: number,
   pageSize: number,
-  search: string
+  search: string,
+  dateRange: { from_date: string; to_date: string },
+  sortBy: string,
+  sortOrder: string
 ) {
-  return useMyCourses(search, page - 1, pageSize);
+  return useMyCourses(
+    search,
+    page - 1,
+    pageSize,
+    sortBy,
+    sortOrder as "asc" | "desc"
+  );
 }
 
 useMyCoursesForDataTable.isQueryHook = true;

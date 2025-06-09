@@ -16,19 +16,37 @@ interface DataTableResponse {
 export const useTeams = (
   searchQuery?: string,
   page: number = 0,
-  size: number = 10
+  size: number = 10,
+  sortBy?: string,
+  sortOrder?: "asc" | "desc"
 ) => {
   const { data: session } = useSession();
   const user = session?.user;
 
   const query = useQuery({
-    queryKey: ["teams", user?.id, user?.role, searchQuery, page, size],
+    queryKey: [
+      "teams",
+      user?.id,
+      user?.role,
+      searchQuery,
+      page,
+      size,
+      sortBy,
+      sortOrder,
+    ],
     queryFn: async (): Promise<DataTableResponse> => {
       if (!user) throw new Error("User not authenticated");
 
       let endpoint = "/teams";
-      const params: { [key: string]: string } = {};
+      const params: { [key: string]: string | number } = {};
 
+      if (sortBy) {
+        params.sort_by = sortBy;
+      }
+
+      if (sortOrder) {
+        params.sort_order = sortOrder;
+      }
       if (searchQuery) {
         endpoint = `/teams/search`;
         params.query = searchQuery;

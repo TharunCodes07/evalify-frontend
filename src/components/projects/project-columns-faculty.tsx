@@ -60,6 +60,7 @@ export const getColumnsFaculty = (): ColumnDef<Project>[] => {
       },
       meta: { label: "Project" },
       size: 250,
+      enableSorting: true,
     },
     {
       accessorKey: "createdAt",
@@ -79,6 +80,7 @@ export const getColumnsFaculty = (): ColumnDef<Project>[] => {
         );
       },
       meta: { label: "Created" },
+      enableSorting: true,
     },
     {
       accessorKey: "updatedAt",
@@ -98,6 +100,7 @@ export const getColumnsFaculty = (): ColumnDef<Project>[] => {
         );
       },
       meta: { label: "Last Updated" },
+      enableSorting: true,
     },
   ];
 };

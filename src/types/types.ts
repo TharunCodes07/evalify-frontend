@@ -74,11 +74,6 @@ export interface Course extends Record<string, unknown> {
   type: CourseType;
   createdAt: string;
   updatedAt: string;
-  _links?: {
-    self: {
-      href: string;
-    };
-  };
 }
 
 export enum CourseType {

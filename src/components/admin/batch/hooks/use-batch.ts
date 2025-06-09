@@ -47,14 +47,25 @@ export const useBatches = (
   searchQuery?: string,
   page: number = 0,
   size: number = 10,
-  columnFilters?: Record<string, string[]>
+  columnFilters?: Record<string, string[]>,
+  sortBy?: string,
+  sortOrder?: string
 ) => {
   const { data: session } = useSession();
   const user = session?.user;
   const isActiveFilter = columnFilters?.isActive?.[0];
 
   const query = useQuery({
-    queryKey: ["batches", user?.id, searchQuery, page, size, isActiveFilter],
+    queryKey: [
+      "batches",
+      user?.id,
+      searchQuery,
+      page,
+      size,
+      isActiveFilter,
+      sortBy,
+      sortOrder,
+    ],
     queryFn: async (): Promise<BatchDataTableResponse> => {
       if (!user) throw new Error("User not authenticated");
 
@@ -65,6 +76,20 @@ export const useBatches = (
 
       if (searchQuery) {
         params.query = searchQuery;
+      }
+
+      // Only add sorting parameters if both sortBy and sortOrder are provided
+      if (sortBy && sortOrder) {
+        // Convert snake_case to camelCase for the API
+        const sortByMap: Record<string, string> = {
+          name: "name",
+          graduation_year: "graduationYear",
+          section: "section",
+          is_active: "isActive",
+          department_id: "departmentId",
+        };
+        params.sort_by = sortByMap[sortBy] || sortBy;
+        params.sort_order = sortOrder;
       }
 
       const endpoint = searchQuery ? "/api/batch/search" : "/api/batch";
@@ -117,16 +142,28 @@ export const useBatchStudents = (
   batchId: string,
   searchQuery?: string,
   page: number = 0,
-  size: number = 10
+  size: number = 10,
+  sortBy?: string,
+  sortOrder?: string
 ) => {
   const query = useQuery({
-    queryKey: ["batchStudents", batchId, searchQuery, page, size],
+    queryKey: [
+      "batchStudents",
+      batchId,
+      searchQuery,
+      page,
+      size,
+      sortBy,
+      sortOrder,
+    ],
     queryFn: async (): Promise<StudentDataTableResponse> => {
       const response = await batchQueries.getBatchStudents(
         batchId,
         page,
         size,
-        searchQuery
+        searchQuery,
+        sortBy,
+        sortOrder
       );
       return response;
     },

@@ -16,16 +16,27 @@ function useDepartmentsForDataTable(
   sortOrder: string,
   columnFilters?: Record<string, string[]>
 ) {
-  return useDepartments(search, page - 1, pageSize, columnFilters);
+  return useDepartments(
+    search,
+    page - 1,
+    pageSize,
+    columnFilters,
+    sortBy,
+    sortOrder as "asc" | "desc"
+  );
 }
 
 useDepartmentsForDataTable.isQueryHook = true;
 
 export default function DepartmentsPage() {
-  const [selectedDepartment, setSelectedDepartment] = useState<Department | undefined>();
+  const [selectedDepartment, setSelectedDepartment] = useState<
+    Department | undefined
+  >();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [departmentToDelete, setDepartmentToDelete] = useState<string | null>(null);
+  const [departmentToDelete, setDepartmentToDelete] = useState<string | null>(
+    null
+  );
 
   const handleEdit = (department: Department) => {
     setSelectedDepartment(department);
@@ -94,4 +105,4 @@ export default function DepartmentsPage() {
       )}
     </div>
   );
-} 
+}

@@ -17,11 +17,22 @@ export const useUsers = (
   searchQuery?: string,
   page: number = 0,
   size: number = 10,
-  columnFilters?: Record<string, string[]>
+  columnFilters?: Record<string, string[]>,
+  sortBy?: string,
+  sortOrder?: string
 ) => {
   const role = columnFilters?.role?.[0];
   const query = useQuery({
-    queryKey: ["users", role, searchQuery, page, size, columnFilters],
+    queryKey: [
+      "users",
+      role,
+      searchQuery,
+      page,
+      size,
+      columnFilters,
+      sortBy,
+      sortOrder,
+    ],
     queryFn: async (): Promise<DataTableResponse> => {
       let endpoint = "/api/user";
       const params: { [key: string]: string } = {};
@@ -42,6 +53,22 @@ export const useUsers = (
         params.page = page.toString();
         params.size = size.toString();
       }
+
+      // Add sorting parameters
+      if (sortBy) {
+        // Convert snake_case to camelCase for the API
+        const sortByMap: Record<string, string> = {
+          created_at: "createdAt",
+          updated_at: "updatedAt",
+          phone_number: "phoneNumber",
+          is_active: "isActive",
+        };
+        params.sort_by = sortByMap[sortBy] || sortBy;
+      }
+      if (sortOrder) {
+        params.sort_order = sortOrder;
+      }
+
       const response = await axiosInstance.get(endpoint, { params });
       const backendResponse = response.data;
 

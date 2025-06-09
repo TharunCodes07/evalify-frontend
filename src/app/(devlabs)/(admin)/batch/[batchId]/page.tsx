@@ -15,14 +15,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import batchQueries from "@/repo/batch-queries/batch-queries";
 import { toast } from "sonner";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 export default function BatchDetailsPage() {
   const params = useParams();
@@ -55,11 +47,18 @@ export default function BatchDetailsPage() {
     pageSize: number,
     search: string,
     _dateRange: { from_date: string; to_date: string },
-    _sortBy: string,
-    _sortOrder: string,
+    sortBy: string,
+    sortOrder: string,
     _columnFilters?: Record<string, string[]>
   ) {
-    return useBatchStudents(batchId, search, page - 1, pageSize);
+    return useBatchStudents(
+      batchId,
+      search,
+      page - 1,
+      pageSize,
+      sortBy,
+      sortOrder
+    );
   }
   useBatchStudentsForDataTable.isQueryHook = true;
 

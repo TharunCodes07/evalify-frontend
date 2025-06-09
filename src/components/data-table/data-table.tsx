@@ -169,10 +169,10 @@ export function DataTable<TData, TValue>({
     from_date: string;
     to_date: string;
   }>("dateRange", { from_date: "", to_date: "" });
-  const [sortBy, setSortBy] = useConditionalUrlState("sortBy", "created_at");
+  const [sortBy, setSortBy] = useConditionalUrlState("sortBy", "");
   const [sortOrder, setSortOrder] = useConditionalUrlState<"asc" | "desc">(
     "sortOrder",
-    "desc"
+    "asc"
   );
   const [columnVisibility, setColumnVisibility] = useConditionalUrlState<
     Record<string, boolean>

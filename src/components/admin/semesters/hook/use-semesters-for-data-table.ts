@@ -7,10 +7,20 @@ const useGetSemesters = (
   searchQuery?: string,
   page: number = 0,
   size: number = 10,
-  columnFilters?: Record<string, string[]>
+  columnFilters?: Record<string, string[]>,
+  sortBy?: string,
+  sortOrder?: string
 ) => {
   return useQuery({
-    queryKey: ["semesters", searchQuery, page, size, columnFilters],
+    queryKey: [
+      "semesters",
+      searchQuery,
+      page,
+      size,
+      columnFilters,
+      sortBy,
+      sortOrder,
+    ],
     queryFn: async (): Promise<DataTableResponse> => {
       const isActiveFilter = columnFilters?.isActive?.[0];
       let endpoint = "/semester";
@@ -22,6 +32,20 @@ const useGetSemesters = (
       if (searchQuery) {
         endpoint = `/semester/search`;
         params.query = searchQuery;
+      }
+
+      // Add sorting parameters
+      if (sortBy) {
+        // Convert snake_case to camelCase for the API
+        const sortByMap: Record<string, string> = {
+          created_at: "createdAt",
+          updated_at: "updatedAt",
+          is_active: "isActive",
+        };
+        params.sort_by = sortByMap[sortBy] || sortBy;
+      }
+      if (sortOrder) {
+        params.sort_order = sortOrder;
       }
 
       const response = await axiosInstance.get(endpoint, { params });
@@ -86,7 +110,14 @@ export function useSemestersForDataTable(
   sortOrder: string,
   columnFilters?: Record<string, string[]>
 ) {
-  return useGetSemesters(search, page - 1, pageSize, columnFilters);
+  return useGetSemesters(
+    search,
+    page - 1,
+    pageSize,
+    columnFilters,
+    sortBy,
+    sortOrder
+  );
 }
 
 useSemestersForDataTable.isQueryHook = true;

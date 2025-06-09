@@ -7,6 +7,35 @@ import { useCourseBatches } from "./hooks/use-course-batches";
 import { Batch } from "@/types/types";
 import { Button } from "@/components/ui/button";
 
+type UseBatchesForDataTable = (
+  page: number,
+  pageSize: number,
+  search: string
+) => ReturnType<typeof useCourseBatches>;
+
+const createUseBatchesForDataTable = (
+  courseId: string
+): UseBatchesForDataTable & { isQueryHook: true } => {
+  const useBatchesForDataTable = (
+    page: number,
+    pageSize: number,
+    search: string
+  ) => {
+    return useCourseBatches(
+      courseId,
+      search,
+      page > 0 ? page - 1 : 0,
+      pageSize
+    );
+  };
+  (
+    useBatchesForDataTable as UseBatchesForDataTable & { isQueryHook?: boolean }
+  ).isQueryHook = true;
+  return useBatchesForDataTable as UseBatchesForDataTable & {
+    isQueryHook: true;
+  };
+};
+
 interface CourseBatchesTableProps {
   courseId: string;
   onAssign: () => void;
@@ -19,19 +48,10 @@ export function CourseBatchesTable({
   onDelete,
 }: CourseBatchesTableProps) {
   const router = useRouter();
-
-  const useBatchesForDataTable = React.useCallback(
-    function (page: number, pageSize: number, search: string) {
-      return useCourseBatches(
-        courseId,
-        search,
-        page > 0 ? page - 1 : 0,
-        pageSize
-      );
-    },
+  const useBatchesForDataTable = React.useMemo(
+    () => createUseBatchesForDataTable(courseId),
     [courseId]
   );
-  (useBatchesForDataTable as any).isQueryHook = true;
   const columns = React.useMemo(() => getBatchColumns(onDelete), [onDelete]);
 
   const handleRowClick = (row: Batch) => {

@@ -38,7 +38,9 @@ const batchQueries = {
     batchId: string,
     page: number,
     size: number,
-    searchQuery?: string
+    searchQuery?: string,
+    sortBy?: string,
+    sortOrder?: string
   ) => {
     const params: { [key: string]: string | number } = {
       page,
@@ -50,6 +52,12 @@ const batchQueries = {
     if (searchQuery && searchQuery.trim() !== "") {
       params.query = searchQuery;
       url = `/api/batch/${batchId}/students/search`;
+    }
+
+    // Add sorting parameters if provided
+    if (sortBy && sortOrder) {
+      params.sort_by = sortBy;
+      params.sort_order = sortOrder;
     }
 
     const response = await axiosInstance.get(url, { params });

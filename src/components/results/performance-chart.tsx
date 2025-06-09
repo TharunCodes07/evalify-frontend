@@ -8,6 +8,7 @@ import {
   YAxis,
   Tooltip,
   Legend,
+  TooltipProps,
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import type { CourseData } from "@/types/types";
@@ -16,8 +17,19 @@ interface PerformanceChartProps {
   data: CourseData[];
 }
 
+interface TooltipPayload {
+  name: string;
+  value: number;
+  color: string;
+  dataKey: string;
+}
+
 // Custom tooltip component
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: TooltipProps<number, string>) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-card/95 backdrop-blur-sm border border-border/50 rounded-lg p-4 shadow-lg">
@@ -29,7 +41,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           })}
         </p>
         <div className="space-y-2">
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry: TooltipPayload, index: number) => (
             <div
               key={index}
               className="flex items-center justify-between gap-4"
@@ -75,7 +87,9 @@ export default function PerformanceChart({ data }: PerformanceChartProps) {
 
   // Transform data to ensure all courses have entries for all dates
   const chartData = allDates.map((date) => {
-    const dataPoint: any = { date };
+    const dataPoint: { date: string; [courseName: string]: number | string } = {
+      date,
+    };
 
     data.forEach((course) => {
       const review = course.reviewHistory.find((r) => r.reviewDate === date);

@@ -28,18 +28,36 @@ export const useDepartments = (
   searchQuery?: string,
   page: number = 0,
   size: number = 10,
-  columnFilters?: Record<string, string[]>
+  columnFilters?: Record<string, string[]>,
+  sortBy?: string,
+  sortOrder?: "asc" | "desc"
 ) => {
   const query = useQuery({
-    queryKey: ["departments", searchQuery, page, size, columnFilters],
+    queryKey: [
+      "departments",
+      searchQuery,
+      page,
+      size,
+      columnFilters,
+      sortBy,
+      sortOrder,
+    ],
     queryFn: async (): Promise<DataTableResponse> => {
       const endpoint = searchQuery
         ? "/api/department/search"
         : "/api/department";
-      const params: { [key: string]: string | number } = {
+      const params: { [key: string]: string | number | undefined } = {
         page: page,
         size: size,
       };
+
+      if (sortBy) {
+        params.sort_by = sortBy;
+      }
+
+      if (sortOrder) {
+        params.sort_order = sortOrder;
+      }
 
       if (searchQuery) {
         params.query = searchQuery;

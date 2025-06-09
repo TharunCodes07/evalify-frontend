@@ -16,14 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import "react-quill/dist/quill.snow.css";
-import { useForm, Controller, FormProvider } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { kanbanAPI } from "@/repo/project-queries/kanban-queries";
-
-const schema = z.object({
-  title: z.string().min(1, "Title is required"),
-});
 
 interface AddTaskModalProps {
   columnId: string;

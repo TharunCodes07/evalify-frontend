@@ -71,6 +71,7 @@ export const getColumns = (
       },
       meta: { label: "Course" },
       size: 200,
+      enableSorting: true,
     },
     {
       accessorKey: "code",
@@ -90,6 +91,7 @@ export const getColumns = (
         );
       },
       meta: { label: "Course Code" },
+      enableSorting: true,
     },
     {
       id: "actions",

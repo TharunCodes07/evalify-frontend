@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   KanbanProvider,
   KanbanBoard,
@@ -10,9 +10,6 @@ import {
   type KanbanItemProps,
   type KanbanColumnProps,
 } from "@/components/kanban/kanban";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
-import { Toaster, toast } from "sonner";
 import { kanbanAPI } from "@/repo/project-queries/kanban-queries";
 import { useState, useEffect } from "react";
 import { AddTaskModal } from "./add-task-modal";
