@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -12,12 +11,8 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "./scroll-area";
 
 export type OptionType = {
   label: string;
@@ -27,7 +22,7 @@ export type OptionType = {
 interface MultiSelectProps {
   options: OptionType[];
   selected: string[];
-  onChange: React.Dispatch<React.SetStateAction<string[]>>;
+  onChange: (selected: string[]) => void;
   className?: string;
   placeholder?: string;
 }
@@ -37,63 +32,77 @@ function MultiSelect({
   selected,
   onChange,
   className,
-  placeholder = "Select options...",
+  placeholder = "Select...",
 }: MultiSelectProps) {
-  const [open, setOpen] = React.useState(false);
+  const [inputValue, setInputValue] = React.useState("");
 
   const handleSelect = (value: string) => {
-    onChange((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    onChange(
+      selected.includes(value)
+        ? selected.filter((v) => v !== value)
+        : [...selected, value]
     );
   };
 
   const handleRemove = (value: string) => {
-    onChange((prev) => prev.filter((v) => v !== value));
+    onChange(selected.filter((v) => v !== value));
   };
 
+  const selectedOptions = selected
+    .map((value) => options.find((option) => option.value === value))
+    .filter((option): option is OptionType => option !== undefined);
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-full justify-between", className)}
-          onClick={() => setOpen(!open)}
-        >
-          <div className="flex gap-1 flex-wrap">
-            {selected
-              .map((value) => options.find((option) => option.value === value))
-              .filter(Boolean)
-              .map((option) => (
-                <Badge
-                  variant="secondary"
-                  key={option!.value}
-                  className="mr-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemove(option!.value);
-                  }}
-                >
-                  {option!.label}
-                  <X className="ml-1 h-3 w-3" />
-                </Badge>
-              ))}
-            {selected.length === 0 && placeholder}
-          </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <Command>
-          <CommandInput placeholder="Search ..." />
-          <CommandList>
+    <div
+      className={cn("group w-full rounded-md border border-input", className)}
+    >
+      {selectedOptions.length > 0 && (
+        <div className="flex gap-1 flex-wrap p-2">
+          {selectedOptions.map((option) => (
+            <Badge
+              variant="secondary"
+              key={option.value}
+              className="mr-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemove(option.value);
+              }}
+            >
+              {option.label}
+              <button
+                className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleRemove(option.value);
+                  }
+                }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={() => handleRemove(option.value)}
+              >
+                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+      <Command>
+        <CommandInput
+          placeholder={placeholder}
+          value={inputValue}
+          onValueChange={setInputValue}
+        />
+        <CommandList>
+          <ScrollArea className="h-40">
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
                   onSelect={() => handleSelect(option.value)}
+                  className="cursor-pointer"
                 >
                   <Check
                     className={cn(
@@ -107,10 +116,10 @@ function MultiSelect({
                 </CommandItem>
               ))}
             </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+          </ScrollArea>
+        </CommandList>
+      </Command>
+    </div>
   );
 }
 

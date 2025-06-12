@@ -248,7 +248,7 @@ export const KanbanProvider = <
     const { active } = event;
     setActiveCardId(active.id as string);
     setIsDragging(true);
-    setDraggedData([...data]); 
+    setDraggedData([...data]);
     onDragStart?.(event);
   };
 
@@ -426,41 +426,22 @@ export const KanbanProvider = <
 
   const announcements: Announcements = {
     onDragStart({ active }) {
-      const { name, column } = data.find((item) => item.id === active.id) ?? {};
-      const columnName = columns.find((col) => col.id === column)?.name;
-      return `Picked up the card "${name}" from the "${columnName}" column`;
+      return `Picked up ${active.id}.`;
     },
     onDragOver({ active, over }) {
-      const { name } = data.find((item) => item.id === active.id) ?? {};
-
-      const overItem = data.find((item) => item.id === over?.id);
-      if (overItem) {
-        const newColumn = columns.find(
-          (column) => column.id === overItem.column
-        )?.name;
-        return `Dragged the card "${name}" over the "${newColumn}" column`;
+      if (over) {
+        return `${active.id} was moved over ${over.id}.`;
       }
-
-      const newColumn = columns.find((column) => column.id === over?.id)?.name;
-      return `Dragged the card "${name}" over the "${newColumn}" column`;
+      return `${active.id} is no longer over a droppable area.`;
     },
     onDragEnd({ active, over }) {
-      const { name } = data.find((item) => item.id === active.id) ?? {};
-
-      const overItem = data.find((item) => item.id === over?.id);
-      if (overItem) {
-        const newColumn = columns.find(
-          (column) => column.id === overItem.column
-        )?.name;
-        return `Dropped the card "${name}" into the "${newColumn}" column`;
+      if (over) {
+        return `${active.id} was dropped over ${over.id}.`;
       }
-
-      const newColumn = columns.find((column) => column.id === over?.id)?.name;
-      return `Dropped the card "${name}" into the "${newColumn}" column`;
+      return `${active.id} was dropped.`;
     },
     onDragCancel({ active }) {
-      const { name } = data.find((item) => item.id === active.id) ?? {};
-      return `Cancelled dragging the card "${name}"`;
+      return `Dragging was cancelled. ${active.id} was dropped.`;
     },
   };
 
@@ -475,30 +456,32 @@ export const KanbanProvider = <
     >
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
-        accessibility={{ announcements }}
+        collisionDetection={closestCenter}
+        announcements={announcements}
         {...props}
       >
-        <div
-          className={cn(
-            "grid size-full auto-cols-fr grid-flow-col gap-4",
-            className
-          )}
-        >
-          {columns.map((column) => children(column))}
-        </div>
-        {typeof window !== "undefined" &&
-          createPortal(
-            <DragOverlay>
-              <t.Out />
-            </DragOverlay>,
-            document.body
-          )}
+        <ScrollArea className="w-full">
+          <div
+            className={cn(
+              "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1",
+              className
+            )}
+          >
+            {columns.map(children)}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </DndContext>
+      {createPortal(
+        <DragOverlay>{activeCardId && <t.Out />}</DragOverlay>,
+        document.body
+      )}
     </KanbanContext.Provider>
   );
 };
+
+KanbanProvider.displayName = "KanbanProvider";

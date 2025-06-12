@@ -1,5 +1,5 @@
 import axiosInstance from "@/lib/axios/axios-client";
-import { Project } from "@/types/types";
+import { Project, ProjectWithTeam } from "@/types/types";
 import { CreateProjectRequest } from "@/components/projects/types/types";
 
 export const projectQueries = {
@@ -8,7 +8,9 @@ export const projectQueries = {
     return response.data.data || response.data;
   },
 
-  fetchProjectByProjectId: async (projectId: string): Promise<Project> => {
+  fetchProjectByProjectId: async (
+    projectId: string
+  ): Promise<ProjectWithTeam> => {
     const response = await axiosInstance.get(`/projects/${projectId}`);
     return response.data.data || response.data;
   },
@@ -33,6 +35,25 @@ export const projectQueries = {
 
   deleteProject: async (projectId: string) => {
     const response = await axiosInstance.delete(`/projects/${projectId}`);
+    return response.data;
+  },
+
+  getActiveProjects: async () => {
+    const response = await axiosInstance.get("/projects/active");
+    return response.data;
+  },
+
+  getActiveProjectsBySemester: async (semesterId: string) => {
+    const response = await axiosInstance.get(
+      `/projects/semester/${semesterId}/active`
+    );
+    return response.data;
+  },
+
+  getActiveProjectsByBatch: async (batchId: string) => {
+    const response = await axiosInstance.get(
+      `/projects/batch/${batchId}/active`
+    );
     return response.data;
   },
 };

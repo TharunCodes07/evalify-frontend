@@ -208,18 +208,12 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
     day: "numeric",
   });
   return (
-    <div className="h-full">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">Kanban Board</h1>
-        {moveTaskMutation.isPending && (
-          <p className="text-sm text-muted-foreground">Saving changes...</p>
-        )}
-      </div>{" "}
+    <div>
       <KanbanProvider
         columns={columns}
         data={kanbanTasks}
         onDataChange={handleDataChange}
-        className="h-[calc(100vh-200px)]"
+        className="min-h-[400px] h-auto"
       >
         {(column: EnhancedKanbanColumn) => (
           <KanbanBoard key={column.id} id={column.id}>

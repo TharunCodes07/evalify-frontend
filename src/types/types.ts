@@ -34,10 +34,16 @@ export interface Project extends Record<string, unknown> {
   objectives: string | null;
   status: ProjectStatus;
   teamId: string;
-  courseId: string[];
   createdAt: string;
   updatedAt: string;
   githubUrl?: string | null;
+  courses?: { id: string; name: string; code?: string }[];
+  teamMembers?: User[];
+}
+
+export interface ProjectWithTeam extends Project {
+  teamMembers: User[];
+  courses: { id: string; name: string; code?: string }[];
 }
 
 export enum ProjectStatus {
@@ -131,7 +137,7 @@ export interface MoveTaskRequest {
   userId: string;
 }
 
-export interface Review {
+export interface ReviewHistory {
   reviewId: string;
   reviewName: string;
   reviewDate: string;
@@ -142,6 +148,87 @@ export interface Review {
     averageScore: number;
     maxScore: number;
   }[];
+}
+
+export interface Review {
+  id: string;
+  name: string;
+  status: "SCHEDULED" | "LIVE" | "COMPLETED" | "CANCELLED";
+  startDate: string;
+  endDate: string;
+  courses: {
+    id: string;
+    name: string;
+    code: string;
+    semesterInfo: {
+      id: string;
+      name: string;
+      year: number;
+      isActive: boolean;
+    };
+  }[];
+  projects: { id: string; title: string }[];
+  sections: { id: string; name: string }[];
+  rubricsInfo: {
+    id: string;
+    name: string;
+    criteria: Criterion[];
+  };
+}
+
+export interface ProjectReviewsResponse {
+  hasReview: boolean;
+  assignmentType: string;
+  liveReviews: Review[];
+  completedReviews: Review[];
+}
+
+export interface Criterion {
+  id: string;
+  name: string;
+  description: string;
+  maxScore: number;
+  isCommon: boolean;
+}
+
+export interface EvaluationCriteria {
+  reviewId: string;
+  reviewName: string;
+  criteria: Criterion[];
+}
+
+export interface CriterionScore {
+  criterionId: string;
+  score: number;
+  comment?: string;
+}
+
+export interface EvaluationSubmission {
+  reviewId: string;
+  projectId: string;
+  comments?: string;
+  criterionScores: CriterionScore[];
+}
+
+export interface SubmittedEvaluation {
+  id: string;
+  reviewId: string;
+  reviewName: string;
+  projectId: string;
+  projectTitle: string;
+  evaluatorId: string;
+  evaluatorName: string;
+  comments?: string;
+  criterionScores: (CriterionScore & {
+    id: string;
+    criterionName: string;
+    maxScore: number;
+  })[];
+  totalScore: number;
+  maxPossibleScore: number;
+  status: "DRAFT" | "SUBMITTED";
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CourseData {
@@ -155,7 +242,7 @@ export interface CourseData {
   activeProjects: number;
   completedProjects: number;
   projects: Project[];
-  reviewHistory: Review[];
+  reviewHistory: ReviewHistory[];
   lastReviewDate: string | null;
   totalReviews: number;
 }

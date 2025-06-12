@@ -82,11 +82,6 @@ const semesterQueries = {
     };
   },
 
-  getSemester: async (id: string): Promise<Semester> => {
-    const response = await axiosInstance.get(`/semester/${id}`);
-    return response.data;
-  },
-
   createSemester: async (semester: Omit<Semester, "id">): Promise<Semester> => {
     const response = await axiosInstance.post("/api/semester", semester);
     return response.data;
@@ -126,6 +121,11 @@ const semesterQueries = {
     const response = await axiosInstance.delete(
       `/semester/${semesterId}/courses/${courseId}`
     );
+    return response.data;
+  },
+
+  getActiveSemesters: async () => {
+    const response = await axiosInstance.get("/api/semester/active");
     return response.data;
   },
 };
