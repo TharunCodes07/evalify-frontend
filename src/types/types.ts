@@ -3,7 +3,6 @@ export interface Team extends Record<string, unknown> {
   name: string;
   description?: string;
   members: TeamMember[];
-  projectCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,9 +19,9 @@ export interface User extends Record<string, unknown> {
   id: string;
   name: string;
   email: string;
-  profileId?: string;
+  profileId: string;
   role: "STUDENT" | "ADMIN" | "FACULTY" | "MANAGER";
-  phoneNumber?: string;
+  phoneNumber: string;
   image?: string;
   isActive: boolean;
 }
@@ -37,8 +36,8 @@ export interface Project extends Record<string, unknown> {
   createdAt: string;
   updatedAt: string;
   githubUrl?: string | null;
-  courses?: { id: string; name: string; code?: string }[];
-  teamMembers?: User[];
+  courses: { id: string; name: string; code?: string }[];
+  teamMembers: User[];
 }
 
 export interface ProjectWithTeam extends Project {
@@ -180,6 +179,7 @@ export interface ProjectReviewsResponse {
   hasReview: boolean;
   assignmentType: string;
   liveReviews: Review[];
+  upcomingReviews: Review[];
   completedReviews: Review[];
 }
 
@@ -261,4 +261,76 @@ export interface DataTableResponse<T> {
     per_page: number;
     total_count: number;
   };
+}
+
+export interface CourseEvaluationSummary {
+  reviewId: string;
+  reviewName: string;
+  projectId: string;
+  projectTitle: string;
+  teamName: string;
+  courseEvaluations: {
+    courseId: string;
+    courseName: string;
+    instructors: string[];
+    hasEvaluation: boolean;
+    evaluationCount: number;
+  }[];
+}
+
+export interface CourseEvaluationData {
+  courseId: string;
+  courseName: string;
+  projectId: string;
+  reviewId: string;
+  teamMembers: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  }[];
+  criteria: {
+    id: string;
+    name: string;
+    description: string;
+    maxScore: number;
+    courseSpecific: boolean;
+  }[];
+  existingScores?: {
+    participantId: string;
+    criterionScores: {
+      criterionId: string;
+      score: number;
+      comment?: string;
+    }[];
+  }[];
+  isPublished: boolean;
+}
+
+export interface IndividualScoreCriterionScore {
+  criterionId: string;
+  score: number;
+  comment?: string;
+}
+
+export interface IndividualScoreParticipantScore {
+  participantId: string;
+  criterionScores: IndividualScoreCriterionScore[];
+}
+
+export interface IndividualScoreSubmission {
+  userId: string;
+  reviewId: string;
+  projectId: string;
+  courseId: string;
+  scores: IndividualScoreParticipantScore[];
+}
+
+export interface StudentCourse {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  averageScorePercentage: number;
+  reviewCount: number;
 }

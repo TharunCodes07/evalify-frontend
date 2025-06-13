@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import "react-quill/dist/quill.snow.css";
 import { kanbanAPI } from "@/repo/project-queries/kanban-queries";
+import { useSession } from "next-auth/react";
 
 interface AddTaskModalProps {
   columnId: string;
@@ -28,6 +29,7 @@ export function AddTaskModal({ columnId, projectId }: AddTaskModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
 
   const createTaskMutation = useMutation({
     mutationFn: (taskData: {
@@ -57,11 +59,18 @@ export function AddTaskModal({ columnId, projectId }: AddTaskModalProps) {
       return;
     }
 
+    const userId = session?.user?.id;
+    if (!userId) {
+      console.error("User is not authenticated.");
+      // Handle not authenticated error, maybe show a toast
+      return;
+    }
+
     createTaskMutation.mutate({
       title: title.trim(),
       description: description.trim() || undefined,
       columnId,
-      userId: "user-id-placeholder", // Replace with actual user ID if needed
+      userId: userId,
     });
   };
 

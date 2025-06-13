@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import semesterQueries from "@/repo/semester-queries/semester-queries";
 import batchQueries from "@/repo/batch-queries/batch-queries";
-import courseQueries from "@/repo/course-queries/course-queries";
+import { courseQueries } from "@/repo/course-queries/course-queries";
 import { projectQueries } from "@/repo/project-queries/project-queries";
 import {
   BatchResponse,

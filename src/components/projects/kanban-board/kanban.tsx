@@ -14,6 +14,7 @@ import { kanbanAPI } from "@/repo/project-queries/kanban-queries";
 import { useState, useEffect } from "react";
 import { AddTaskModal } from "./add-task-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSession } from "next-auth/react";
 
 interface KanbanBoardPageProps {
   id?: string;
@@ -42,6 +43,7 @@ interface EnhancedKanbanColumn extends KanbanColumnProps {
 
 export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
   const [kanbanTasks, setKanbanTasks] = useState<EnhancedKanbanItem[]>([]);
+  const { data: session } = useSession();
   const {
     data: kanbanData,
     isLoading,
@@ -164,7 +166,7 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
         request: {
           columnId: movedTask.column,
           position: position,
-          userId: "user-id-placeholder",
+          userId: session?.user?.id || "",
         },
       });
     }

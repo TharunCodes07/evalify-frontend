@@ -5,21 +5,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
 import {
-  ChevronRight,
-  ChevronsUpDown,
-  Folder,
+  Book,
+  Building,
+  CalendarDays,
+  FileText,
   LogOut,
-  Settings2,
   User,
+  Users,
+  Users2,
   Zap,
+  ChevronsUpDown,
+  Home,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,46 +37,76 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/nav/theme-toggle";
 
-const navItems = [
-  {
-    title: "Admin",
-    icon: Settings2,
-    items: [
-      { title: "User", url: "/user" },
-      { title: "Semester", url: "/semester" },
-      { title: "Batch", url: "/batch" },
-      { title: "Department", url: "/department" },
-    ],
-  },
-  {
-    title: "Project",
-    icon: Folder,
-    items: [
-      { title: "Reviews", url: "/reviews" },
-      { title: "Evaluation", url: "/evaluation" },
-      { title: "Teams", url: "/teams" },
-      { title: "Projects", url: "/projects" },
-      { title: "Courses", url: "/courses/mine" },
-    ],
-  },
-];
-
 interface NavItem {
   title: string;
   icon: React.ElementType;
-  items?: { title: string; url: string }[];
-  url?: string;
+  url: string;
+  roles: string[];
 }
+
+const navItems: NavItem[] = [
+  {
+    title: "Dashboard",
+    icon: Home,
+    url: "/dashboard",
+    roles: ["ADMIN", "FACULTY", "STUDENT", "MANAGER"],
+  },
+  {
+    title: "Users",
+    icon: Users,
+    url: "/user",
+    roles: ["ADMIN"],
+  },
+  {
+    title: "Semester",
+    icon: CalendarDays,
+    url: "/semester",
+    roles: ["ADMIN"],
+  },
+  {
+    title: "Batch",
+    icon: Users2,
+    url: "/batch",
+    roles: ["ADMIN"],
+  },
+  {
+    title: "Department",
+    icon: Building,
+    url: "/department",
+    roles: ["ADMIN"],
+  },
+  {
+    title: "Reviews",
+    icon: FileText,
+    url: "/reviews",
+    roles: ["ADMIN", "FACULTY", "MANAGER"],
+  },
+  {
+    title: "Teams",
+    icon: Users,
+    url: "/teams",
+    roles: ["ADMIN", "STUDENT", "MANAGER"],
+  },
+  {
+    title: "Courses",
+    icon: Book,
+    url: "/courses",
+    roles: ["FACULTY", "MANAGER", "STUDENT"],
+  },
+];
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
+  const userRole = session?.user.role;
+
+  const accessibleNavItems = React.useMemo(() => {
+    if (!userRole) return [];
+    return navItems.filter((item) => item.roles.includes(userRole));
+  }, [userRole]);
 
   return (
     <>
@@ -109,37 +138,14 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           <SidebarGroup>
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
             <SidebarMenu>
-              {navItems.map((item: NavItem) => (
+              {accessibleNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  {item.items ? (
-                    <Collapsible className="group/collapsible">
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuButton tooltip={item.title}>
-                          <item.icon />
-                          <span>{item.title}</span>
-                          <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                        </SidebarMenuButton>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {item.items?.map((subItem) => (
-                            <SidebarMenuSubItem key={subItem.title}>
-                              <SidebarMenuSubButton asChild>
-                                <Link href={subItem.url}>{subItem.title}</Link>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ) : (
-                    <SidebarMenuButton tooltip={item.title} asChild>
-                      <Link href={item.url || ""}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  )}
+                  <SidebarMenuButton tooltip={item.title} asChild>
+                    <Link href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -217,7 +223,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() =>
-                      signOut({ redirect: true, callbackUrl: "/auth/login" })
+                      signOut({ redirect: true, callbackUrl: "/login" })
                     }
                   >
                     <LogOut />

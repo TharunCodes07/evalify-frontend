@@ -26,29 +26,31 @@ export default function ProjectReviews({
     queryFn: () => evaluationQueries.fetchReviewsForProject(projectId),
   });
 
-  const allReviews = reviewsResponse
-    ? [
-        ...reviewsResponse.liveReviews.map((r) => ({
-          ...r,
-          status: "LIVE" as const,
-        })),
-        ...reviewsResponse.completedReviews.map((r) => ({
-          ...r,
-          status: "COMPLETED" as const,
-        })),
-      ]
-    : [];
-
-  const filteredReviews = allReviews.filter((review) =>
-    review.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   if (isLoading) return <div>Loading reviews...</div>;
   if (error) return <div>Error loading reviews.</div>;
 
   if (!reviewsResponse || !reviewsResponse.hasReview) {
     return <p>No reviews found for this project.</p>;
   }
+
+  const allReviews = [
+    ...reviewsResponse.liveReviews.map((r) => ({
+      ...r,
+      status: "LIVE" as const,
+    })),
+    ...reviewsResponse.upcomingReviews.map((r) => ({
+      ...r,
+      status: "SCHEDULED" as const,
+    })),
+    ...reviewsResponse.completedReviews.map((r) => ({
+      ...r,
+      status: "COMPLETED" as const,
+    })),
+  ];
+
+  const filteredReviews = allReviews.filter((review) =>
+    review.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">

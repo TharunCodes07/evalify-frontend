@@ -189,7 +189,7 @@ export default function CoursePage() {
           <p>Loading instructors...</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(instructors || []).map((instructor) => (
+            {(instructors || []).map((instructor: User) => (
               <div
                 key={instructor.id}
                 className="flex items-center justify-between p-2 border rounded-md"

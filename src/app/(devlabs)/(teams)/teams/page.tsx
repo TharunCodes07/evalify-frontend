@@ -28,7 +28,7 @@ function useTeamsForDataTable(
   sortBy: string,
   sortOrder: string
 ) {
-  return useTeams(search, page - 1, pageSize, sortBy, sortOrder);
+  return useTeams(search, page - 1, pageSize, sortBy, sortOrder as "asc" | "desc");
 }
 
 useTeamsForDataTable.isQueryHook = true;

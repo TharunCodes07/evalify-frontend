@@ -45,11 +45,12 @@ import userQueries from "@/repo/user-queries/user-queries";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   description: z.string().optional(),
-  memberIds: z.array(z.string()).min(1, "At least one member is required."),
+  memberIds: z.array(z.string()),
 });
 
 type TeamFormValues = z.infer<typeof formSchema>;
@@ -71,6 +72,7 @@ export function TeamForm({
 }: TeamFormProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const { data: session } = useSession();
 
   const form = useForm<TeamFormValues>({
     resolver: zodResolver(formSchema),
@@ -130,9 +132,16 @@ export function TeamForm({
 
   const handleSubmit = (values: TeamFormValues) => {
     if (team) {
-      onSubmit({ ...values });
+      onSubmit(values);
     } else {
-      onSubmit({ ...values, creatorId: "user-id-placeholder" });
+      const userId = session?.user?.id;
+      if (!userId) {
+        // This should not happen in a real-world scenario as the user should be authenticated
+        // to access this form. Adding a console error for debugging.
+        console.error("User not authenticated, cannot create team.");
+        return;
+      }
+      onSubmit({ ...values, creatorId: userId });
     }
   };
 
