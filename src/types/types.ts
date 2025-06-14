@@ -272,7 +272,10 @@ export interface CourseEvaluationSummary {
   courseEvaluations: {
     courseId: string;
     courseName: string;
-    instructors: string[];
+    instructors: {
+      id: string;
+      name: string;
+    }[];
     hasEvaluation: boolean;
     evaluationCount: number;
   }[];

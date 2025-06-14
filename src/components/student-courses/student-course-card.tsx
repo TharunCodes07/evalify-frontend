@@ -1,48 +1,63 @@
 "use client";
 
-import { StudentCourse } from "@/types/types";
+import type { StudentCourse } from "@/types/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 interface StudentCourseCardProps {
-  course: StudentCourse;
+  course: StudentCourse & { color: string };
+  onClick: (course: StudentCourse) => void;
 }
 
-const getScoreColor = (score: number) => {
-  if (score >= 90) return "bg-green-500";
-  if (score >= 80) return "bg-yellow-500";
-  if (score >= 70) return "bg-orange-500";
-  return "bg-red-500";
+const getScoreBadgeClass = (score: number) => {
+  if (score >= 75)
+    return "bg-emerald-50 text-emerald-700 border-emerald-200/80";
+  if (score >= 50) return "bg-slate-50 text-slate-700 border-slate-200/80";
+  return "bg-rose-50 text-rose-700 border-rose-200/80";
 };
 
-export const StudentCourseCard = ({ course }: StudentCourseCardProps) => {
+export const StudentCourseCard = ({
+  course,
+  onClick,
+}: StudentCourseCardProps) => {
+  const score = course.averageScorePercentage;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex justify-between items-start">
-          <span>{course.name}</span>
-          <Badge variant="outline">{course.code}</Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-gray-500 mb-4">{course.description}</p>
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="text-sm font-medium text-gray-700">Reviews</p>
-            <p className="text-lg font-bold">{course.reviewCount}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-medium text-gray-700">Average Score</p>
-            <p
-              className={`text-lg font-bold text-white px-2 py-1 rounded ${getScoreColor(
-                course.averageScorePercentage
+    <div
+      className="relative group transition-transform duration-300 ease-in-out hover:-translate-y-1 rounded-lg overflow-hidden"
+      onClick={() => onClick(course)}
+    >
+      <Card
+        className="h-full rounded-lg shadow-sm group-hover:shadow-xl transition-shadow duration-300 border-l-5"
+        style={{ borderLeftColor: course.color }}
+      >
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <p className="pb-1 text-sm font-medium text-muted-foreground">
+                {course.code}
+              </p>
+              <CardTitle className="text-lg font-semibold leading-tight">
+                {course.name}
+              </CardTitle>
+            </div>
+            <Badge
+              variant="outline"
+              className={`whitespace-nowrap font-medium ${getScoreBadgeClass(
+                score
               )}`}
             >
-              {course.averageScorePercentage.toFixed(2)}%
-            </p>
+              {score.toFixed(1)}%
+            </Badge>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            {course.reviewCount} {course.reviewCount === 1 ? "Quiz" : "Quizzes"}{" "}
+            Completed
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 };

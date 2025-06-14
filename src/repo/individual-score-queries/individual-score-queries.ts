@@ -5,9 +5,6 @@ import {
   IndividualScoreSubmission,
 } from "@/types/types";
 
-// Note: The userId should be passed from the frontend,
-// ideally from a session or auth context.
-
 const fetchEvaluationSummary = async (
   reviewId: string,
   projectId: string,
@@ -35,7 +32,7 @@ const fetchCourseEvaluationData = async (
 
 const submitCourseScores = async (
   submission: IndividualScoreSubmission
-): Promise<any> => {
+): Promise<IndividualScoreSubmission> => {
   const response = await axiosInstance.post(
     "/api/individualScore/course",
     submission

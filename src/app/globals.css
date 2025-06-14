@@ -93,6 +93,11 @@
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.984 0.003 247.858);
 
+  --color-excellent: var(--chart-4);
+  --color-good: var(--chart-2);
+  --color-average: var(--chart-1);
+  --color-poor: var(--destructive);
+
   /* Dynamic theming variables */
   --primary-hue: 221;
   --base-font-size: 16px;

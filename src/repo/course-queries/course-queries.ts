@@ -18,41 +18,49 @@ export const courseQueries = {
     );
     return response.data;
   },
+  getCoursePerformance: async (studentId: string, courseId: string) => {
+    const response = await axiosInstance.get(
+      `/api/course/student/${studentId}/course/${courseId}/review`
+    );
+    return response.data;
+  },
   getCourseById: async (courseId: string) => {
     const response = await axiosInstance.get(`/api/course/${courseId}`);
     return response.data;
   },
   assignBatchesToCourse: async (courseId: string, batchIds: string[]) => {
-    const response = await axiosInstance.put(
+    const response = await axiosInstance.post(
       `/api/course/${courseId}/addBatch`,
       batchIds
     );
     return response.data;
   },
   removeBatchFromCourse: async (courseId: string, batchId: string) => {
-    const response = await axiosInstance.put(
-      `/api/course/${courseId}/remove-batch`,
-      {
-        batchId: [batchId],
-      }
+    const response = await axiosInstance.delete(
+      `/api/course/${courseId}/batches/${batchId}`
     );
     return response.data;
   },
   assignStudentsToCourse: async (courseId: string, studentIds: string[]) => {
-    const response = await axiosInstance.put(
-      `/api/course/${courseId}/add-student`,
-      {
-        studentId: studentIds,
-      }
+    const response = await axiosInstance.post(
+      `/api/course/${courseId}/students`,
+      { studentIds }
     );
     return response.data;
   },
   removeStudentFromCourse: async (courseId: string, studentId: string) => {
-    const response = await axiosInstance.put(
-      `/api/course/${courseId}/remove-student`,
-      {
-        studentId: [studentId],
-      }
+    const response = await axiosInstance.delete(
+      `/api/course/${courseId}/students/${studentId}`
+    );
+    return response.data;
+  },
+  getFaculty: async () => {
+    const response = await axiosInstance.get("/api/user/faculty");
+    return response.data;
+  },
+  getCourseInstructors: async (courseId: string) => {
+    const response = await axiosInstance.get(
+      `/api/course/${courseId}/instructors`
     );
     return response.data;
   },
@@ -60,11 +68,9 @@ export const courseQueries = {
     courseId: string,
     instructorIds: string[]
   ) => {
-    const response = await axiosInstance.put(
-      `/api/course/${courseId}/add-instructor`,
-      {
-        instructorId: instructorIds,
-      }
+    const response = await axiosInstance.post(
+      `/api/course/${courseId}/instructors`,
+      { instructorIds }
     );
     return response.data;
   },
@@ -72,11 +78,8 @@ export const courseQueries = {
     courseId: string,
     instructorId: string
   ) => {
-    const response = await axiosInstance.put(
-      `/api/course/${courseId}/remove-instructor`,
-      {
-        instructorId: [instructorId],
-      }
+    const response = await axiosInstance.delete(
+      `/api/course/${courseId}/instructors/${instructorId}`
     );
     return response.data;
   },

@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { useFaculty } from "./hooks/use-faculty";
+import { User } from "@/types/types";
 
 interface AssignInstructorDialogProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ export function AssignInstructorDialog({
   }, [isOpen]);
 
   const instructorOptions = useMemo(() => {
-    return (instructors || []).map((instructor) => ({
+    return (instructors || []).map((instructor: User) => ({
       label: instructor.name,
       value: instructor.id,
     }));

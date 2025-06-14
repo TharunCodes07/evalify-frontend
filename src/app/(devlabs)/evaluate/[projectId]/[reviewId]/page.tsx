@@ -27,7 +27,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeftIcon } from "@radix-ui/react-icons";
 
-// Component to select a course for evaluation
 function CourseSelector({
   summary,
   project,
@@ -37,6 +36,22 @@ function CourseSelector({
   project: ProjectWithTeam;
   reviewId: string;
 }) {
+  const user = useCurrentUser();
+
+  const canEvaluateCourse = (course: { instructors: { id: string }[] }) => {
+    if (!user) return false;
+
+    // Admin and Manager can evaluate any course
+    if (user.role === "ADMIN" || user.role === "MANAGER") return true;
+
+    // Faculty can only evaluate their own courses
+    if (user.role === "FACULTY") {
+      return course.instructors.some((instructor) => instructor.id === user.id);
+    }
+
+    return false;
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -56,32 +71,45 @@ function CourseSelector({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {summary.courseEvaluations.map((course) => (
-              <TableRow key={course.courseId}>
-                <TableCell className="font-medium">
-                  {course.courseName}
-                </TableCell>
-                <TableCell>{course.instructors.join(", ")}</TableCell>
-                <TableCell>
-                  {course.hasEvaluation ? (
-                    <Badge variant="secondary">Evaluated</Badge>
-                  ) : (
-                    <Badge variant="outline">Not Evaluated</Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Link
-                    href={`/evaluate/${project.id}/${reviewId}?courseId=${course.courseId}`}
-                  >
-                    <Button variant="default" size="sm">
-                      {course.hasEvaluation
-                        ? "View/Edit Evaluation"
-                        : "Start Evaluation"}
-                    </Button>
-                  </Link>
-                </TableCell>
-              </TableRow>
-            ))}
+            {summary.courseEvaluations.map((course) => {
+              const canEvaluate = canEvaluateCourse(course);
+              return (
+                <TableRow key={course.courseId}>
+                  <TableCell className="font-medium">
+                    {course.courseName}
+                  </TableCell>
+                  <TableCell>
+                    {course.instructors.map((i) => i.name).join(", ")}
+                  </TableCell>
+                  <TableCell>
+                    {course.hasEvaluation ? (
+                      <Badge variant="secondary">Evaluated</Badge>
+                    ) : (
+                      <Badge variant="outline">Not Evaluated</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {canEvaluate ? (
+                      <Link
+                        href={`/evaluate/${project.id}/${reviewId}?courseId=${course.courseId}`}
+                      >
+                        <Button variant="default" size="sm">
+                          {course.hasEvaluation
+                            ? "View/Edit Evaluation"
+                            : "Start Evaluation"}
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button variant="default" size="sm" disabled>
+                        {course.hasEvaluation
+                          ? "View/Edit Evaluation"
+                          : "Start Evaluation"}
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </CardContent>

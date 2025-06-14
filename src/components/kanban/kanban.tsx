@@ -461,7 +461,9 @@ export const KanbanProvider = <
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
         collisionDetection={closestCenter}
-        announcements={announcements}
+        accessibility={{
+          announcements,
+        }}
         {...props}
       >
         <ScrollArea className="w-full">

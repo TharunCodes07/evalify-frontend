@@ -11,5 +11,6 @@ export const useFaculty = () => {
       return courseQueries.getFaculty();
     },
     enabled: !!session,
+    refetchOnWindowFocus: false,
   });
 };
