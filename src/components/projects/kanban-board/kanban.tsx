@@ -45,10 +45,10 @@ interface EnhancedKanbanColumn extends KanbanColumnProps {
 function KanbanBoardSkeleton() {
   return (
     <div className="min-h-[400px] h-auto">
-      <div className="flex gap-6 overflow-x-auto pb-4">
-        {/* Skeleton for 4 columns */}
-        {Array.from({ length: 4 }).map((_, columnIndex) => (
-          <div key={columnIndex} className="flex-shrink-0 w-80">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Skeleton for 3 columns */}
+        {Array.from({ length: 3 }).map((_, columnIndex) => (
+          <div key={columnIndex} className="w-full">
             <div className="bg-muted/50 rounded-lg p-4">
               {/* Column Header */}
               <div className="flex items-center justify-between mb-4">
@@ -61,7 +61,7 @@ function KanbanBoardSkeleton() {
 
               {/* Column Cards */}
               <div className="space-y-3">
-                {Array.from({ length: Math.floor(Math.random() * 3) + 2 }).map(
+                {Array.from({ length: 2 + (columnIndex % 2) }).map(
                   (_, cardIndex) => (
                     <div
                       key={cardIndex}

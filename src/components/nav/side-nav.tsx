@@ -55,7 +55,7 @@ const navItems: NavItem[] = [
     url: "/dashboard",
     roles: ["ADMIN", "FACULTY", "STUDENT", "MANAGER"],
   },
-{
+  {
     title: "Users",
     icon: Users,
     url: "/user",
@@ -95,7 +95,7 @@ const navItems: NavItem[] = [
     title: "Courses",
     icon: Book,
     url: "/courses",
-    roles: ["FACULTY", "MANAGER", "STUDENT"],
+    roles: ["FACULTY", "ADMIN", "MANAGER", "STUDENT"],
   },
 ];
 
