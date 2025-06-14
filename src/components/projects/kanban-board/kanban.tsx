@@ -14,6 +14,7 @@ import { kanbanAPI } from "@/repo/project-queries/kanban-queries";
 import { useState, useEffect } from "react";
 import { AddTaskModal } from "./add-task-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
 
 interface KanbanBoardPageProps {
@@ -39,6 +40,52 @@ interface EnhancedKanbanItem extends KanbanItemProps {
 
 interface EnhancedKanbanColumn extends KanbanColumnProps {
   color?: string;
+}
+
+function KanbanBoardSkeleton() {
+  return (
+    <div className="min-h-[400px] h-auto">
+      <div className="flex gap-6 overflow-x-auto pb-4">
+        {/* Skeleton for 4 columns */}
+        {Array.from({ length: 4 }).map((_, columnIndex) => (
+          <div key={columnIndex} className="flex-shrink-0 w-80">
+            <div className="bg-muted/50 rounded-lg p-4">
+              {/* Column Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-2 w-2 rounded-full" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+
+              {/* Column Cards */}
+              <div className="space-y-3">
+                {Array.from({ length: Math.floor(Math.random() * 3) + 2 }).map(
+                  (_, cardIndex) => (
+                    <div
+                      key={cardIndex}
+                      className="bg-card border rounded-lg p-3"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-3 w-3/4" />
+                          <Skeleton className="h-3 w-1/2" />
+                        </div>
+                        <Skeleton className="h-6 w-6 rounded-full shrink-0" />
+                      </div>
+                      <Skeleton className="h-3 w-16 mt-2" />
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
@@ -176,7 +223,7 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
   }
 
   if (isLoading) {
-    return <div>Loading Kanban Board...</div>;
+    return <KanbanBoardSkeleton />;
   }
 
   if (error) {

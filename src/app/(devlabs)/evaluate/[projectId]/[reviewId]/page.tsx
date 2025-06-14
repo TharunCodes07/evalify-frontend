@@ -16,16 +16,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeftIcon } from "@radix-ui/react-icons";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft } from "lucide-react";
 
 function CourseSelector({
   summary,
@@ -40,78 +33,60 @@ function CourseSelector({
 
   const canEvaluateCourse = (course: { instructors: { id: string }[] }) => {
     if (!user) return false;
-
-    // Admin and Manager can evaluate any course
     if (user.role === "ADMIN" || user.role === "MANAGER") return true;
-
-    // Faculty can only evaluate their own courses
     if (user.role === "FACULTY") {
       return course.instructors.some((instructor) => instructor.id === user.id);
     }
-
     return false;
   };
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Select a Course to Evaluate</CardTitle>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-xl">Select Course</CardTitle>
         <CardDescription>
-          Project: {project.title} | Review: {summary.reviewName}
+          {project.title} • {summary.reviewName}
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Course</TableHead>
-              <TableHead>Instructors</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {summary.courseEvaluations.map((course) => {
-              const canEvaluate = canEvaluateCourse(course);
-              return (
-                <TableRow key={course.courseId}>
-                  <TableCell className="font-medium">
-                    {course.courseName}
-                  </TableCell>
-                  <TableCell>
-                    {course.instructors.map((i) => i.name).join(", ")}
-                  </TableCell>
-                  <TableCell>
-                    {course.hasEvaluation ? (
-                      <Badge variant="secondary">Evaluated</Badge>
-                    ) : (
-                      <Badge variant="outline">Not Evaluated</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {canEvaluate ? (
-                      <Link
-                        href={`/evaluate/${project.id}/${reviewId}?courseId=${course.courseId}`}
-                      >
-                        <Button variant="default" size="sm">
-                          {course.hasEvaluation
-                            ? "View/Edit Evaluation"
-                            : "Start Evaluation"}
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Button variant="default" size="sm" disabled>
-                        {course.hasEvaluation
-                          ? "View/Edit Evaluation"
-                          : "Start Evaluation"}
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+      <CardContent className="space-y-3">
+        {summary.courseEvaluations.map((course) => {
+          const canEvaluate = canEvaluateCourse(course);
+          return (
+            <div
+              key={course.courseId}
+              className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+            >
+              <div className="space-y-1 mb-3 sm:mb-0">
+                <h3 className="font-medium">{course.courseName}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {course.instructors.map((i) => i.name).join(", ")}
+                </p>
+                <Badge
+                  variant={course.hasEvaluation ? "default" : "outline"}
+                  className="w-fit"
+                >
+                  {course.hasEvaluation ? "Completed" : "Pending"}
+                </Badge>
+              </div>
+              <Button
+                asChild={canEvaluate}
+                disabled={!canEvaluate}
+                size="sm"
+                className="w-full sm:w-auto"
+              >
+                {canEvaluate ? (
+                  <Link
+                    href={`/evaluate/${project.id}/${reviewId}?courseId=${course.courseId}`}
+                  >
+                    {course.hasEvaluation ? "Edit" : "Start"}
+                  </Link>
+                ) : (
+                  <span>{course.hasEvaluation ? "Edit" : "Start"}</span>
+                )}
+              </Button>
+            </div>
+          );
+        })}
       </CardContent>
     </Card>
   );
@@ -160,51 +135,90 @@ export default function EvaluationPage() {
     }
   );
 
-  const isLoading =
-    isLoadingProject || isLoadingSummary || isLoadingEvaluationData;
-
-  if (isLoading) {
+  if (isLoadingProject || isLoadingSummary || isLoadingEvaluationData) {
     return (
-      <div className="container mx-auto p-4 text-center">
-        Loading evaluation data...
+      <div className="container mx-auto p-4 max-w-4xl">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-64" />
+              <Skeleton className="h-4 w-96" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex justify-between items-center p-4 border rounded-lg"
+                  >
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-40" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                    <Skeleton className="h-9 w-20" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-8">
-      <div>
+    <div className="container mx-auto max-w-4xl">
+      <div className="space-y-6">
         {courseId && (
-          <Button variant="outline" size="sm" onClick={() => router.back()}>
-            <ArrowLeftIcon className="mr-2 h-4 w-4" />
-            Back to Course Selection
-          </Button>
+          <div className="w-fit border rounded-sm bg-background shadow-sm">
+            <Button
+              variant="ghost"
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-sm font-medium hover:bg-muted/50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Course Selection
+            </Button>
+          </div>
         )}
-        <div className="my-4">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Project Evaluation
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            A modern, user-friendly evaluation experience.
+
+        {!courseId && project && summary && (
+          <div className="w-fit border rounded-sm bg-background shadow-sm">
+            <Button
+              variant="ghost"
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-sm font-medium hover:bg-muted/50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Project Selection
+            </Button>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">Project Evaluation</h1>
+          <p className="text-muted-foreground">
+            Evaluate team members based on defined criteria
           </p>
         </div>
+
+        {!courseId && project && summary && (
+          <CourseSelector
+            summary={summary}
+            project={project}
+            reviewId={reviewId}
+          />
+        )}
+
+        {courseId && evaluationData && (
+          <CourseEvaluationForm
+            evaluationData={evaluationData}
+            projectId={projectId}
+            reviewId={reviewId}
+          />
+        )}
       </div>
-
-      {!courseId && project && summary && (
-        <CourseSelector
-          summary={summary}
-          project={project}
-          reviewId={reviewId}
-        />
-      )}
-
-      {courseId && evaluationData && (
-        <CourseEvaluationForm
-          evaluationData={evaluationData}
-          projectId={projectId}
-          reviewId={reviewId}
-        />
-      )}
     </div>
   );
 }

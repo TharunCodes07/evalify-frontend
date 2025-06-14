@@ -53,7 +53,7 @@ export function ProjectForm({
 
   const { data: courses } = useQuery({
     queryKey: ["courses"],
-    queryFn: () => courseQueries.getActiveCourses(userId),
+    queryFn: () => courseQueries.getCourseByUserId(userId),
     enabled: isOpen,
     refetchOnMount: true,
     staleTime: 2 * 60 * 1000,

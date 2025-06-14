@@ -152,9 +152,17 @@ export interface ReviewHistory {
 export interface Review {
   id: string;
   name: string;
-  status: "SCHEDULED" | "LIVE" | "COMPLETED" | "CANCELLED";
+  status?: "SCHEDULED" | "LIVE" | "COMPLETED" | "CANCELLED";
   startDate: string;
   endDate: string;
+  isPublished: boolean;
+  publishedAt: string | null;
+  createdBy: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
   courses: {
     id: string;
     name: string;

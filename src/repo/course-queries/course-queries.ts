@@ -10,7 +10,7 @@ export const courseQueries = {
     const response = await axiosInstance.get(
       `/api/course/${userId}/active-courses`
     );
-    return response;
+    return response.data;
   },
   getCourseByStudentId: async (studentId: string): Promise<StudentCourse[]> => {
     const response = await axiosInstance.get(

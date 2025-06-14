@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getInitials } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
@@ -30,8 +31,91 @@ export default function DevlabsProjectPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="space-y-8">
+          {/* Project Header Skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-96" />
+            <Skeleton className="h-6 w-24" />
+          </div>
+
+          {/* Project Details Skeleton */}
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-32" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border"
+                  >
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="flex-1 space-y-1">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-24" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-6 w-24" />
+              </div>
+            </div>
+          </div>
+
+          {/* Kanban Board Skeleton */}
+          <div className="border rounded-lg">
+            <div className="p-6 space-y-4">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-48" />
+              <div className="min-h-[400px] h-auto">
+                <div className="flex gap-6 overflow-x-auto pb-4">
+                  {Array.from({ length: 4 }).map((_, columnIndex) => (
+                    <div key={columnIndex} className="flex-shrink-0 w-80">
+                      <div className="bg-muted/50 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-2 w-2 rounded-full" />
+                            <Skeleton className="h-4 w-20" />
+                          </div>
+                          <Skeleton className="h-8 w-8 rounded" />
+                        </div>
+                        <div className="space-y-3">
+                          {Array.from({ length: 2 }).map((_, cardIndex) => (
+                            <div
+                              key={cardIndex}
+                              className="bg-card border rounded-lg p-3"
+                            >
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div className="flex-1 space-y-2">
+                                  <Skeleton className="h-4 w-full" />
+                                  <Skeleton className="h-3 w-3/4" />
+                                </div>
+                                <Skeleton className="h-6 w-6 rounded-full shrink-0" />
+                              </div>
+                              <Skeleton className="h-3 w-16 mt-2" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -61,12 +145,25 @@ export default function DevlabsProjectPage() {
 
         <div>
           <h2 className="text-xl font-semibold mb-3">Team Members</h2>
-          <div className="flex flex-wrap -space-x-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {project.teamMembers?.map((member) => (
-              <Avatar key={member.id} className="border-2 border-white">
-                <AvatarImage src={member.image || ""} />
-                <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
-              </Avatar>
+              <div
+                key={member.id}
+                className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={member.image || ""} />
+                  <AvatarFallback className="text-xs">
+                    {getInitials(member.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{member.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {member.email}
+                  </p>
+                </div>
+              </div>
             ))}
           </div>
         </div>

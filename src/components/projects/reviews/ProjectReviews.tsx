@@ -4,15 +4,57 @@ import { useQuery } from "@tanstack/react-query";
 import { evaluationQueries } from "@/repo/evaluation-queries";
 import ReviewCard from "./ReviewCard";
 import { ProjectReviewsResponse } from "@/types/types";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProjectReviewsProps {
   projectId: string;
   projectCourses: { id: string; name: string; code?: string }[];
 }
 
+function ReviewsLoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-10 w-80" />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="space-y-4 p-6 border rounded-lg">
+            <div className="flex justify-between items-start">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-6 w-20" />
+            </div>
+            <Skeleton className="h-4 w-48" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-6 w-20" />
+              </div>
+            </div>
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ProjectReviews({
+  projectId,
+  projectCourses,
+}: ProjectReviewsProps) {
+  return (
+    <Suspense fallback={<ReviewsLoadingSkeleton />}>
+      <ProjectReviewsContent
+        projectId={projectId}
+        projectCourses={projectCourses}
+      />
+    </Suspense>
+  );
+}
+
+function ProjectReviewsContent({
   projectId,
   projectCourses,
 }: ProjectReviewsProps) {
@@ -26,7 +68,7 @@ export default function ProjectReviews({
     queryFn: () => evaluationQueries.fetchReviewsForProject(projectId),
   });
 
-  if (isLoading) return <div>Loading reviews...</div>;
+  if (isLoading) return <ReviewsLoadingSkeleton />;
   if (error) return <div>Error loading reviews.</div>;
 
   if (!reviewsResponse || !reviewsResponse.hasReview) {

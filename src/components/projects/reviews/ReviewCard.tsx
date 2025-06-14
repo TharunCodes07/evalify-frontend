@@ -11,9 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useToast } from "@/hooks/use-toast";
 import { Review } from "@/types/types";
 import { Calendar, Tag } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 
 interface ReviewCardProps {
@@ -28,21 +30,40 @@ export default function ReviewCard({
   projectCourses,
 }: ReviewCardProps) {
   const user = useCurrentUser();
+  const { error: showError } = useToast();
+  const router = useRouter();
+
   const canEvaluate =
     user && ["ADMIN", "FACULTY", "MANAGER"].includes(user.role);
 
-  const getStatusBadgeColor = (status: Review["status"]) => {
+  const isStudent = user && user.role === "STUDENT";
+
+  const getStatusBadgeClassName = (status: Review["status"]) => {
     switch (status) {
       case "LIVE":
-        return "bg-green-500 hover:bg-green-600";
+        return "bg-green-500 hover:bg-green-600 text-white border-green-500";
       case "SCHEDULED":
-        return "bg-blue-500 hover:bg-blue-600";
+        return "bg-blue-500 hover:bg-blue-600 text-white border-blue-500";
       case "COMPLETED":
-        return "bg-gray-500 hover:bg-gray-600";
+        return "bg-purple-500 hover:bg-purple-600 text-white border-purple-500";
       case "CANCELLED":
-        return "bg-red-500 hover:bg-red-600";
+        return "bg-red-500 hover:bg-red-600 text-white border-red-500";
       default:
-        return "bg-gray-500 hover:bg-gray-600";
+        return "bg-gray-500 hover:bg-gray-600 text-white border-gray-500";
+    }
+  };
+
+  const handleViewResults = () => {
+    if (review.status === "COMPLETED") {
+      if (canEvaluate) {
+        router.push(`/results/${review.id}/${projectId}`);
+      } else if (isStudent) {
+        if (review.isPublished) {
+          router.push(`/results/${review.id}/${projectId}`);
+        } else {
+          showError("Results are not yet published for this review.");
+        }
+      }
     }
   };
 
@@ -55,7 +76,7 @@ export default function ReviewCard({
       <CardHeader>
         <CardTitle className="flex justify-between items-start">
           <span className="font-bold">{review.name}</span>
-          <Badge className={`${getStatusBadgeColor(review.status)} text-white`}>
+          <Badge className={getStatusBadgeClassName(review.status)}>
             {review.status}
           </Badge>
         </CardTitle>
@@ -98,9 +119,28 @@ export default function ReviewCard({
             <Button className="w-full">Evaluate</Button>
           </Link>
         )}
-        {review.status !== "LIVE" && (
-          <Button variant="outline" className="w-full" disabled>
+        {review.status === "COMPLETED" && (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleViewResults}
+          >
             View Results
+          </Button>
+        )}
+        {review.status === "SCHEDULED" && (
+          <Button variant="outline" className="w-full" disabled>
+            Upcoming
+          </Button>
+        )}
+        {review.status === "CANCELLED" && (
+          <Button variant="outline" className="w-full" disabled>
+            Cancelled
+          </Button>
+        )}
+        {review.status === "LIVE" && !canEvaluate && (
+          <Button variant="outline" className="w-full" disabled>
+            Live Review
           </Button>
         )}
       </CardFooter>
