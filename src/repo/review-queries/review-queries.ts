@@ -1,14 +1,9 @@
 import axiosInstance from "@/lib/axios/axios-client";
-import { CreateReviewRequest, UpdateReviewRequest } from "./review-types";
+import { CreateReviewRequest } from "./review-types";
 
 const reviewQueries = {
   createReview: async (data: CreateReviewRequest) => {
     const response = await axiosInstance.post("/api/review", data);
-    return response.data;
-  },
-
-  updateReview: async (reviewId: string, data: UpdateReviewRequest) => {
-    const response = await axiosInstance.put(`/api/review/${reviewId}`, data);
     return response.data;
   },
 

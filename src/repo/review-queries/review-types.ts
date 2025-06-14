@@ -1,25 +1,16 @@
 export interface CreateReviewRequest {
   name: string;
-  startDate: string; // YYYY-MM-DD format
-  endDate: string; // YYYY-MM-DD format
+  startDate: string; // YYYY-MM-DD format (LocalDate)
+  endDate: string; // YYYY-MM-DD format (LocalDate)
   rubricsId: string; // UUID
-  userId: string; // UUID of the user creating the review
-  semesterIds?: string[]; // Optional array of UUIDs
-  batchIds?: string[]; // Optional array of UUIDs
-  courseIds?: string[];
-  projectIds?: string[]; // Optional array of UUIDs
-}
+  userId: string; // UUID
 
-export interface UpdateReviewRequest {
-  name?: string;
-  startDate?: string;
-  endDate?: string;
-  rubricsId?: string;
-  userId: string; // UUID of the user updating the review
-  semesterIds?: string[];
-  batchIds?: string[];
-  courseIds?: string[];
-  projectIds?: string[];
+  courseIds?: string[] | null; // Optional array of UUIDs
+  semesterIds?: string[] | null; // Optional array of UUIDs
+  batchIds?: string[] | null; // Optional array of UUIDs
+  projectIds?: string[] | null; // Optional array of UUIDs
+
+  sections?: string[] | null; // Optional array of strings
 }
 
 interface DepartmentResponse {
@@ -31,20 +22,6 @@ interface CourseResponse {
   id: string;
   name: string;
   code: string;
-}
-
-interface CriterionResponse {
-  id: string;
-  name: string;
-  description: string;
-  maxScore: number;
-  isCommon: boolean;
-}
-
-export interface RubricsResponse {
-  id: string;
-  name: string;
-  criteria: CriterionResponse[];
 }
 
 export interface SemesterResponse {
@@ -69,16 +46,4 @@ export interface ProjectResponse {
   description: string;
   courses: CourseResponse[];
   status: "ONGOING" | "PROPOSED";
-}
-
-export interface ReviewResponse {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  rubrics: RubricsResponse;
-  semesters: SemesterResponse[];
-  batches: BatchResponse[];
-  courses: CourseResponse[];
-  projects: ProjectResponse[];
 }
