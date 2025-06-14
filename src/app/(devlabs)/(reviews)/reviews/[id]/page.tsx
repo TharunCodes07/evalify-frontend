@@ -9,13 +9,38 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Calendar, Users } from "lucide-react";
 import { format } from "date-fns";
 import { RubricDisplay } from "@/components/reviews/rubric-display";
+import { PublishReviewButton } from "@/components/reviews/publish-review-button";
+import { useSession } from "next-auth/react";
+import {
+  calculateReviewStatus,
+  getStatusColor,
+  formatStatus,
+} from "@/utils/review-status";
 
 export default function ReviewDetailPage() {
   const params = useParams();
   const router = useRouter();
   const reviewId = params.id as string;
+  const { data: session } = useSession();
 
   const { data: review, isLoading, error } = useReview(reviewId);
+
+  // Check permissions based on user role
+  const canPublish =
+    session?.user &&
+    review &&
+    (() => {
+      const userRole = session.user.role;
+      switch (userRole) {
+        case "ADMIN":
+        case "MANAGER":
+          return true;
+        case "FACULTY":
+          return review.createdBy.id === session.user.id;
+        default:
+          return false;
+      }
+    })();
 
   if (isLoading) {
     return (
@@ -43,7 +68,9 @@ export default function ReviewDetailPage() {
   if (error || !review) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <h2 className="text-2xl font-bold text-destructive">Review Not Found</h2>
+        <h2 className="text-2xl font-bold text-destructive">
+          Review Not Found
+        </h2>
         <p className="text-muted-foreground">
           The review you are looking for does not exist or has been removed.
         </p>
@@ -55,21 +82,6 @@ export default function ReviewDetailPage() {
     );
   }
 
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case "LIVE":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "COMPLETED":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "SCHEDULED":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "CANCELLED":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -79,16 +91,18 @@ export default function ReviewDetailPage() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">{review.name}</h1>
-            <p className="text-muted-foreground">Review ID: {review.id}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className={getStatusColor(review.status)}>
-            {review.status || "UNKNOWN"}
-          </Badge>
-          <Badge variant={review.isPublished ? "default" : "secondary"}>
-            {review.isPublished ? "Published" : "Draft"}
-          </Badge>
+          {canPublish && (
+            <PublishReviewButton
+              reviewId={review.id}
+              isPublished={review.isPublished}
+              canPublish={canPublish}
+              variant="default"
+              size="default"
+            />
+          )}
         </div>
       </div>
 
@@ -105,13 +119,17 @@ export default function ReviewDetailPage() {
               <div>
                 <h4 className="font-medium mb-2">Start Date</h4>
                 <p className="text-muted-foreground">
-                  {review.startDate ? format(new Date(review.startDate), "PPP") : "Not set"}
+                  {review.startDate
+                    ? format(new Date(review.startDate), "PPP")
+                    : "Not set"}
                 </p>
               </div>
               <div>
                 <h4 className="font-medium mb-2">End Date</h4>
                 <p className="text-muted-foreground">
-                  {review.endDate ? format(new Date(review.endDate), "PPP") : "Not set"}
+                  {review.endDate
+                    ? format(new Date(review.endDate), "PPP")
+                    : "Not set"}
                 </p>
               </div>
               {review.publishedAt && (
@@ -157,14 +175,25 @@ export default function ReviewDetailPage() {
               <div>
                 <h4 className="font-medium mb-2">Publication Status</h4>
                 <Badge variant={review.isPublished ? "default" : "secondary"}>
-                  {review.isPublished ? "Published" : "Draft"}
+                  {review.isPublished ? "Published" : "Not Published"}
                 </Badge>
               </div>
               <div>
                 <h4 className="font-medium mb-2">Review Status</h4>
-                <Badge variant="outline" className={getStatusColor(review.status)}>
-                  {review.status || "UNKNOWN"}
-                </Badge>
+                {(() => {
+                  const dynamicStatus = calculateReviewStatus(
+                    review.startDate,
+                    review.endDate
+                  );
+                  return (
+                    <Badge
+                      variant="outline"
+                      className={getStatusColor(dynamicStatus)}
+                    >
+                      {formatStatus(dynamicStatus)}
+                    </Badge>
+                  );
+                })()}
               </div>
             </div>
           </CardContent>

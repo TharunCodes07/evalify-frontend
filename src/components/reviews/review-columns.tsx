@@ -10,6 +10,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Eye, Edit, Trash } from "lucide-react";
 import { format } from "date-fns";
+import {
+  calculateReviewStatus,
+  getStatusColor,
+  formatStatus,
+} from "@/utils/review-status";
 
 export const getColumns = (
   onView: (review: Review) => void,
@@ -24,9 +29,6 @@ export const getColumns = (
       return (
         <div className="flex flex-col">
           <span className="font-medium">{review.name}</span>
-          <span className="text-sm text-muted-foreground">
-            {review.id.slice(0, 8)}...
-          </span>
         </div>
       );
     },
@@ -35,25 +37,15 @@ export const getColumns = (
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.original.status;
-      const getStatusColor = (status?: string) => {
-        switch (status) {
-          case "LIVE":
-            return "bg-green-100 text-green-800 border-green-200";
-          case "COMPLETED":
-            return "bg-blue-100 text-blue-800 border-blue-200";
-          case "SCHEDULED":
-            return "bg-yellow-100 text-yellow-800 border-yellow-200";
-          case "CANCELLED":
-            return "bg-red-100 text-red-800 border-red-200";
-          default:
-            return "bg-gray-100 text-gray-800 border-gray-200";
-        }
-      };
+      const review = row.original;
+      const dynamicStatus = calculateReviewStatus(
+        review.startDate,
+        review.endDate
+      );
 
       return (
-        <Badge variant="outline" className={getStatusColor(status)}>
-          {status || "UNKNOWN"}
+        <Badge variant="outline" className={getStatusColor(dynamicStatus)}>
+          {formatStatus(dynamicStatus)}
         </Badge>
       );
     },
@@ -76,12 +68,12 @@ export const getColumns = (
   },
   {
     accessorKey: "isPublished",
-    header: "Published",
+    header: "Publication Status",
     cell: ({ row }) => {
       const isPublished = row.original.isPublished;
       return (
         <Badge variant={isPublished ? "default" : "secondary"}>
-          {isPublished ? "Published" : "Draft"}
+          {isPublished ? "Published" : "Not Published"}
         </Badge>
       );
     },
