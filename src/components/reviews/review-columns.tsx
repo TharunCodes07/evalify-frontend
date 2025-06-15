@@ -95,7 +95,7 @@ export const getColumns = (
   },
   {
     id: "actions",
-    header: "",
+    header: "Actions",
     cell: ({ row }) => {
       const review = row.original;
 

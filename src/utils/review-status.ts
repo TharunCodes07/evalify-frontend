@@ -1,4 +1,4 @@
-export type ReviewStatus = "PENDING" | "LIVE" | "OVERDUE" | "COMPLETED" | "CANCELLED";
+export type ReviewStatus = "UPCOMING" | "LIVE" | "COMPLETED";
 
 export interface ReviewPublicationStatus {
   reviewId: string;
@@ -20,9 +20,9 @@ export function calculateReviewStatus(
   const start = new Date(startDate);
   const end = new Date(endDate);
 
-  // If current time is before start time - review is pending
+  // If current time is before start time - review is upcoming
   if (now < start) {
-    return "PENDING";
+    return "UPCOMING";
   }
 
   // If current time is between start and end time - review is live/active
@@ -30,20 +30,12 @@ export function calculateReviewStatus(
     return "LIVE";
   }
 
-  // If current time is after end time - check if it's overdue or completed
+  // If current time is after end time - review is completed
   if (now > end) {
-    // If it's been more than 7 days past end date, consider it completed
-    const weekAfterEnd = new Date(end);
-    weekAfterEnd.setDate(weekAfterEnd.getDate() + 7);
-    
-    if (now > weekAfterEnd) {
-      return "COMPLETED";
-    } else {
-      return "OVERDUE";
-    }
+    return "COMPLETED";
   }
 
-  return "PENDING";
+  return "UPCOMING";
 }
 
 /**
@@ -52,17 +44,13 @@ export function calculateReviewStatus(
 export function getStatusColor(status: ReviewStatus): string {
   switch (status) {
     case "LIVE":
-      return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800";
-    case "PENDING":
-      return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800";
-    case "OVERDUE":
-      return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800";
+      return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800";
+    case "UPCOMING":
+      return "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800";
     case "COMPLETED":
-      return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800";
-    case "CANCELLED":
-      return "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800";
+      return "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800";
     default:
-      return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800";
+      return "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800";
   }
 }
 
@@ -71,16 +59,12 @@ export function getStatusColor(status: ReviewStatus): string {
  */
 export function formatStatus(status: ReviewStatus): string {
   switch (status) {
-    case "PENDING":
-      return "Pending";
+    case "UPCOMING":
+      return "Upcoming";
     case "LIVE":
       return "Live";
-    case "OVERDUE":
-      return "Overdue";
     case "COMPLETED":
       return "Completed";
-    case "CANCELLED":
-      return "Cancelled";
     default:
       return "Unknown";
   }

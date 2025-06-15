@@ -194,7 +194,7 @@ export function CourseEvaluationForm({
                 {evaluationData.courseName}
               </CardTitle>
               <CardDescription>
-                Team members: {evaluationData.teamMembers.length} • Criteria:{" "}
+                Team members: {evaluationData.teamMembers.length} • Criteria:
                 {evaluationData.criteria.length}
               </CardDescription>
             </div>
@@ -223,7 +223,7 @@ export function CourseEvaluationForm({
             </Alert>
           </CardContent>
         )}
-      </Card>{" "}
+      </Card>
       {/* Criteria-based Evaluation */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">

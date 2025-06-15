@@ -281,7 +281,6 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
             <KanbanCards id={column.id}>
               {(task: EnhancedKanbanItem) => (
                 <KanbanCard key={task.id} {...task}>
-                  {" "}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
                       <p className="m-0 font-medium text-sm line-clamp-2">

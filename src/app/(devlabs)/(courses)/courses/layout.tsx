@@ -21,7 +21,7 @@ export default async function CoursesLayout({
     return <>{student}</>;
   }
 
-  if (role === "FACULTY" || role === "MANAGER" || role === "ADMIN") {
+  if (role === "FACULTY" || role === "MANAGER") {
     return <>{faculty}</>;
   }
 

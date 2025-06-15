@@ -96,13 +96,13 @@ const navItems: NavItem[] = [
     title: "Courses",
     icon: Book,
     url: "/courses",
-    roles: ["FACULTY", "ADMIN", "MANAGER", "STUDENT"],
+    roles: ["FACULTY", "MANAGER", "STUDENT"],
   },
   {
     title: "Archives",
     icon: Archive,
     url: "/archives",
-    roles: ["ADMIN", "STUDENT"],
+    roles: ["FACULTY", "STUDENT"],
   },
 ];
 

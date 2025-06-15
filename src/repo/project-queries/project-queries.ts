@@ -65,6 +65,26 @@ export const projectQueries = {
     );
     return response.data;
   },
+
+  searchProjectsByCourse: async (
+    courseId: string,
+    userId: string,
+    query: string,
+    page: number = 0,
+    size: number = 10
+  ): Promise<Project[]> => {
+    const response = await axiosInstance.get(
+      `/projects/course/${courseId}/search/${userId}`,
+      {
+        params: {
+          query,
+          page,
+          size,
+        },
+      }
+    );
+    return response.data.data || response.data;
+  },
 };
 
 export { archiveQueries } from "./archive-queries";

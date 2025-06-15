@@ -23,14 +23,18 @@ function useReviewsForDataTable(
   search: string,
   dateRange: { from_date: string; to_date: string },
   sortBy: string,
-  sortOrder: string
+  sortOrder: string,
+  courseId?: string,
+  status?: string
 ) {
   return useReviews(
     search,
     page - 1,
     pageSize,
     sortBy,
-    sortOrder as "asc" | "desc"
+    sortOrder as "asc" | "desc",
+    courseId,
+    status
   );
 }
 
@@ -85,10 +89,33 @@ export default function ReviewsPage() {
   const handleCreate = () => {
     router.push("/reviews/create");
   };
-
   const columnsWrapper = () => {
     return getColumns(handleView, handleEdit, handleDelete);
   };
+
+  // Create a wrapper function that includes the status filter
+  const useFilteredReviews = (
+    page: number,
+    pageSize: number,
+    search: string,
+    dateRange: { from_date: string; to_date: string },
+    sortBy: string,
+    sortOrder: string
+  ) => {
+    return useReviewsForDataTable(
+      page,
+      pageSize,
+      search,
+      dateRange,
+      sortBy,
+      sortOrder,
+      undefined, // courseId - could be added later
+      undefined // statusFilter removed
+    );
+  };
+
+  // Add the isQueryHook flag to our wrapper
+  useFilteredReviews.isQueryHook = true;
 
   const renderReviewGrid = (
     review: Review,
@@ -137,11 +164,18 @@ export default function ReviewsPage() {
       />
     );
   };
-
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semibold">Reviews</h1>
+      <div className="flex justify-between items-start mb-6">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-6 w-6" />
+            <h1 className="text-2xl font-semibold">Reviews</h1>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            Create and manage project reviews and evaluations
+          </p>
+        </div>
         <div className="flex items-center gap-4">
           <Button onClick={handleCreate}>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -170,7 +204,7 @@ export default function ReviewsPage() {
               headers: [],
             }}
             getColumns={columnsWrapper}
-            fetchDataFn={useReviewsForDataTable}
+            fetchDataFn={useFilteredReviews}
             idField="id"
             onRowClick={handleView}
           />
@@ -187,7 +221,7 @@ export default function ReviewsPage() {
             }}
             getColumns={columnsWrapper}
             renderGridItem={renderReviewGrid}
-            fetchDataFn={useReviewsForDataTable}
+            fetchDataFn={useFilteredReviews}
             idField="id"
             gridConfig={{
               columns: { default: 1, md: 2, lg: 3, xl: 4 },

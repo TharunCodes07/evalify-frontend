@@ -57,24 +57,24 @@ const CourseSummary: React.FC<CourseSummaryProps> = ({
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="flex justify-between items-center">
-            <p>Total Reviews</p>{" "}
+            <p>Total Reviews</p>
             <span className="font-bold">{stats.total}</span>
           </div>
           <div className="flex justify-between items-center">
-            <p>Completed</p>{" "}
+            <p>Completed</p>
             <span className="font-bold">{stats.completed}</span>
           </div>
           <div className="flex justify-between items-center">
             <p>Upcoming</p> <span className="font-bold">{stats.upcoming}</span>
           </div>
           <div className="flex justify-between items-center">
-            <p>Live</p>{" "}
+            <p>Live</p>
             <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
               {stats.live}
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <p>Missed</p>{" "}
+            <p>Missed</p>
             <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
               {stats.missed}
             </span>

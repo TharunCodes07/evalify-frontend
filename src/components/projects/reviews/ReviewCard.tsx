@@ -82,7 +82,7 @@ export default function ReviewCard({
         </CardTitle>
         <CardDescription className="flex items-center text-sm text-muted-foreground pt-1">
           <Calendar className="mr-2 h-4 w-4" />
-          {format(new Date(review.startDate), "MMM d, yyyy")} -{" "}
+          {format(new Date(review.startDate), "MMM d, yyyy")} -
           {format(new Date(review.endDate), "MMM d, yyyy")}
         </CardDescription>
       </CardHeader>

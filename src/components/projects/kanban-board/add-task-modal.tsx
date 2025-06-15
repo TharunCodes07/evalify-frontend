@@ -100,7 +100,7 @@ export function AddTaskModal({ columnId, projectId }: AddTaskModalProps) {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>{" "}
+              <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
                 placeholder="Enter task title..."
@@ -111,7 +111,7 @@ export function AddTaskModal({ columnId, projectId }: AddTaskModalProps) {
                 required
                 disabled={createTaskMutation.isPending}
               />
-            </div>{" "}
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="description">Description (Optional)</Label>
               <textarea

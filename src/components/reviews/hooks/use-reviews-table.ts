@@ -18,7 +18,9 @@ export const useReviews = (
   page: number = 0,
   size: number = 10,
   sortBy?: string,
-  sortOrder?: "asc" | "desc"
+  sortOrder?: "asc" | "desc",
+  courseId?: string,
+  status?: string
 ) => {
   const { data: session } = useSession();
   const user = session?.user;
@@ -33,37 +35,56 @@ export const useReviews = (
       size,
       sortBy,
       sortOrder,
+      courseId,
+      status,
     ],
     queryFn: async (): Promise<DataTableResponse> => {
       if (!user) throw new Error("User not authenticated");
 
-      let endpoint = "/api/review";
+      let endpoint: string;
       const params: { [key: string]: string | number } = {};
 
+      // Add pagination parameters
+      params.page = page.toString();
+      params.size = size.toString();
+
+      // Add sorting parameters
       if (sortBy) {
-        params.sort_by = sortBy;
+        params.sortBy = sortBy;
       }
 
       if (sortOrder) {
-        params.sort_order = sortOrder;
+        params.sortOrder = sortOrder;
       }
 
-      if (searchQuery) {
-        endpoint = `/api/review/search`;
+      // Use different endpoints based on whether we're searching or not
+      if (searchQuery && searchQuery.trim().length > 0) {
+        // Use search endpoint when there's a search query
+        endpoint = `/api/review/search/${user.id}`;
         params.name = searchQuery;
       } else {
-        params.page = page.toString();
-        params.size = size.toString();
-
+        // Use regular endpoint for listing all reviews based on user role
         if (user.role === "STUDENT") {
           endpoint = `/api/review/user`;
           params.userId = user.id;
+        } else {
+          endpoint = `/api/review`;
         }
       }
 
+      // Add filter parameters only for search
+      if (searchQuery && searchQuery.trim().length > 0) {
+        if (courseId) {
+          params.courseId = courseId;
+        }
+
+        if (status) {
+          params.status = status;
+        }
+      }
       const response = await axiosInstance.get(endpoint, { params });
       const backendResponse = response.data;
-
+      
       if (backendResponse.pagination) {
         return backendResponse as DataTableResponse;
       }

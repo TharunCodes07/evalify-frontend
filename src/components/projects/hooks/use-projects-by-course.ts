@@ -36,22 +36,26 @@ export const useProjectsByCourse = (
       sortOrder,
     ],
     queryFn: async (): Promise<DataTableResponse> => {
-      let endpoint = `/projects/course/${courseId}`;
+      if (!user?.id) throw new Error("User not authenticated");
+
+      let endpoint: string;
       const params: { [key: string]: string } = {};
 
+      params.page = page.toString();
+      params.size = size.toString();
+
       if (sortBy) {
-        params.sort_by = sortBy;
+        params.sortBy = sortBy;
       }
       if (sortOrder) {
-        params.sort_order = sortOrder;
+        params.sortOrder = sortOrder;
       }
 
       if (searchQuery && searchQuery.length > 0) {
-        endpoint = `/projects/course/${courseId}/search`;
+        endpoint = `/projects/course/${courseId}/search/${user.id}`;
         params.query = searchQuery;
       } else {
-        params.page = page.toString();
-        params.size = size.toString();
+        endpoint = `/projects/course/${courseId}`;
       }
 
       const response = await axiosInstance.get(endpoint, { params });
