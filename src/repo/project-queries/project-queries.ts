@@ -1,5 +1,5 @@
 import axiosInstance from "@/lib/axios/axios-client";
-import { Project, ProjectWithTeam } from "@/types/types";
+import { Course, Project, ProjectWithTeam } from "@/types/types";
 import { CreateProjectRequest } from "@/components/projects/types/types";
 
 export const projectQueries = {
@@ -56,4 +56,15 @@ export const projectQueries = {
     );
     return response.data;
   },
+  getProjectByCourse: async (
+    userId: string,
+    courseId: string
+  ): Promise<Course[]> => {
+    const response = await axiosInstance.get(
+      `/project/user/${userId}/course/${courseId}`
+    );
+    return response.data;
+  },
 };
+
+export { archiveQueries } from "./archive-queries";

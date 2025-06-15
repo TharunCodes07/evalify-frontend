@@ -8,7 +8,7 @@ import { GridItem } from "@/components/data-grid/grid-item";
 import { Review } from "@/types/types";
 import { Calendar, Clock, PlusCircle } from "lucide-react";
 import { getColumns } from "@/components/reviews/review-columns";
-import { useReviews } from "@/components/reviews/hooks/use-reviews";
+import { useReviews } from "@/components/reviews/hooks/use-reviews-table";
 import { Button } from "@/components/ui/button";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -97,16 +97,6 @@ export default function ReviewsPage() {
     onToggleSelect: () => void
   ) => {
     const reviewItem = review as Review & Record<string, unknown>;
-    const dynamicStatus = calculateReviewStatus(
-      review.startDate,
-      review.endDate
-    );
-    const statusDescription = getStatusDescription(
-      dynamicStatus,
-      review.startDate,
-      review.endDate
-    );
-
     return (
       <GridItem<Review & Record<string, unknown>>
         key={review.id}
@@ -119,21 +109,20 @@ export default function ReviewsPage() {
         fieldConfig={{
           id: "id",
           title: "name",
-          description: statusDescription || "startDate",
+          description: "startDate",
           createdAt: "publishedAt",
           badge: {
             field: "status",
             label: "",
             variant: "outline",
-            format: () => formatStatus(dynamicStatus),
+            format: (value: unknown) => String(value || "UNKNOWN"),
           },
           stats: [
             {
               field: "isPublished",
-              label: "publication",
+              label: "status",
               icon: Calendar,
-              format: (value: unknown) =>
-                value ? "Published" : "Not Published",
+              format: (value: unknown) => (value ? "Published" : "Draft"),
             },
             {
               field: "endDate",

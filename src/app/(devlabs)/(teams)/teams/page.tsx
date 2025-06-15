@@ -28,7 +28,13 @@ function useTeamsForDataTable(
   sortBy: string,
   sortOrder: string
 ) {
-  return useTeams(search, page - 1, pageSize, sortBy, sortOrder as "asc" | "desc");
+  return useTeams(
+    search,
+    page - 1,
+    pageSize,
+    sortBy,
+    sortOrder as "asc" | "desc"
+  );
 }
 
 useTeamsForDataTable.isQueryHook = true;
@@ -168,8 +174,16 @@ export default function TeamsPage() {
   };
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semibold">Teams</h1>
+      <div className="flex justify-between items-start mb-6">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <Users className="h-6 w-6" />
+            <h1 className="text-2xl font-semibold">Teams</h1>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            Manage and collaborate with your project teams
+          </p>
+        </div>
         <div className="flex items-center gap-4">
           <Button onClick={handleCreate}>
             <PlusCircle className="mr-2 h-4 w-4" />

@@ -16,6 +16,7 @@ import {
   Zap,
   ChevronsUpDown,
   Home,
+  Archive,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -96,6 +97,12 @@ const navItems: NavItem[] = [
     icon: Book,
     url: "/courses",
     roles: ["FACULTY", "ADMIN", "MANAGER", "STUDENT"],
+  },
+  {
+    title: "Archives",
+    icon: Archive,
+    url: "/archives",
+    roles: ["ADMIN", "STUDENT"],
   },
 ];
 

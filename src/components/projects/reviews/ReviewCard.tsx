@@ -61,7 +61,7 @@ export default function ReviewCard({
         if (review.isPublished) {
           router.push(`/results/${review.id}/${projectId}`);
         } else {
-          showError("Results are not yet published for this review.");
+          showError("Results not yet published");
         }
       }
     }
@@ -122,7 +122,11 @@ export default function ReviewCard({
         {review.status === "COMPLETED" && (
           <Button
             variant="outline"
-            className="w-full"
+            className={`w-full ${
+              isStudent && !review.isPublished
+                ? "opacity-50 cursor-not-allowed"
+                : ""
+            }`}
             onClick={handleViewResults}
           >
             View Results

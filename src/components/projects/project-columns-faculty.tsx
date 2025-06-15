@@ -2,6 +2,21 @@ import { Project } from "@/types/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table/column-header";
 
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "PROPOSED":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "ONGOING":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "COMPLETED":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "REJECTED":
+      return "bg-red-100 text-red-800 border-red-200";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+};
+
 export const getColumnsFaculty = (): ColumnDef<Project>[] => {
   return [
     {
@@ -60,6 +75,33 @@ export const getColumnsFaculty = (): ColumnDef<Project>[] => {
       },
       meta: { label: "Project" },
       size: 250,
+      enableSorting: true,
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title="Status"
+          className="text-center"
+        />
+      ),
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+        return (
+          <div className="flex justify-center">
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                status
+              )}`}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
+            </span>
+          </div>
+        );
+      },
+      meta: { label: "Status" },
+      size: 120,
       enableSorting: true,
     },
     {

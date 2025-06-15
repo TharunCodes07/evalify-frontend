@@ -48,13 +48,24 @@ export const useTeams = (
         params.sort_order = sortOrder;
       }
       if (searchQuery) {
-        endpoint = `/teams/search`;
+        endpoint = `/teams/search/${user.id}`;
         params.query = searchQuery;
+        params.page = page.toString();
+        params.size = size.toString();
       } else {
         params.page = page.toString();
         params.size = size.toString();
 
+        // Role-based team fetching
         if (user.role === "STUDENT") {
+          endpoint = `/teams/user/${user.id}`;
+        } else if (user.role === "ADMIN" || user.role === "MANAGER") {
+          endpoint = `/teams`;
+        } else if (user.role === "FACULTY") {
+          // Faculty can see teams from courses they teach
+          endpoint = `/teams/user/${user.id}`;
+        } else {
+          // Default fallback for any other roles
           endpoint = `/teams/user/${user.id}`;
         }
       }

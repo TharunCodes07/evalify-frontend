@@ -29,7 +29,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown } from "lucide-react";
 
-// This interface is based on COURSE_PERFORMANCE_CHART_API.md
 export interface ReviewPerformance {
   reviewId: string;
   reviewName: string;
@@ -199,7 +198,7 @@ export const PerformanceOverviewChart = ({
       <Card>
         <CardHeader>
           <CardTitle>Performance Overview</CardTitle>
-          <CardDescription>Your quiz scores across all courses</CardDescription>
+          <CardDescription>Your review scores across all courses</CardDescription>
         </CardHeader>
         <CardContent className="text-center py-10">
           <p>No performance data available to display.</p>
@@ -213,7 +212,7 @@ export const PerformanceOverviewChart = ({
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Performance Overview</CardTitle>
-          <CardDescription>Your quiz scores across all courses</CardDescription>
+          <CardDescription>Your review scores across all courses</CardDescription>
         </div>
         <Popover>
           <PopoverTrigger asChild>

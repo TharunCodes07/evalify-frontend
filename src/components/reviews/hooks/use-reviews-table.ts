@@ -88,7 +88,7 @@ export const useReviews = (
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
-  
+
   const queryWithFlag = query as typeof query & { isQueryHook: boolean };
   queryWithFlag.isQueryHook = true;
 

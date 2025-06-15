@@ -5,10 +5,20 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import { courseQueries } from "@/repo/course-queries/course-queries";
+import { projectQueries } from "@/repo/project-queries/project-queries";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, ArrowLeft, BarChart3, Download } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  BarChart3,
+  Download,
+  Folder,
+  Calendar,
+  Users,
+  GitBranch,
+} from "lucide-react";
 import { ReviewPerformance } from "@/components/student-courses/performance-overview-chart";
-import { Course } from "@/types/types";
+import { Course, Project } from "@/types/types";
 import PerformanceAnalytics from "@/components/student-courses/course-results/PerformanceAnalytics";
 import { ChartConfig } from "@/components/ui/chart";
 import {
@@ -20,8 +30,9 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
-// Helper function to categorize scores
 const getScoreCategory = (score: number) => {
   if (score < 50) return "Poor";
   if (score >= 50 && score < 70) return "Average";
@@ -29,12 +40,41 @@ const getScoreCategory = (score: number) => {
   return "Excellent";
 };
 
-// Colors for categories
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "PROPOSED":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "ONGOING":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "COMPLETED":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "REJECTED":
+      return "bg-red-100 text-red-800 border-red-200";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+};
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case "PROPOSED":
+      return <Folder className="h-4 w-4" />;
+    case "ONGOING":
+      return <Calendar className="h-4 w-4" />;
+    case "COMPLETED":
+      return <GitBranch className="h-4 w-4" />;
+    case "REJECTED":
+      return <AlertTriangle className="h-4 w-4" />;
+    default:
+      return <Folder className="h-4 w-4" />;
+  }
+};
+
 const categoryColors: Record<string, string> = {
-  Excellent: "hsl(var(--chart-2))", // green
-  Good: "hsl(var(--chart-1))", // yellow
-  Average: "hsl(var(--chart-3))", // orange
-  Poor: "hsl(var(--chart-4))", // red
+  Excellent: "hsl(var(--chart-2))",
+  Good: "hsl(var(--chart-1))",
+  Average: "hsl(var(--chart-3))",
+  Poor: "hsl(var(--chart-4))",
 };
 
 const CoursePerformancePage = () => {
@@ -64,6 +104,16 @@ const CoursePerformancePage = () => {
     enabled: !!studentId && !!courseId,
   });
 
+  const {
+    data: projectsData,
+    isLoading: projectsLoading,
+    isError: projectsError,
+  } = useQuery<Project[]>({
+    queryKey: ["courseProjects", studentId, courseId],
+    queryFn: () => projectQueries.fetchProjectsByCourseId(courseId),
+    enabled: !!courseId,
+  });
+
   if (status === "unauthenticated") {
     return (
       <Alert variant="destructive">
@@ -76,7 +126,7 @@ const CoursePerformancePage = () => {
     );
   }
 
-  if (courseError || performanceError) {
+  if (courseError || performanceError || projectsError) {
     return (
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
@@ -88,7 +138,7 @@ const CoursePerformancePage = () => {
     );
   }
 
-  const isLoading = courseLoading || performanceLoading;
+  const isLoading = courseLoading || performanceLoading || projectsLoading;
 
   if (isLoading) {
     return (
@@ -195,7 +245,6 @@ const CoursePerformancePage = () => {
     ),
   } satisfies ChartConfig;
 
-  // Data for Bar Chart
   const barChartData = completedReviews.map((review) => ({
     reviewName: review.reviewName,
     score: review.scorePercentage || 0,
@@ -207,6 +256,85 @@ const CoursePerformancePage = () => {
       color: "hsl(var(--chart-1))",
     },
   } satisfies ChartConfig;
+
+  // Group projects by status
+  const projectsByStatus = {
+    PROPOSED: projectsData?.filter((p) => p.status === "PROPOSED") || [],
+    ONGOING: projectsData?.filter((p) => p.status === "ONGOING") || [],
+    COMPLETED: projectsData?.filter((p) => p.status === "COMPLETED") || [],
+    REJECTED: projectsData?.filter((p) => p.status === "REJECTED") || [],
+  };
+
+  const ProjectCard = ({ project }: { project: Project }) => (
+    <Card
+      className="w-full hover:shadow-md transition-shadow duration-200 cursor-pointer"
+      onClick={() => router.push(`/projects/${project.id}`)}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-lg font-semibold mb-2">
+              {project.title}
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground line-clamp-2">
+              {project.description}
+            </CardDescription>
+          </div>
+          <div className="ml-4 flex flex-col items-end gap-2">
+            <Badge className={`${getStatusColor(project.status)} border`}>
+              <span className="flex items-center gap-1">
+                {getStatusIcon(project.status)}
+                {project.status.charAt(0).toUpperCase() +
+                  project.status.slice(1).toLowerCase()}
+              </span>
+            </Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="space-y-3">
+          {project.objectives && (
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">
+                Objectives
+              </p>
+              <p className="text-sm text-foreground line-clamp-3">
+                {project.objectives}
+              </p>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                <span>{project.teamMembers?.length || 0} members</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  Created {new Date(project.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+            {project.githubUrl && (
+              <div className="flex items-center gap-1">
+                <GitBranch className="h-4 w-4" />
+                <a
+                  href={project.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  GitHub
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
@@ -337,6 +465,119 @@ const CoursePerformancePage = () => {
             barChartData={barChartData}
             barChartConfig={barChartConfig}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Folder className="h-5 w-5 text-primary" />
+            <CardTitle>Course Projects</CardTitle>
+          </div>
+          <CardDescription>
+            Projects associated with this course
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {projectsLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="border rounded-lg p-4">
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : projectsData && projectsData.length > 0 ? (
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList className="grid w-full grid-cols-5 mb-6">
+                <TabsTrigger value="all">
+                  All ({projectsData.length})
+                </TabsTrigger>
+                <TabsTrigger value="PROPOSED">
+                  Proposed ({projectsByStatus.PROPOSED.length})
+                </TabsTrigger>
+                <TabsTrigger value="ONGOING">
+                  Live ({projectsByStatus.ONGOING.length})
+                </TabsTrigger>
+                <TabsTrigger value="COMPLETED">
+                  Completed ({projectsByStatus.COMPLETED.length})
+                </TabsTrigger>
+                <TabsTrigger value="REJECTED">
+                  Rejected ({projectsByStatus.REJECTED.length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="all" className="space-y-4">
+                <div className="grid gap-4">
+                  {projectsData.map((project) => (
+                    <ProjectCard key={project.id} project={project} />
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="PROPOSED" className="space-y-4">
+                <div className="grid gap-4">
+                  {projectsByStatus.PROPOSED.length > 0 ? (
+                    projectsByStatus.PROPOSED.map((project) => (
+                      <ProjectCard key={project.id} project={project} />
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No proposed projects found
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="ONGOING" className="space-y-4">
+                <div className="grid gap-4">
+                  {projectsByStatus.ONGOING.length > 0 ? (
+                    projectsByStatus.ONGOING.map((project) => (
+                      <ProjectCard key={project.id} project={project} />
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No ongoing projects found
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="COMPLETED" className="space-y-4">
+                <div className="grid gap-4">
+                  {projectsByStatus.COMPLETED.length > 0 ? (
+                    projectsByStatus.COMPLETED.map((project) => (
+                      <ProjectCard key={project.id} project={project} />
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No completed projects found
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="REJECTED" className="space-y-4">
+                <div className="grid gap-4">
+                  {projectsByStatus.REJECTED.length > 0 ? (
+                    projectsByStatus.REJECTED.map((project) => (
+                      <ProjectCard key={project.id} project={project} />
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No rejected projects found
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No projects found for this course
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
