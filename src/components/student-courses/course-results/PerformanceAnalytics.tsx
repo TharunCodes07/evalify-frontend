@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   type ChartConfig,
   ChartContainer,
@@ -34,100 +33,119 @@ interface BarChartData {
 
 interface PerformanceAnalyticsProps {
   pieChartData: PieChartData[];
-  pieChartConfig: ChartConfig;
   barChartData: BarChartData[];
-  barChartConfig: ChartConfig;
 }
 
-const pieChartConfig = {
+// Professional color scheme for performance grades
+const performanceChartConfig = {
   count: {
     label: "Reviews",
   },
   excellent: {
-    label: "Excellent (≥85%)",
-    color: "#10B981",
+    label: "Excellent (85-100%)",
+    color: "#10b981", // Emerald green - success
   },
   good: {
     label: "Good (70-84%)",
-    color: "#F59E0B",
+    color: "#22c55e", // Green - good performance
   },
   average: {
-    label: "Average (50-69%)",
-    color: "#F97316",
+    label: "Average (55-69%)",
+    color: "#f59e0b", // Amber - needs attention
   },
   poor: {
-    label: "Poor (<50%)",
-    color: "#EF4444",
+    label: "Poor (0-54%)",
+    color: "#ef4444", // Red - needs improvement
   },
 } satisfies ChartConfig;
 
 const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
   pieChartData,
   barChartData,
-  barChartConfig,
 }) => {
-  // Process pie chart data to match the shadcn pattern
-  const processedPieData = pieChartData.map((item) => {
-    const category = item.category.toLowerCase();
-    let fillKey = "poor";
-
-    if (category.includes("excellent") || category.includes("≥85")) {
-      fillKey = "excellent";
-    } else if (category.includes("good") || category.includes("70-84")) {
-      fillKey = "good";
-    } else if (category.includes("average") || category.includes("50-69")) {
-      fillKey = "average";
-    } else if (category.includes("poor") || category.includes("<50")) {
-      fillKey = "poor";
+  // Function to get performance category and color based on score
+  const getPerformanceLevel = (value: number | string) => {
+    if (typeof value === "number") {
+      if (value >= 85)
+        return {
+          category: "excellent",
+          label: "Excellent",
+          color: "#10b981",
+        };
+      if (value >= 70)
+        return { category: "good", label: "Good", color: "#22c55e" };
+      if (value >= 55)
+        return {
+          category: "average",
+          label: "Average",
+          color: "#f59e0b",
+        };
+      return { category: "poor", label: "Poor", color: "#ef4444" };
     }
+    // For string categories
+    const category = value.toLowerCase();
+    if (category.includes("excellent") || category.includes("85"))
+      return {
+        category: "excellent",
+        label: "Excellent",
+        color: "#10b981",
+      };
+    if (category.includes("good") || category.includes("70"))
+      return { category: "good", label: "Good", color: "#22c55e" };
+    if (category.includes("average") || category.includes("55"))
+      return {
+        category: "average",
+        label: "Average",
+        color: "#f59e0b",
+      };
+    return { category: "poor", label: "Poor", color: "#ef4444" };
+  };
 
+  // Process pie chart data with consistent colors
+  const processedPieData = pieChartData.map((item) => {
+    const performance = getPerformanceLevel(item.category);
     return {
       category: item.category,
       count: item.count,
-      fill: `var(--color-${fillKey})`,
+      fill: performance.color,
+      performanceLabel: performance.label,
     };
   });
 
   const totalCount = pieChartData.reduce((sum, item) => sum + item.count, 0);
 
-  // Function to get fill key based on score or category
-  const getFillKey = (value: number | string) => {
-    if (typeof value === "number") {
-      if (value >= 85) return "excellent";
-      if (value >= 70) return "good";
-      if (value >= 50) return "average";
-      return "poor";
-    }
-    const category = value.toLowerCase();
-    if (category.includes("excellent") || category.includes("≥85"))
-      return "excellent";
-    if (category.includes("good") || category.includes("70-84")) return "good";
-    if (category.includes("average") || category.includes("50-69"))
-      return "average";
-    return "poor";
+  // Calculate average performance for insights
+  const calculateOverallPerformance = () => {
+    if (barChartData.length === 0) return null;
+    const average =
+      barChartData.reduce((sum, item) => sum + item.score, 0) /
+      barChartData.length;
+    const trend =
+      barChartData.length > 1
+        ? barChartData[barChartData.length - 1].score - barChartData[0].score
+        : 0;
+
+    return { average: Number(average.toFixed(1)), trend };
   };
 
-  // Function to get category based on score
-  const getScoreCategory = (score: number) => {
-    if (score >= 85) return "Excellent";
-    if (score >= 70) return "Good";
-    if (score >= 50) return "Average";
-    return "Poor";
-  };
+  const overallPerformance = calculateOverallPerformance();
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
-      {/* Pie Chart - No Card Wrapper */}
+      {/* Performance Distribution Pie Chart */}
       <div className="flex flex-col">
-        <div className="items-center pb-0 mb-4">
-          <h3 className="text-lg font-semibold text-center text-foreground">
-            Score Distribution
+        <div className="items-center pb-4">
+          <h3 className="text-lg font-semibold text-center text-foreground mb-1">
+            Performance Distribution
           </h3>
+          <p className="text-sm text-muted-foreground text-center">
+            Overall grade breakdown
+          </p>
         </div>
-        <div className="flex-1 pb-0">
+        <div className="flex-1">
           <ChartContainer
-            config={pieChartConfig}
-            className="mx-auto aspect-square max-h-[250px] px-0"
+            config={performanceChartConfig}
+            className="mx-auto aspect-square max-h-[280px] px-0"
           >
             <PieChart>
               <ChartTooltip
@@ -140,7 +158,7 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
                         (Number(value) / totalCount) *
                         100
                       ).toFixed(1)}%)`,
-                      props.payload.category,
+                      props.payload.performanceLabel,
                     ]}
                   />
                 }
@@ -154,7 +172,7 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
                     (payload.count / totalCount) *
                     100
                   ).toFixed(1);
-                  const fillKey = getFillKey(payload.category);
+                  const performance = getPerformanceLevel(payload.category);
                   return (
                     <text
                       cx={props.cx}
@@ -163,30 +181,46 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
                       y={props.y}
                       textAnchor={props.textAnchor}
                       dominantBaseline={props.dominantBaseline}
-                      fill={`var(--color-${fillKey})`}
+                      fill={performance.color}
                       fontSize={12}
-                      fontWeight="500"
+                      fontWeight="600"
+                      className="drop-shadow-sm"
                     >
-                      {`${payload.category} ${percentage}%`}
+                      {`${percentage}%`}
                     </text>
                   );
                 }}
                 nameKey="category"
+                stroke="hsl(var(--background))"
+                strokeWidth={2}
               />
             </PieChart>
           </ChartContainer>
         </div>
+        <div className="flex flex-col gap-2 text-sm mt-4">
+          <div className="flex items-center gap-2 leading-none font-medium justify-center">
+            Total Reviews: {totalCount}
+          </div>
+          <div className="text-muted-foreground leading-none text-center">
+            Performance grade distribution across all evaluations
+          </div>
+        </div>
       </div>
 
-      {/* Bar Chart */}
-      <Card className="flex flex-col">
-        <CardHeader className="items-center pb-0">
-          <CardTitle className="text-lg">Review Performance Timeline</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 pb-0">
+      {/* Review Performance Timeline Bar Chart */}
+      <div className="flex flex-col">
+        <div className="items-center pb-4">
+          <h3 className="text-lg font-semibold text-center text-foreground mb-1">
+            Review Performance Timeline
+          </h3>
+          <p className="text-sm text-muted-foreground text-center">
+            Individual review scores
+          </p>
+        </div>
+        <div className="flex-1">
           <ChartContainer
-            config={barChartConfig}
-            className="min-h-[250px] w-full"
+            config={performanceChartConfig}
+            className="min-h-[280px] w-full"
           >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -198,19 +232,16 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
                   stroke="hsl(var(--border))"
                   horizontal={true}
                   vertical={false}
+                  opacity={0.4}
                 />
                 <XAxis
                   dataKey="reviewName"
-                  tickLine={true}
+                  tickLine={false}
                   tickMargin={10}
-                  axisLine={{
-                    stroke: "hsl(var(--foreground))",
-                    strokeWidth: 1,
-                  }}
+                  axisLine={false}
                   stroke="hsl(var(--muted-foreground))"
-                  strokeWidth={1}
                   tickFormatter={(value) =>
-                    value.slice(0, 10) + (value.length > 10 ? "..." : "")
+                    value.slice(0, 8) + (value.length > 8 ? "..." : "")
                   }
                   tick={{
                     fill: "hsl(var(--muted-foreground))",
@@ -219,33 +250,37 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
                 />
                 <YAxis
                   domain={[0, 100]}
-                  tickLine={true}
-                  axisLine={{
-                    stroke: "hsl(var(--foreground))",
-                    strokeWidth: 1,
-                  }}
+                  tickLine={false}
+                  axisLine={false}
                   stroke="hsl(var(--muted-foreground))"
-                  strokeWidth={1}
                   tick={{
                     fill: "hsl(var(--muted-foreground))",
                     fontSize: 12,
                   }}
+                  tickFormatter={(value) => `${value}%`}
                 />
                 <ChartTooltip
-                  cursor={{ fill: "hsl(var(--muted) / 0.1)" }}
+                  cursor={{
+                    fill: "hsl(var(--muted) / 0.1)",
+                    stroke: "hsl(var(--border))",
+                    strokeWidth: 1,
+                    radius: 4,
+                  }}
                   content={
                     <ChartTooltipContent
                       hideLabel
                       formatter={(value, name, props) => {
                         const score = value as number;
-                        const category = getScoreCategory(score);
-                        const fillKey = getFillKey(score);
+                        const performance = getPerformanceLevel(score);
                         return [
                           <span
                             key="score"
-                            style={{ color: `var(--color-${fillKey})` }}
+                            style={{
+                              color: performance.color,
+                              fontWeight: "600",
+                            }}
                           >
-                            {`${score}% (${category})`}
+                            {`${score.toFixed(1)}% (${performance.label})`}
                           </span>,
                           props.payload.reviewName,
                         ];
@@ -253,32 +288,64 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
                     />
                   }
                 />
-                <Bar dataKey="score" radius={[4, 4, 0, 0]}>
+                <Bar
+                  dataKey="score"
+                  radius={[6, 6, 0, 0]}
+                  stroke="hsl(var(--background))"
+                  strokeWidth={1}
+                >
                   {barChartData.map((entry, index) => {
-                    const fillKey = getFillKey(entry.score);
+                    const performance = getPerformanceLevel(entry.score);
                     return (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={`var(--color-${fillKey})`}
-                      />
+                      <Cell key={`cell-${index}`} fill={performance.color} />
                     );
                   })}
                   <LabelList
                     dataKey="score"
                     position="top"
-                    formatter={(value: number) => `${value}%`}
-                    style={{
-                      fill: "hsl(var(--foreground))",
-                      fontSize: "12px",
-                      fontWeight: "500",
+                    offset={8}
+                    content={(props) => {
+                      const { x, y, value, index, width } = props;
+                      if (typeof index === "number" && barChartData[index]) {
+                        const performance = getPerformanceLevel(
+                          barChartData[index].score
+                        );
+                        return (
+                          <text
+                            x={Number(x) + Number(width) / 2}
+                            y={Number(y) - 8}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fill={performance.color}
+                            fontSize="11px"
+                            fontWeight="600"
+                          >
+                            {`${Number(value).toFixed(1)}%`}
+                          </text>
+                        );
+                      }
+                      return null;
                     }}
                   />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
-        </CardContent>
-      </Card>
+        </div>
+        <div className="flex flex-col items-start gap-2 text-sm mt-4">
+          {overallPerformance && (
+            <>
+              <div className="flex items-center gap-2 leading-none font-medium">
+                Average Score: {overallPerformance.average.toFixed(1)}% (
+                {getPerformanceLevel(overallPerformance.average).label})
+              </div>
+              <div className="text-muted-foreground leading-none">
+                Showing performance trend across {barChartData.length} reviews
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
