@@ -34,11 +34,6 @@ const userQueries = {
     await axiosInstance.delete("/api/user/bulk", { data: userIds });
   },
 
-  fetchUsersByRole: async (role: string): Promise<User[]> => {
-    const response = await axiosInstance.get(`/api/user/role/${role}`);
-    return response.data;
-  },
-
   searchStudents: async (query: string): Promise<User[]> => {
     if (!query) {
       return [];

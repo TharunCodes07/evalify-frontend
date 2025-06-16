@@ -54,7 +54,6 @@ const batchQueries = {
       url = `/api/batch/${batchId}/students/search`;
     }
 
-    // Add sorting parameters if provided
     if (sortBy && sortOrder) {
       params.sort_by = sortBy;
       params.sort_order = sortOrder;

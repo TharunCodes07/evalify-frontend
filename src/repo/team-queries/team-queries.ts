@@ -32,31 +32,7 @@ const teamQueries = {
     });
     return response.data;
   },
-  getTeamsByUserId: async (
-    userId: string,
-    page: number = 0,
-    size: number = 10,
-    sortBy?: string,
-    sortOrder?: "asc" | "desc"
-  ) => {
-    const params: { [key: string]: string | number } = {
-      page: page.toString(),
-      size: size.toString(),
-    };
 
-    if (sortBy) {
-      params.sort_by = sortBy;
-    }
-
-    if (sortOrder) {
-      params.sort_order = sortOrder;
-    }
-
-    const response = await axiosInstance.get(`/teams/user/${userId}`, {
-      params,
-    });
-    return response.data;
-  },
   getAllTeams: async (
     page: number = 0,
     size: number = 10,

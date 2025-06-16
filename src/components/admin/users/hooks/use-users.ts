@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@/types/types";
-import userQueries from "@/repo/user-queries/user-queries";
 import axiosInstance from "@/lib/axios/axios-client";
 
 interface DataTableResponse {
@@ -119,14 +118,4 @@ export const useUsers = (
   const queryWithFlag = query as typeof query & { isQueryHook: boolean };
   queryWithFlag.isQueryHook = true;
   return queryWithFlag;
-};
-
-export const useUsersByRole = (role: string) => {
-  return useQuery({
-    queryKey: ["users", role],
-    queryFn: async () => {
-      return userQueries.fetchUsersByRole(role);
-    },
-    enabled: !!role,
-  });
 };
