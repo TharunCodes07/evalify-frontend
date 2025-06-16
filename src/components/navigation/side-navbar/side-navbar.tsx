@@ -61,7 +61,7 @@ const academicsItems = [
   },
   {
     title: "Results",
-    url: "/result",
+    url: "/student-results",
     icon: Trophy,
   },
 ];
@@ -71,6 +71,11 @@ const administrationItems = [
     title: "Users",
     url: "/user",
     icon: Users,
+  },
+  {
+    title: "Teacher Results",
+    url: "/teacher-results",
+    icon: BarChart3,
   },
   {
     title: "Batches",

@@ -133,8 +133,7 @@ const QuestionSettings = ({
                 />
               </div>
               {availableTopics.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-semibold mb-2">
+                <div>                  <div className="flex items-center gap-2 text-sm font-semibold mb-2">
                     <Tags className="h-4 w-4 text-primary" />
                     <label>Related Topics</label>
                   </div>
@@ -157,8 +156,7 @@ const QuestionSettings = ({
                     allowMultiple={true}
                   />
                 </div>
-              )}
-            </div>
+              )}            </div>
           </div>
         </CardContent>
       </Card>

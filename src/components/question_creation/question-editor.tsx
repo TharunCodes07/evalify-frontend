@@ -141,7 +141,6 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
           type: "true-false",
           correctAnswer: null,
         };
-
       case "fillup":
         return {
           ...baseData,
@@ -279,7 +278,6 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
           );
         }
         break;
-
       case "fillup":
         if (questionData.type === "fillup") {
           return (
@@ -288,6 +286,8 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
               blanks={questionData.blanks}
               explanation={questionData.explanation}
               showExplanation={questionData.showExplanation}
+              strictMatch={questionData.strictMatch}
+              useHybridEvaluation={questionData.useHybridEvaluation}
               onQuestionChange={(question) => updateData({ question })}
               onBlanksChange={(blanks) => updateData({ blanks })}
               onExplanationChange={(explanation) => updateData({ explanation })}
@@ -298,8 +298,6 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
               onUseHybridEvaluationChange={(useHybridEvaluation) =>
                 updateData({ useHybridEvaluation })
               }
-              strictMatch={questionData.strictMatch}
-              useHybridEvaluation={questionData.useHybridEvaluation}
             />
           );
         }
