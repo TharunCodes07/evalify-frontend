@@ -24,22 +24,22 @@ export default function ReviewDetailPage() {
   const { data: session } = useSession();
 
   const { data: review, isLoading, error } = useReview(reviewId);
-
   // Check permissions based on user role
   const canPublish =
     session?.user &&
     review &&
     (() => {
-      const userRole = session.user.role;
-      switch (userRole) {
-        case "ADMIN":
-        case "MANAGER":
-          return true;
-        case "FACULTY":
-          return review.createdBy.id === session.user.id;
-        default:
-          return false;
+      const userGroups = session.user.groups || [];
+      if (
+        (userGroups as string[]).includes("admin") ||
+        (userGroups as string[]).includes("manager")
+      ) {
+        return true;
       }
+      if ((userGroups as string[]).includes("staff")) {
+        return review.createdBy.id === session.user.id;
+      }
+      return false;
     })();
 
   if (isLoading) {

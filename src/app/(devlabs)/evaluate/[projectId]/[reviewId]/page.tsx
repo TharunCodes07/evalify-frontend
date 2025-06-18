@@ -33,8 +33,13 @@ function CourseSelector({
 
   const canEvaluateCourse = (course: { instructors: { id: string }[] }) => {
     if (!user) return false;
-    if (user.role === "ADMIN" || user.role === "MANAGER") return true;
-    if (user.role === "FACULTY") {
+    const userGroups = user.groups || [];
+    if (
+      (userGroups as string[]).includes("admin") ||
+      (userGroups as string[]).includes("manager")
+    )
+      return true;
+    if ((userGroups as string[]).includes("staff")) {
       return course.instructors.some((instructor) => instructor.id === user.id);
     }
     return false;

@@ -17,6 +17,7 @@ import { Calendar, Tag } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import React from "react";
 
 interface ReviewCardProps {
   review: Review;
@@ -32,11 +33,19 @@ export default function ReviewCard({
   const user = useCurrentUser();
   const { error: showError } = useToast();
   const router = useRouter();
+  const canEvaluate = !!(
+    user &&
+    user.groups &&
+    ((user.groups as string[]).includes("admin") ||
+      (user.groups as string[]).includes("staff") ||
+      (user.groups as string[]).includes("manager"))
+  );
 
-  const canEvaluate =
-    user && ["ADMIN", "FACULTY", "MANAGER"].includes(user.role);
-
-  const isStudent = user && user.role === "STUDENT";
+  const isStudent = !!(
+    user &&
+    user.groups &&
+    (user.groups as string[]).includes("student")
+  );
 
   const getStatusBadgeClassName = (status: Review["status"]) => {
     switch (status) {
@@ -52,7 +61,6 @@ export default function ReviewCard({
         return "bg-gray-500 hover:bg-gray-600 text-white border-gray-500";
     }
   };
-
   const handleViewResults = () => {
     if (review.status === "COMPLETED") {
       if (canEvaluate) {

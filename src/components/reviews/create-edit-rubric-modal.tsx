@@ -45,7 +45,10 @@ export function CreateEditRubricModal({
   const [isShared, setIsShared] = useState(false);
   const [criteria, setCriteria] = useState<RubricCriterionData[]>([]);
 
-  const userCanShare = user?.role === "ADMIN" || user?.role === "MANAGER";
+  const userCanShare =
+    user?.groups &&
+    ((user?.groups as string[]).includes("admin") ||
+      (user?.groups as string[]).includes("manager"));
 
   useEffect(() => {
     if (isOpen) {

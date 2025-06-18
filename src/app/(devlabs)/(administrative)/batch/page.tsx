@@ -8,7 +8,6 @@ import { BatchDialog } from "@/components/admin/batch/batch-dialog";
 import { DeleteBatchDialog } from "@/components/admin/batch/delete-batch-dialog";
 import { Batch } from "@/types/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
 import batchQueries from "@/repo/batch-queries/batch-queries";
 import { useToast } from "@/hooks/use-toast";
 
@@ -38,17 +37,12 @@ export default function BatchesPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [batchToDelete, setBatchToDelete] = useState<string | null>(null);
-  const { data: session } = useSession();
-  const accessToken = session?.accessToken;
   const queryClient = useQueryClient();
   const router = useRouter();
   const { toast } = useToast();
 
   const { mutate: bulkDelete } = useMutation({
     mutationFn: (batchIds: (string | number)[]) => {
-      if (!accessToken) {
-        return Promise.reject(new Error("Not authenticated"));
-      }
       return batchQueries.deleteBatch(String(batchIds[0]));
     },
     onSuccess: () => {

@@ -10,18 +10,18 @@ export default async function CoursesLayout({
 }) {
   const session = await auth();
   const user = session?.user;
-
   if (!user) {
     return redirect("/login");
   }
-
-  const role = user?.role;
-
-  if (role === "STUDENT") {
+  const userGroups = user?.groups || [];
+  if ((userGroups as string[]).includes("student")) {
     return <>{student}</>;
   }
 
-  if (role === "FACULTY" || role === "MANAGER") {
+  if (
+    (userGroups as string[]).includes("staff") ||
+    (userGroups as string[]).includes("manager")
+  ) {
     return <>{faculty}</>;
   }
 

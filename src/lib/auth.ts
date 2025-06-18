@@ -1,270 +1,162 @@
 import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import "next-auth/jwt";
-import { JWT } from "next-auth/jwt";
+import Keycloak from "next-auth/providers/keycloak";
+import { decode, JwtPayload } from "jsonwebtoken";
 
-declare module "next-auth" {
-  interface User {
-    id: string;
-    name: string;
-    email: string;
-    profileId: string;
-    role: string;
-    phoneNumber: string;
-    image?: string;
-    isActive: boolean;
-    accessToken?: string;
+interface KeycloakToken {
+  access_token: string;
+  refresh_token?: string;
+  expires_at: number;
+  groups: string[];
+  idToken?: string;
+  error?: string;
+}
+
+interface DecodedJWT {
+  realm_access?: {
+    roles?: string[];
+  };
+  groups?: string[];
+  [key: string]: unknown;
+}
+
+function processDecodedToken(decoded: string | JwtPayload | null): {
+  roles: string[];
+  groups: string[];
+} {
+  let roles: string[] = [];
+  let groups: string[] = [];
+
+  // Only process if decoded is an object (JwtPayload) and not null or string
+  if (decoded && typeof decoded === "object" && !Array.isArray(decoded)) {
+    const decodedJWT = decoded as DecodedJWT;
+    roles = decodedJWT.realm_access?.roles || [];
+    groups = (decodedJWT.groups || []).map((group: string) =>
+      group.replace(/^\//, "")
+    );
   }
+  return { roles, groups };
+}
 
-  interface Session {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      profileId: string;
-      role: string;
-      phoneNumber: string;
-      image?: string;
-      isActive: boolean;
+async function refreshKeycloakaccess_token(token: KeycloakToken) {
+  try {
+    console.log("Attempting to refresh Keycloak access token...");
+
+    const response = await fetch(
+      `${process.env.AUTH_KEYCLOAK_ISSUER!}/protocol/openid-connect/token`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          grant_type: "refresh_token",
+          refresh_token: token.refresh_token!,
+          client_id: process.env.AUTH_KEYCLOAK_ID!,
+          client_secret: process.env.AUTH_KEYCLOAK_SECRET!,
+        }),
+      }
+    );
+
+    const refreshedTokens = await response.json();
+
+    if (!response.ok) {
+      console.error("Failed to refresh access token:", {
+        status: response.status,
+        statusText: response.statusText,
+        error: refreshedTokens,
+      });
+      throw new Error(
+        `Token refresh failed: ${
+          refreshedTokens.error_description ||
+          refreshedTokens.error ||
+          "Unknown error"
+        }`
+      );
+    }
+
+    const decoded = decode(refreshedTokens.access_token);
+    const { roles, groups } = processDecodedToken(decoded);
+
+    console.log("Successfully refreshed access token");
+    return {
+      ...token,
+      access_token: refreshedTokens.access_token,
+      refresh_token: refreshedTokens.refresh_token ?? token.refresh_token,
+      expires_at: Math.floor(Date.now() / 1000) + refreshedTokens.expires_in,
+      roles: roles,
+      groups: groups,
+      error: null,
     };
-    accessToken?: string;
+  } catch (error: unknown) {
+    console.error("Error refreshing access token:", error);
+
+    let errorMessage = "Refreshaccess_tokenError";
+    if (error instanceof Error) {
+      errorMessage = `Refreshaccess_tokenError: ${error.message}`;
+    }
+
+    return {
+      ...token,
+      error: errorMessage,
+    };
   }
 }
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    accessToken?: string;
-    refreshToken?: string;
-    role?: string;
-    profileId?: string;
-    phoneNumber?: string;
-    isActive?: boolean;
-    exp?: number;
-  }
-}
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
-    Credentials({
-      name: "Credentials",
-      credentials: {
-        email: {
-          label: "Email",
-          type: "email",
-          placeholder: "your-email@example.com",
-        },
-        password: {
-          label: "Password",
-          type: "password",
-          placeholder: "Enter your password",
-        },
-      },
-      authorize: async (credentials) => {
-        const email = credentials.email as string | undefined;
-        const password = credentials.password as string | undefined;
-
-        if (!email || !password) {
-          throw new Error("Please provide both email and password");
-        }
-
-        try {
-          const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email,
-              password,
-            }),
-          });
-
-          const data = await response.json();
-
-          if (!response.ok || !data.success) {
-            throw new Error(data.message || "Authentication failed");
-          }
-
-          const { token, user } = data.data;
-
-          const userData = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            profileId: user.profileId,
-            role: user.role,
-            phoneNumber: user.phoneNumber,
-            image: user.image,
-            isActive: user.isActive,
-            accessToken: token,
-          };
-
-          return userData;
-        } catch (error) {
-          console.error("Authentication error:", error);
-          throw new Error(
-            error instanceof Error ? error.message : "Authentication failed"
-          );
-        }
-      },
+    Keycloak({
+      clientId: process.env.AUTH_KEYCLOAK_ID,
+      clientSecret: process.env.AUTH_KEYCLOAK_SECRET,
+      issuer: process.env.AUTH_KEYCLOAK_ISSUER,
     }),
   ],
   pages: {
-    signIn: "/login",
+    signIn: "/auth/login",
   },
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60,
   },
+  trustHost: true,
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, account, user }) {
       if (account && user) {
+        const decoded = decode(account.access_token!);
+        const { roles, groups } = processDecodedToken(decoded);
         return {
           ...token,
-          accessToken: user.accessToken,
-          role: user.role,
-          profileId: user.profileId,
-          phoneNumber: user.phoneNumber,
-          isActive: user.isActive,
+          access_token: account.access_token,
+          refresh_token: account.refresh_token,
+          expires_at: account.expires_at,
+          roles: roles,
+          groups: groups,
+          id: user.id,
         };
       }
-
-      if (Date.now() < (token.exp as number) * 1000) {
+      if (
+        token.expires_at &&
+        Date.now() < token.expires_at * 1000 - 60 * 1000
+      ) {
         return token;
       }
 
-      return await refreshAccessToken(token);
-    },
+      // Access token has expired or is about to expire, try to update it
+      if (token.refresh_token) {
+        return refreshKeycloakaccess_token(token as KeycloakToken);
+      }
 
+      // If no refresh token, return the token as is (it might be an error state or session ended)
+      return token;
+    },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.sub!;
-        session.user.role = token.role as string;
-        session.user.profileId = token.profileId as string;
-        session.user.phoneNumber = token.phoneNumber as string;
-        session.user.isActive = token.isActive as boolean;
-        session.accessToken = token.accessToken as string;
+        session.user.id = token.id as string; // Ensure id is correctly assigned
+        session.user.roles = token.roles as string[];
+        session.user.groups = token.groups as string[];
+        session.access_token = token.access_token as string;
+        if (token.error) {
+          session.error = token.error as string;
+        }
       }
       return session;
     },
   },
 });
-
-async function refreshAccessToken(token: JWT) {
-  try {
-    const response = await fetch(`${BACKEND_URL}/api/auth/refresh-token`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token.accessToken}`,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || "Token refresh failed");
-    }
-
-    return {
-      ...token,
-      accessToken: data.data.token,
-      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60,
-    };
-  } catch (error) {
-    console.error("Error refreshing access token:", error);
-
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    };
-  }
-}
-
-export async function registerUser(userData: {
-  name: string;
-  email: string;
-  profileId: string;
-  password: string;
-  phoneNumber: string;
-  role?: string;
-}) {
-  try {
-    const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...userData,
-        role: userData.role || "STUDENT",
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || "Registration failed");
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Registration error:", error);
-    throw error;
-  }
-}
-
-export async function changePassword(
-  currentPassword: string,
-  newPassword: string,
-  accessToken: string
-) {
-  try {
-    const response = await fetch(`${BACKEND_URL}/api/auth/change-password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        currentPassword,
-        newPassword,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || "Password change failed");
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Password change error:", error);
-    throw error;
-  }
-}
-
-export async function getCurrentUser(accessToken: string) {
-  try {
-    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || "Failed to get user info");
-    }
-
-    return data.data;
-  } catch (error) {
-    console.error("Get current user error:", error);
-    throw error;
-  }
-}

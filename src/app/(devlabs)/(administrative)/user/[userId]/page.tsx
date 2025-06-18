@@ -23,7 +23,7 @@ export default function UserProfilePage() {
   } = useQuery({
     queryKey: ["user", userId],
     queryFn: () => userQueries.fetchUserById(userId),
-    enabled: !!session?.accessToken && !!userId,
+    enabled: !!session?.access_token && !!userId,
   });
 
   if (isLoading) {
@@ -88,6 +88,7 @@ export default function UserProfilePage() {
               )}
             </div>
             <div className="flex items-center space-x-2">
+              {" "}
               <Badge variant={user.isActive ? "default" : "destructive"}>
                 {user.isActive ? "Active" : "Inactive"}
               </Badge>

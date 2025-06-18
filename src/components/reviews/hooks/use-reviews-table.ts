@@ -24,12 +24,11 @@ export const useReviews = (
 ) => {
   const { data: session } = useSession();
   const user = session?.user;
-
   const query = useQuery({
     queryKey: [
       "reviews",
       user?.id,
-      user?.role,
+      user?.groups, // Using groups instead of role
       searchQuery,
       page,
       size,
@@ -55,16 +54,15 @@ export const useReviews = (
 
       if (sortOrder) {
         params.sortOrder = sortOrder;
-      }
-
-      // Use different endpoints based on whether we're searching or not
+      } // Use different endpoints based on whether we're searching or not
       if (searchQuery && searchQuery.trim().length > 0) {
         // Use search endpoint when there's a search query
         endpoint = `/api/review/search/${user.id}`;
         params.name = searchQuery;
       } else {
         // Use regular endpoint for listing all reviews based on user role
-        if (user.role === "STUDENT") {
+        const userGroups = user.groups || [];
+        if ((userGroups as string[]).includes("student")) {
           endpoint = `/api/review/user`;
           params.userId = user.id;
         } else {
@@ -84,7 +82,7 @@ export const useReviews = (
       }
       const response = await axiosInstance.get(endpoint, { params });
       const backendResponse = response.data;
-      
+
       if (backendResponse.pagination) {
         return backendResponse as DataTableResponse;
       }

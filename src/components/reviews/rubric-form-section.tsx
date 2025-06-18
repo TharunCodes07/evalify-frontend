@@ -81,7 +81,10 @@ export function RubricFormSection({
     }
     const rubricToEdit = rubrics?.find((r) => r.id === selectedRubricId);
     if (rubricToEdit) {
-      const userCanManage = user?.role === "ADMIN" || user?.role === "MANAGER";
+      const userCanManage =
+        user?.groups &&
+        ((user?.groups as string[]).includes("admin") ||
+          (user?.groups as string[]).includes("manager"));
       if (rubricToEdit.isShared && !userCanManage) {
         setEditingRubric({
           ...rubricToEdit,

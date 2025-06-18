@@ -54,66 +54,69 @@ const navItems: NavItem[] = [
     title: "Dashboard",
     icon: Home,
     url: "/dashboard",
-    roles: ["ADMIN", "FACULTY", "STUDENT", "MANAGER"],
+    roles: ["admin", "staff", "student", "manager"],
   },
   {
     title: "Users",
     icon: Users,
     url: "/user",
-    roles: ["ADMIN"],
+    roles: ["admin"],
   },
   {
     title: "Semester",
     icon: CalendarDays,
     url: "/semester",
-    roles: ["ADMIN"],
+    roles: ["admin"],
   },
   {
     title: "Batch",
     icon: Users2,
     url: "/batch",
-    roles: ["ADMIN"],
+    roles: ["admin"],
   },
   {
     title: "Department",
     icon: Building,
     url: "/department",
-    roles: ["ADMIN"],
+    roles: ["admin"],
   },
   {
     title: "Reviews",
     icon: FileText,
     url: "/reviews",
-    roles: ["ADMIN", "FACULTY", "MANAGER"],
+    roles: ["admin", "staff", "manager"],
   },
   {
     title: "Teams",
     icon: Users,
     url: "/teams",
-    roles: ["ADMIN", "STUDENT", "MANAGER"],
+    roles: ["admin", "student", "manager"],
   },
   {
     title: "Courses",
     icon: Book,
     url: "/courses",
-    roles: ["FACULTY", "MANAGER", "STUDENT"],
+    roles: ["staff", "manager", "student"],
   },
   {
     title: "Archives",
     icon: Archive,
     url: "/archives",
-    roles: ["FACULTY", "STUDENT"],
+    roles: ["staff", "student"],
   },
 ];
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
-  const userRole = session?.user.role;
-
   const accessibleNavItems = React.useMemo(() => {
-    if (!userRole) return [];
-    return navItems.filter((item) => item.roles.includes(userRole));
-  }, [userRole]);
+    if (!session?.user?.groups?.length) return [];
+
+    return navItems.filter((item) =>
+      item.roles.some((role) =>
+        (session.user.groups as string[]).includes(role)
+      )
+    );
+  }, [session?.user?.groups]);
 
   return (
     <>

@@ -27,8 +27,8 @@ axiosInstance.interceptors.request.use(
       // For most client-side requests, getSession() is sufficient.
     }
 
-    if (session?.accessToken) {
-      config.headers.Authorization = `Bearer ${session.accessToken}`;
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`;
     }
 
     return config;

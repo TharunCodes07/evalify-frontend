@@ -22,12 +22,11 @@ export const useTeams = (
 ) => {
   const { data: session } = useSession();
   const user = session?.user;
-
   const query = useQuery({
     queryKey: [
       "teams",
       user?.id,
-      user?.role,
+      user?.groups,
       searchQuery,
       page,
       size,
@@ -54,14 +53,16 @@ export const useTeams = (
         params.size = size.toString();
       } else {
         params.page = page.toString();
-        params.size = size.toString();
-
-        // Role-based team fetching
-        if (user.role === "STUDENT") {
+        params.size = size.toString(); // Role-based team fetching based on user groups
+        const userGroups = user.groups || [];
+        if ((userGroups as string[]).includes("student")) {
           endpoint = `/teams/user/${user.id}`;
-        } else if (user.role === "ADMIN" || user.role === "MANAGER") {
+        } else if (
+          (userGroups as string[]).includes("admin") ||
+          (userGroups as string[]).includes("manager")
+        ) {
           endpoint = `/teams`;
-        } else if (user.role === "FACULTY") {
+        } else if ((userGroups as string[]).includes("staff")) {
           // Faculty can see teams from courses they teach
           endpoint = `/teams/user/${user.id}`;
         } else {
