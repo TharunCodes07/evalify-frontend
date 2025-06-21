@@ -423,7 +423,6 @@ const QuestionCreationPage: React.FC<QuestionCreationPageProps> = ({
         isLoading={isLoading}
         isEdit={isEdit}
         hasChanges={hasChanges}
-        mode={mode}
       />
       {/* Main Content Area - Fixed Layout */}
       <div className="flex-1 overflow-hidden flex">
@@ -434,6 +433,7 @@ const QuestionCreationPage: React.FC<QuestionCreationPageProps> = ({
             questionData={questionData}
             onQuestionDataChange={setQuestionData}
           />
+        </div>
         </div>
         {/* Right Panel - Question Settings (fixed width) */}
         <div className="w-96 border-l overflow-hidden">

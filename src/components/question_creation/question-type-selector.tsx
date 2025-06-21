@@ -122,67 +122,10 @@ const QuestionTypeSelector: React.FC<QuestionTypeSelectorProps> = ({
   };
 
   return (
-    <div className="border-b bg-white dark:bg-gray-900 px-6 py-4">
-      <div className="flex items-center justify-between">
-        {/* Question Type Selection */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold text-foreground">
-              {isEdit ? "Edit Question" : "Create Question"}
-            </h1>
-            {!isEdit && (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                {getModeIcon()}
-                {getModeText()}
-              </Badge>
-            )}
-          </div>
-
-          {/* Question Type Dropdown - Only show in create mode */}
-          {!isEdit && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  {selectedTypeInfo && <selectedTypeInfo.icon className="h-4 w-4" />}
-                  {selectedTypeInfo?.label || "Select Type"}
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-80">
-                {questionTypes.map((type) => (
-                  <DropdownMenuItem
-                    key={type.type}
-                    onClick={() => onTypeSelect(type.type)}
-                    className="flex items-start gap-3 p-3 cursor-pointer"
-                  >
-                    <type.icon className="h-5 w-5 mt-0.5 text-primary" />
-                    <div className="flex-1">
-                      <div className="font-medium">{type.label}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {type.description}
-                      </div>
-                    </div>
-                    {selectedType === type.type && (
-                      <CheckCircle className="h-4 w-4 text-primary" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          {/* Show selected type in edit mode */}
-          {isEdit && selectedTypeInfo && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg">
-              <selectedTypeInfo.icon className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">{selectedTypeInfo.label}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3">
-          {/* Preview Button */}
+    <div className="flex items-center justify-between px-6 py-4 border-b bg-background">
+      {/* Left side - Question types */}
+      <div className="flex flex-wrap gap-2">
+        {questionTypes.map(({ type, label, icon }) => (
           <Button
             onClick={onPreview}
             variant="outline"
@@ -193,56 +136,32 @@ const QuestionTypeSelector: React.FC<QuestionTypeSelectorProps> = ({
             <Eye className="h-4 w-4" />
             Preview
           </Button>
-
-          {/* Save Buttons */}
-          {isEdit ? (
-            <Button
-              onClick={onSave}
-              disabled={isLoading || !hasChanges}
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              {getSaveButtonText()}
-            </Button>
-          ) : (
-            <div className="flex items-center gap-2">
-              
-              <Button
-                onClick={onSaveAndAddNew}
-                disabled={isLoading}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-                Save & Add New
-              </Button>
-              <Button
-                onClick={onSave}
-                disabled={isLoading}
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                Save
-              </Button>
-
-            </div>
-          )}
-        </div>
+        ))}
+      </div>
+      {/* Right side - Action buttons */}
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          onClick={onPreview}
+          className="flex items-center gap-2"
+        >
+          <Eye className="h-4 w-4" />
+          Preview
+        </Button>
+        <Button
+          onClick={onSave}
+          disabled={isLoading || (isEdit && !hasChanges)}
+          className="flex items-center gap-2"
+        >
+          <Save className="h-4 w-4" />
+          {isLoading
+            ? isEdit
+              ? "Updating..."
+              : "Saving..."
+            : isEdit
+              ? "Update Question"
+              : "Save Question"}
+        </Button>
       </div>
     </div>
   );
