@@ -58,6 +58,7 @@ export default function SemesterCoursesPage() {
         id: "",
         name: course.name,
         description: course.description,
+        code: course.code,
         type: course.type,
         createdAt: course.createdAt,
         updatedAt: course.updatedAt,

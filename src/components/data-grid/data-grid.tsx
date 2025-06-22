@@ -67,6 +67,12 @@ interface DataGridProps<TData, TValue> {
   // Allow overriding the table configuration
   config?: Partial<TableConfig>;
 
+  // Default sorting configuration
+  defaultSort?: {
+    sortBy: string;
+    sortOrder: "asc" | "desc";
+  };
+
   // Column definitions generator (for filtering/sorting metadata)
   getColumns: (
     handleRowDeselection: ((rowId: string) => void) | null | undefined
@@ -152,6 +158,7 @@ interface DataGridProps<TData, TValue> {
 
 export function DataGrid<TData, TValue>({
   config = {},
+  defaultSort = { sortBy: "created_at", sortOrder: "desc" },
   getColumns,
   renderGridItem,
   fetchDataFn,
@@ -188,10 +195,13 @@ export function DataGrid<TData, TValue>({
     from_date: string;
     to_date: string;
   }>("dateRange", { from_date: "", to_date: "" });
-  const [sortBy, setSortBy] = useConditionalUrlState("sortBy", "created_at");
+  const [sortBy, setSortBy] = useConditionalUrlState(
+    "sortBy",
+    defaultSort.sortBy
+  );
   const [sortOrder, setSortOrder] = useConditionalUrlState<"asc" | "desc">(
     "sortOrder",
-    "desc"
+    defaultSort.sortOrder
   );
   const [columnVisibility, setColumnVisibility] = useConditionalUrlState<
     Record<string, boolean>

@@ -213,6 +213,10 @@ export default function ReviewsPage() {
             config={{
               enableUrlState: false,
             }}
+            defaultSort={{
+              sortBy: "startDate",
+              sortOrder: "desc",
+            }}
             exportConfig={{
               entityName: "reviews",
               columnMapping: {},
