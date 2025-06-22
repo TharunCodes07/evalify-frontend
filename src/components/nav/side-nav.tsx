@@ -54,7 +54,7 @@ const navItems: NavItem[] = [
     title: "Dashboard",
     icon: Home,
     url: "/dashboard",
-    roles: ["admin", "staff", "student", "manager"],
+    roles: ["admin", "faculty", "student", "manager"],
   },
   {
     title: "Users",
@@ -84,7 +84,7 @@ const navItems: NavItem[] = [
     title: "Reviews",
     icon: FileText,
     url: "/reviews",
-    roles: ["admin", "staff", "manager"],
+    roles: ["admin", "faculty", "manager"],
   },
   {
     title: "Teams",
@@ -96,13 +96,13 @@ const navItems: NavItem[] = [
     title: "Courses",
     icon: Book,
     url: "/courses",
-    roles: ["staff", "manager", "student"],
+    roles: ["faculty", "manager", "student"],
   },
   {
     title: "Archives",
     icon: Archive,
     url: "/archives",
-    roles: ["staff", "student"],
+    roles: ["faculty", "student"],
   },
 ];
 
@@ -230,11 +230,20 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                       </div>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator />{" "}
                   <DropdownMenuItem
-                    onClick={() =>
-                      signOut({ redirect: true, callbackUrl: "/login" })
-                    }
+                    onClick={async () => {
+                      try {
+                        await signOut({
+                          redirect: true,
+                          callbackUrl: "/login",
+                        });
+                      } catch (error) {
+                        console.error("Error during logout:", error);
+                        // Fallback: still redirect to login even if logout fails
+                        window.location.href = "/login";
+                      }
+                    }}
                   >
                     <LogOut />
                     Log out

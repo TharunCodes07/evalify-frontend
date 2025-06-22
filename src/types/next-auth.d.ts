@@ -11,8 +11,10 @@ declare module "next-auth" {
       roles: string[];
       groups: string[];
     };
+
     access_token: string;
     error?: string | null;
+    needsRegistration?: boolean;
   }
 
   interface User {
@@ -32,5 +34,6 @@ declare module "next-auth/jwt" {
     refresh_token?: string;
     expires_at?: number;
     groups?: string[];
+    needsRegistration?: boolean;
   }
 }

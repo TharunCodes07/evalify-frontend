@@ -17,9 +17,8 @@ export default async function CoursesLayout({
   if ((userGroups as string[]).includes("student")) {
     return <>{student}</>;
   }
-
   if (
-    (userGroups as string[]).includes("staff") ||
+    (userGroups as string[]).includes("faculty") ||
     (userGroups as string[]).includes("manager")
   ) {
     return <>{faculty}</>;

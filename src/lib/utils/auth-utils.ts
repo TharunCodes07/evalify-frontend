@@ -2,7 +2,7 @@ enum UserType {
   SUPERUSER = "superuser",
   ADMIN = "admin",
   MANAGER = "manager",
-  STAFF = "staff",
+  FACULTY = "faculty",
   STUDENT = "student",
 }
 

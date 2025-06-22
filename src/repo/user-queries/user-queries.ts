@@ -14,6 +14,13 @@ interface UpdateUserData extends Omit<CreateUserData, "password"> {
   id: string;
 }
 
+interface CreateKeycloakUserData {
+  email: string;
+  name: string;
+  role: string;
+  phoneNumber: string;
+}
+
 const userQueries = {
   createUser: async (data: CreateUserData): Promise<User> => {
     const response = await axiosInstance.post("/api/user", data);
@@ -47,6 +54,28 @@ const userQueries = {
 
   fetchUserById: async (userId: string): Promise<User> => {
     const response = await axiosInstance.get(`/api/user/${userId}`);
+    return response.data;
+  },
+
+  checkUserExists: async (email: string): Promise<{ exists: boolean }> => {
+    try {
+      const response = await axiosInstance.get(
+        `/api/user/check-exists?email=${encodeURIComponent(email)}`
+      );
+      return response.data;
+    } catch {
+      return { exists: false };
+    }
+  },
+
+  createKeycloakUser: async (data: CreateKeycloakUserData): Promise<User> => {
+    const response = await axiosInstance.post("/api/user/keycloak-sync", {
+      name: data.name,
+      email: data.email,
+      role: data.role,
+      phoneNumber: data.phoneNumber,
+      isActive: true,
+    });
     return response.data;
   },
 };

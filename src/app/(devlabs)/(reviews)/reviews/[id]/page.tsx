@@ -36,7 +36,7 @@ export default function ReviewDetailPage() {
       ) {
         return true;
       }
-      if ((userGroups as string[]).includes("staff")) {
+      if ((userGroups as string[]).includes("faculty")) {
         return review.createdBy.id === session.user.id;
       }
       return false;

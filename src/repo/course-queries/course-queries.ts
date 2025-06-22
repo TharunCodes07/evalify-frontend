@@ -29,7 +29,7 @@ export const courseQueries = {
     return response.data;
   },
   assignBatchesToCourse: async (courseId: string, batchIds: string[]) => {
-    const response = await axiosInstance.post(
+    const response = await axiosInstance.put(
       `/api/course/${courseId}/addBatch`,
       batchIds
     );

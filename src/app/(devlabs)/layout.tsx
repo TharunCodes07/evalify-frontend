@@ -1,26 +1,35 @@
+"use client";
+
 import { AppSidebar } from "@/components/nav/side-nav";
 import { AppSidebarInset } from "@/components/nav/side-nav-inset";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { cookies } from "next/headers";
+import AuthGuard from "@/components/auth/AuthGuard";
+import { useEffect, useState } from "react";
 
-export default async function DevlabsLayout({
+export default function DevlabsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const sidebarState = cookieStore.get("sidebar:state")?.value;
+  const [defaultOpen, setDefaultOpen] = useState(true);
 
-  let defaultOpen = true;
-  if (sidebarState) {
-    defaultOpen = sidebarState === "true";
-  }
+  useEffect(() => {
+    const sidebarState = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("sidebar:state="))
+      ?.split("=")[1];
 
+    if (sidebarState) {
+      setDefaultOpen(sidebarState === "true");
+    }
+  }, []);
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar>
-        <AppSidebarInset>{children}</AppSidebarInset>
-      </AppSidebar>
-    </SidebarProvider>
+    <AuthGuard requiredGroups={["admin", "faculty", "student", "manager"]}>
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <AppSidebar>
+          <AppSidebarInset>{children}</AppSidebarInset>
+        </AppSidebar>
+      </SidebarProvider>
+    </AuthGuard>
   );
 }

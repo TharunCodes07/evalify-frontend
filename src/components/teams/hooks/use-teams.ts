@@ -62,7 +62,7 @@ export const useTeams = (
           (userGroups as string[]).includes("manager")
         ) {
           endpoint = `/teams`;
-        } else if ((userGroups as string[]).includes("staff")) {
+        } else if ((userGroups as string[]).includes("faculty")) {
           // Faculty can see teams from courses they teach
           endpoint = `/teams/user/${user.id}`;
         } else {

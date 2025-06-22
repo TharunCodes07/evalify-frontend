@@ -39,7 +39,7 @@ function CourseSelector({
       (userGroups as string[]).includes("manager")
     )
       return true;
-    if ((userGroups as string[]).includes("staff")) {
+    if ((userGroups as string[]).includes("faculty")) {
       return course.instructors.some((instructor) => instructor.id === user.id);
     }
     return false;

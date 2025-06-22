@@ -37,7 +37,7 @@ export default function ReviewCard({
     user &&
     user.groups &&
     ((user.groups as string[]).includes("admin") ||
-      (user.groups as string[]).includes("staff") ||
+      (user.groups as string[]).includes("faculty") ||
       (user.groups as string[]).includes("manager"))
   );
 
