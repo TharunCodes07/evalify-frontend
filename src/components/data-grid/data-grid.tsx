@@ -158,7 +158,7 @@ interface DataGridProps<TData, TValue> {
 
 export function DataGrid<TData, TValue>({
   config = {},
-  defaultSort = { sortBy: "created_at", sortOrder: "desc" },
+  defaultSort = { sortBy: "createdAt", sortOrder: "desc" },
   getColumns,
   renderGridItem,
   fetchDataFn,

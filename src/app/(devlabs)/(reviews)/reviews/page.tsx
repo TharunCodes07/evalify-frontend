@@ -16,6 +16,7 @@ import reviewQueries from "@/repo/review-queries/review-queries";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
+import { calculateReviewStatus } from "@/utils/review-status";
 
 function useReviewsForDataTable(
   page: number,
@@ -116,7 +117,6 @@ export default function ReviewsPage() {
 
   // Add the isQueryHook flag to our wrapper
   useFilteredReviews.isQueryHook = true;
-
   const renderReviewGrid = (
     review: Review,
     index: number,
@@ -124,6 +124,8 @@ export default function ReviewsPage() {
     onToggleSelect: () => void
   ) => {
     const reviewItem = review as Review & Record<string, unknown>;
+    const status = calculateReviewStatus(review.startDate, review.endDate);
+
     return (
       <GridItem<Review & Record<string, unknown>>
         key={review.id}
@@ -142,7 +144,7 @@ export default function ReviewsPage() {
             field: "status",
             label: "",
             variant: "outline",
-            format: (value: unknown) => String(value || "UNKNOWN"),
+            format: () => status,
           },
           stats: [
             {

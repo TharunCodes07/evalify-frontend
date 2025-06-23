@@ -9,7 +9,7 @@ export interface ReviewPublicationStatus {
 }
 
 /**
- * Calculate the dynamic status of a review based ONLY on start time and end time
+ * Calculate the dynamic status of a review based ONLY on start time and end time in IST
  * This is independent of publication status
  */
 export function calculateReviewStatus(
@@ -17,21 +17,29 @@ export function calculateReviewStatus(
   endDate: string | Date
 ): ReviewStatus {
   const now = new Date();
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+  const istNow = new Date(now.getTime() + istOffset);
 
-  // If current time is before start time - review is upcoming
-  if (now < start) {
+  // Parse dates and set proper time boundaries
+  const start = new Date(
+    startDate + (typeof startDate === "string" ? "T00:00:00.000Z" : "")
+  );
+  const end = new Date(
+    endDate + (typeof endDate === "string" ? "T23:59:59.999Z" : "")
+  );
+
+  // If current IST time is before start time - review is upcoming
+  if (istNow < start) {
     return "UPCOMING";
   }
 
-  // If current time is between start and end time - review is live/active
-  if (now >= start && now <= end) {
+  // If current IST time is between start and end time - review is live/active
+  if (istNow >= start && istNow <= end) {
     return "LIVE";
   }
 
-  // If current time is after end time - review is completed
-  if (now > end) {
+  // If current IST time is after end time (after 11:59:59 PM) - review is completed
+  if (istNow > end) {
     return "COMPLETED";
   }
 
