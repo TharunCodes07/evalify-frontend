@@ -21,13 +21,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
-import { DevTool } from "@hookform/devtools";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import reviewQueries from "@/repo/review-queries/review-queries";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { CreateReviewRequest } from "@/repo/review-queries/review-types";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
 
 const formSteps = [
   { value: "basic-info", label: "Basic Info" },
@@ -40,6 +40,7 @@ export default function Page() {
   const user = useCurrentUser();
   const { success, error } = useToast();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const form = useForm<CreateReviewSchema>({
     resolver: zodResolver(createReviewSchema),
@@ -55,13 +56,12 @@ export default function Page() {
       projects: [],
     },
   });
-
   const { mutate: createReview, isPending } = useMutation({
     mutationFn: (data: CreateReviewRequest) => reviewQueries.createReview(data),
     onSuccess: () => {
       success("Review created successfully!");
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
-      // TODO: Redirect to the new review page or reviews list
+      router.push("/reviews");
     },
     onError: (err) => {
       error(`Failed to create review: ${err.message}`);
@@ -133,17 +133,15 @@ export default function Page() {
     <div className="container mx-auto p-4 md:p-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <Tabs
-            value={currentTab}
-            onValueChange={setCurrentTab}
-            className="w-full"
-          >
+          {" "}
+          <Tabs value={currentTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-4">
               {formSteps.map((step) => (
                 <TabsTrigger
                   key={step.value}
                   value={step.value}
                   onClick={() => setCurrentTab(step.value)}
+                  type="button"
                 >
                   {step.label}
                 </TabsTrigger>
@@ -201,9 +199,6 @@ export default function Page() {
           </Tabs>
         </form>
       </Form>
-      {process.env.NODE_ENV === "development" && (
-        <DevTool control={form.control} />
-      )}
     </div>
   );
 }

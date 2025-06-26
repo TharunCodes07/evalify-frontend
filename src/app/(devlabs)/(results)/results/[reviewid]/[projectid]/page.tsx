@@ -253,7 +253,8 @@ export default function ResultsPage() {
                     {student.percentage.toFixed(1)}%
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {student.totalScore} / {student.maxPossibleScore} points
+                    {student.totalScore} / {student.maxPossibleScore}
+                    points
                   </p>
                 </div>
               </div>

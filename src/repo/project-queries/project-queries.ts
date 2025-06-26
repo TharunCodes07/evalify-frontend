@@ -85,6 +85,7 @@ export const projectQueries = {
     );
     return response.data.data || response.data;
   },
+  
 };
 
 export { archiveQueries } from "./archive-queries";

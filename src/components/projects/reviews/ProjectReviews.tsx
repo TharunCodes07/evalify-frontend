@@ -44,20 +44,6 @@ export default function ProjectReviews({
   projectId,
   projectCourses,
 }: ProjectReviewsProps) {
-  return (
-    <Suspense fallback={<ReviewsLoadingSkeleton />}>
-      <ProjectReviewsContent
-        projectId={projectId}
-        projectCourses={projectCourses}
-      />
-    </Suspense>
-  );
-}
-
-function ProjectReviewsContent({
-  projectId,
-  projectCourses,
-}: ProjectReviewsProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const {
     data: reviewsResponse,
@@ -68,7 +54,10 @@ function ProjectReviewsContent({
     queryFn: () => evaluationQueries.fetchReviewsForProject(projectId),
   });
 
-  if (isLoading) return <ReviewsLoadingSkeleton />;
+  if (isLoading) {
+    return <ReviewsLoadingSkeleton />;
+  }
+
   if (error) return <div>Error loading reviews.</div>;
 
   if (!reviewsResponse || !reviewsResponse.hasReview) {
@@ -95,30 +84,32 @@ function ProjectReviewsContent({
   );
 
   return (
-    <div className="space-y-6">
-      <Input
-        type="text"
-        placeholder="Search reviews by name..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="max-w-sm"
-      />
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredReviews.length > 0 ? (
-          filteredReviews.map((review) => (
-            <ReviewCard
-              key={review.id}
-              review={review}
-              projectId={projectId}
-              projectCourses={projectCourses}
-            />
-          ))
-        ) : (
-          <p className="text-muted-foreground col-span-full">
-            No reviews match your search.
-          </p>
-        )}
+    <Suspense fallback={<ReviewsLoadingSkeleton />}>
+      <div className="space-y-6">
+        <Input
+          type="text"
+          placeholder="Search reviews by name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredReviews.length > 0 ? (
+            filteredReviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                projectId={projectId}
+                projectCourses={projectCourses}
+              />
+            ))
+          ) : (
+            <p className="text-muted-foreground col-span-full">
+              No reviews match your search.
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 }

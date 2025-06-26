@@ -158,7 +158,7 @@ interface DataGridProps<TData, TValue> {
 
 export function DataGrid<TData, TValue>({
   config = {},
-  defaultSort = { sortBy: "createdAt", sortOrder: "desc" },
+  defaultSort,
   getColumns,
   renderGridItem,
   fetchDataFn,
@@ -197,11 +197,11 @@ export function DataGrid<TData, TValue>({
   }>("dateRange", { from_date: "", to_date: "" });
   const [sortBy, setSortBy] = useConditionalUrlState(
     "sortBy",
-    defaultSort.sortBy
+    defaultSort?.sortBy || "name"
   );
   const [sortOrder, setSortOrder] = useConditionalUrlState<"asc" | "desc">(
     "sortOrder",
-    defaultSort.sortOrder
+    defaultSort?.sortOrder || "asc"
   );
   const [columnVisibility, setColumnVisibility] = useConditionalUrlState<
     Record<string, boolean>

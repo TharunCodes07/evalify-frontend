@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import { useMemo } from "react";
 import { useReview } from "@/components/reviews/hooks/use-review";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,25 +23,31 @@ export default function ReviewDetailPage() {
   const router = useRouter();
   const reviewId = params.id as string;
   const { data: session } = useSession();
-
   const { data: review, isLoading, error } = useReview(reviewId);
-  // Check permissions based on user role
-  const canPublish =
-    session?.user &&
-    review &&
-    (() => {
-      const userGroups = session.user.groups || [];
-      if (
-        (userGroups as string[]).includes("admin") ||
-        (userGroups as string[]).includes("manager")
-      ) {
-        return true;
-      }
-      if ((userGroups as string[]).includes("faculty")) {
-        return review.createdBy.id === session.user.id;
-      }
-      return false;
-    })();
+
+  const reviewStatus = useMemo(() => {
+    if (!review) return null;
+    return calculateReviewStatus(review.startDate, review.endDate);
+  }, [review]);
+
+  const canPublish = useMemo(() => {
+    if (!session?.user || !review || !reviewStatus) return false;
+
+    // Only allow publishing after review is completed
+    if (reviewStatus !== "COMPLETED") return false;
+
+    const userGroups = session.user.groups || [];
+    if (
+      (userGroups as string[]).includes("admin") ||
+      (userGroups as string[]).includes("manager")
+    ) {
+      return true;
+    }
+    if ((userGroups as string[]).includes("faculty")) {
+      return review.createdBy.id === session.user.id;
+    }
+    return false;
+  }, [session?.user, review, reviewStatus]);
 
   if (isLoading) {
     return (
@@ -92,16 +99,24 @@ export default function ReviewDetailPage() {
           <div>
             <h1 className="text-3xl font-bold">{review.name}</h1>
           </div>
-        </div>
+        </div>{" "}
         <div className="flex items-center gap-2">
-          {canPublish && (
-            <PublishReviewButton
-              reviewId={review.id}
-              isPublished={review.isPublished}
-              canPublish={canPublish}
-              variant="default"
-              size="default"
-            />
+          {session?.user && review && reviewStatus && (
+            <>
+              {canPublish ? (
+                <PublishReviewButton
+                  reviewId={review.id}
+                  isPublished={review.isPublished}
+                  canPublish={canPublish}
+                  variant="default"
+                  size="default"
+                />
+              ) : reviewStatus !== "COMPLETED" ? (
+                <Button disabled variant="outline" size="default">
+                  Publish (Available after completion)
+                </Button>
+              ) : null}
+            </>
           )}
         </div>
       </div>
@@ -177,23 +192,17 @@ export default function ReviewDetailPage() {
                 <Badge variant={review.isPublished ? "default" : "secondary"}>
                   {review.isPublished ? "Published" : "Not Published"}
                 </Badge>
-              </div>
+              </div>{" "}
               <div>
                 <h4 className="font-medium mb-2">Review Status</h4>
-                {(() => {
-                  const dynamicStatus = calculateReviewStatus(
-                    review.startDate,
-                    review.endDate
-                  );
-                  return (
-                    <Badge
-                      variant="outline"
-                      className={getStatusColor(dynamicStatus)}
-                    >
-                      {formatStatus(dynamicStatus)}
-                    </Badge>
-                  );
-                })()}
+                {reviewStatus && (
+                  <Badge
+                    variant="outline"
+                    className={getStatusColor(reviewStatus)}
+                  >
+                    {formatStatus(reviewStatus)}
+                  </Badge>
+                )}
               </div>
             </div>
           </CardContent>
