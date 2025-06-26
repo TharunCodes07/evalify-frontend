@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import reviewQueries from "@/repo/review-queries/review-queries";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
 import { calculateReviewStatus } from "@/utils/review-status";
@@ -47,18 +47,19 @@ export default function ReviewsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
+  const { success, error: showError } = useToast();
 
   const deleteMutation = useMutation({
     mutationFn: (data: { reviewId: string; userId: string }) => {
       return reviewQueries.deleteReview(data.reviewId, data.userId);
     },
     onSuccess: () => {
-      toast.success("Review deleted successfully");
+      success("Review deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
       setReviewToDelete(null);
     },
     onError: (error) => {
-      toast.error(`Failed to delete review: ${error.message}`);
+      showError(`Failed to delete review: ${error.message}`);
       setReviewToDelete(null);
     },
   });
@@ -84,7 +85,7 @@ export default function ReviewsPage() {
   };
 
   const handleEdit = (review: Review) => {
-    router.push(`/reviews/create?edit=${review.id}`);
+    router.push(`/reviews/${review.id}/edit`);
   };
 
   const handleCreate = () => {

@@ -13,6 +13,21 @@ export interface CreateReviewRequest {
   sections?: string[] | null; // Optional array of strings
 }
 
+export interface UpdateReviewRequest {
+  name: string;
+  startDate: string; // YYYY-MM-DD format (LocalDate)
+  endDate: string; // YYYY-MM-DD format (LocalDate)
+  rubricsId: string; // UUID
+  userId: string; // UUID
+
+  courseIds?: string[] | null; // Optional array of UUIDs
+  semesterIds?: string[] | null; // Optional array of UUIDs
+  batchIds?: string[] | null; // Optional array of UUIDs
+  projectIds?: string[] | null; // Optional array of UUIDs
+
+  sections?: string[] | null; // Optional array of strings
+}
+
 interface DepartmentResponse {
   id: string;
   name: string;

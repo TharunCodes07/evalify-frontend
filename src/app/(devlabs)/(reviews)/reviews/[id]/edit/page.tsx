@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BasicInfoForm } from "@/components/reviews/basic-info-form";
 import { ParticipantsForm } from "@/components/reviews/participants-form";
 import { ReviewSummary } from "@/components/reviews/review-summary";
@@ -22,12 +22,14 @@ import {
 } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { DevTool } from "@hookform/devtools";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import reviewQueries from "@/repo/review-queries/review-queries";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { CreateReviewRequest } from "@/repo/review-queries/review-types";
+import { UpdateReviewRequest } from "@/repo/review-queries/review-types";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
+import { useParams, useRouter } from "next/navigation";
+import { Review } from "@/types/types";
 
 const formSteps = [
   { value: "basic-info", label: "Basic Info" },
@@ -35,11 +37,20 @@ const formSteps = [
   { value: "summary", label: "Summary" },
 ];
 
-export default function Page() {
+export default function EditReviewPage() {
   const [currentTab, setCurrentTab] = useState(formSteps[0].value);
+  const params = useParams();
+  const router = useRouter();
+  const reviewId = params.id as string;
   const user = useCurrentUser();
   const { success, error } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: review, isLoading: isLoadingReview } = useQuery({
+    queryKey: ["review", reviewId],
+    queryFn: () => reviewQueries.getReviewById(reviewId),
+    enabled: !!reviewId,
+  });
 
   const form = useForm<CreateReviewSchema>({
     resolver: zodResolver(createReviewSchema),
@@ -56,25 +67,59 @@ export default function Page() {
     },
   });
 
-  const { mutate: createReview, isPending } = useMutation({
-    mutationFn: (data: CreateReviewRequest) => reviewQueries.createReview(data),
+  useEffect(() => {
+    if (review) {
+      // Extract unique semesters from courses
+      const semesters = review.courses?.map((course: any) => ({
+        id: course.semesterInfo.id,
+        name: course.semesterInfo.name
+      })) || [];
+      
+      // Remove duplicates
+      const uniqueSemesters = semesters.filter((semester: any, index: number, self: any[]) => 
+        index === self.findIndex((s: any) => s.id === semester.id)
+      );
+
+      form.reset({
+        name: review.name || "",
+        startDate: review.startDate ? parseISO(review.startDate) : undefined,
+        endDate: review.endDate ? parseISO(review.endDate) : undefined,
+        rubricId: review.rubricsInfo?.id || undefined,
+        semesters: uniqueSemesters,
+        batches: [],
+        courses: review.courses?.map((course: any) => ({
+          id: course.id,
+          name: course.name
+        })) || [],
+        projects: review.projects?.map((project: any) => ({
+          id: project.id,
+          name: project.title
+        })) || [],
+      });
+    }
+  }, [review, form]);
+
+  const { mutate: updateReview, isPending } = useMutation({
+    mutationFn: (data: UpdateReviewRequest) => 
+      reviewQueries.updateReview(reviewId, data),
     onSuccess: () => {
-      success("Review created successfully!");
+      success("Review updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
-      // TODO: Redirect to the new review page or reviews list
+      queryClient.invalidateQueries({ queryKey: ["review", reviewId] });
+      router.push(`/reviews/${reviewId}`);
     },
     onError: (err) => {
-      error(`Failed to create review: ${err.message}`);
+      error(`Failed to update review: ${err.message}`);
     },
   });
 
   async function onSubmit(data: CreateReviewSchema) {
     if (!user) {
-      error("You must be logged in to create a review.");
+      error("You must be logged in to update a review.");
       return;
     }
 
-    const requestData: CreateReviewRequest = {
+    const requestData: UpdateReviewRequest = {
       name: data.name,
       startDate: format(data.startDate, "yyyy-MM-dd"),
       endDate: format(data.endDate, "yyyy-MM-dd"),
@@ -85,7 +130,7 @@ export default function Page() {
       courseIds: data.courses.map((c) => c.id),
       projectIds: data.projects.map((p) => p.id),
     };
-    createReview(requestData);
+    updateReview(requestData);
   }
 
   const handleNext = async () => {
@@ -129,8 +174,53 @@ export default function Page() {
     }
   };
 
+  if (isLoadingReview) {
+    return (
+      <div className="container mx-auto p-4 md:p-8 flex items-center justify-center min-h-64">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading review...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!review) {
+    return (
+      <div className="container mx-auto p-4 md:p-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600">Review not found</h1>
+          <p className="text-muted-foreground mt-2">
+            The review you're looking for doesn't exist or has been deleted.
+          </p>
+          <Button 
+            onClick={() => router.push("/reviews")}
+            className="mt-4"
+          >
+            Back to Reviews
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-4 md:p-8">
+      <div className="mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        <h1 className="text-3xl font-bold">Edit Review</h1>
+        <p className="text-muted-foreground">
+          Update the details of "{review.name}"
+        </p>
+      </div>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <Tabs
@@ -157,11 +247,11 @@ export default function Page() {
                 </CardTitle>
                 <CardDescription>
                   {currentTab === "basic-info" &&
-                    "Fill in the basic details of the review."}
+                    "Update the basic details of the review."}
                   {currentTab === "participants" &&
-                    "Select the participants for this review."}
+                    "Modify the participants for this review."}
                   {currentTab === "summary" &&
-                    "Review all the details before creating the review."}
+                    "Review all the changes before updating the review."}
                 </CardDescription>
               </CardHeader>
               <CardContent>{renderContent()}</CardContent>
@@ -193,7 +283,7 @@ export default function Page() {
                     {isPending ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : null}
-                    Create Review
+                    Update Review
                   </Button>
                 )}
               </CardFooter>
