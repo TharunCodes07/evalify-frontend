@@ -75,6 +75,32 @@ export default function ReviewCard({
     }
   };
 
+  const handleViewReview = () => {
+    if (review.status === "LIVE") {
+      router.push(`/projects/${projectId}/${review.id}`);
+    } else if (review.status === "SCHEDULED") {
+      if (isStudent || canEvaluate) {
+        // Allow students and staff to view the review page even if scheduled
+        router.push(`/projects/${projectId}/${review.id}`);
+      } else {
+        showError("Review is yet to start");
+      }
+    } else if (review.status === "COMPLETED") {
+      // Allow students and staff to view the review page even if completed
+      router.push(`/projects/${projectId}/${review.id}`);
+    } else {
+      showError("Review is not available");
+    }
+  };
+
+  const handleStudentResultsClick = () => {
+    if (review.isPublished) {
+      router.push(`/results/${review.id}/${projectId}`);
+    } else {
+      showError("Results not yet published");
+    }
+  };
+
   const relevantCourses = review.courses.filter((course) =>
     projectCourses.some((pc) => pc.id === course.id)
   );
@@ -120,27 +146,75 @@ export default function ReviewCard({
             )}
           </div>
         </div>
-      </CardContent>
+      </CardContent>{" "}
       <CardFooter>
         {review.status === "LIVE" && canEvaluate && (
-          <Link href={`/evaluate/${projectId}/${review.id}`} className="w-full">
-            <Button className="w-full">Evaluate</Button>
-          </Link>
+          <div className="flex gap-2 w-full">
+            <Link
+              href={`/evaluate/${projectId}/${review.id}`}
+              className="flex-1"
+            >
+              <Button className="w-full">Evaluate</Button>
+            </Link>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={handleViewReview}
+            >
+              View Review
+            </Button>
+          </div>
         )}
-        {review.status === "COMPLETED" && (
+        {review.status === "COMPLETED" && canEvaluate && (
+          <div className="flex gap-2 w-full">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={handleViewResults}
+            >
+              View Results
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={handleViewReview}
+            >
+              View Review
+            </Button>
+          </div>
+        )}
+        {review.status === "SCHEDULED" && canEvaluate && (
           <Button
             variant="outline"
-            className={`w-full ${
-              isStudent && !review.isPublished
-                ? "opacity-50 cursor-not-allowed"
-                : ""
-            }`}
-            onClick={handleViewResults}
+            className="w-full"
+            onClick={handleViewReview}
           >
-            View Results
+            View Review
           </Button>
         )}
-        {review.status === "SCHEDULED" && (
+        {isStudent && (
+          <div className="flex gap-2 w-full">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={handleViewReview}
+            >
+              View Review
+            </Button>
+            {review.status === "COMPLETED" && (
+              <Button
+                variant="outline"
+                className={`flex-1 ${
+                  !review.isPublished ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                onClick={handleStudentResultsClick}
+              >
+                View Results
+              </Button>
+            )}
+          </div>
+        )}
+        {review.status === "SCHEDULED" && !canEvaluate && !isStudent && (
           <Button variant="outline" className="w-full" disabled>
             Upcoming
           </Button>
@@ -150,7 +224,7 @@ export default function ReviewCard({
             Cancelled
           </Button>
         )}
-        {review.status === "LIVE" && !canEvaluate && (
+        {review.status === "LIVE" && !canEvaluate && !isStudent && (
           <Button variant="outline" className="w-full" disabled>
             Live Review
           </Button>

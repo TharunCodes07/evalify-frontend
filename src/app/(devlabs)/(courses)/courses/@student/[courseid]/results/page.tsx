@@ -17,7 +17,6 @@ import {
 import { ReviewPerformance } from "@/components/student-courses/performance-overview-chart";
 import { Course, Project } from "@/types/types";
 import PerformanceAnalytics from "@/components/student-courses/course-results/PerformanceAnalytics";
-import { ChartConfig } from "@/components/ui/chart";
 import {
   Card,
   CardHeader,
@@ -200,29 +199,11 @@ const CoursePerformancePage = () => {
     })
   );
 
-  const pieChartConfig = {
-    count: {
-      label: "Reviews",
-    },
-    ...Object.fromEntries(
-      Object.keys(scoreDistribution).map((cat) => [
-        cat.toLowerCase(),
-        { label: cat, color: categoryColors[cat] },
-      ])
-    ),
-  } satisfies ChartConfig;
-
   const barChartData = completedReviews.map((review) => ({
     reviewName: review.reviewName,
     score: review.scorePercentage || 0,
   }));
 
-  const barChartConfig = {
-    score: {
-      label: "Score",
-      color: "hsl(var(--chart-1))",
-    },
-  } satisfies ChartConfig;
   // Group projects by status
   const projectsByStatus = {
     PROPOSED: projectsData?.filter((p) => p.status === "PROPOSED") || [],
@@ -356,9 +337,7 @@ const CoursePerformancePage = () => {
         <CardContent>
           <PerformanceAnalytics
             pieChartData={pieChartData}
-            pieChartConfig={pieChartConfig}
             barChartData={barChartData}
-            barChartConfig={barChartConfig}
           />
         </CardContent>
       </Card>

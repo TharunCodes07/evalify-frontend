@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { projectQueries } from "@/repo/project-queries/project-queries";
 import { individualScoreQueries } from "@/repo/individual-score-queries/individual-score-queries";
+import reviewQueries from "@/repo/review-queries/review-queries";
+import teamQueries from "@/repo/team-queries/team-queries";
 import { CourseEvaluationForm } from "@/components/evaluations/CourseEvaluationForm";
+import { FileList } from "@/components/file-upload/file-list";
+import { ReviewResults } from "@/components/results/review-results";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ProjectWithTeam, CourseEvaluationSummary } from "@/types/types";
 import { Button } from "@/components/ui/button";
@@ -115,6 +119,21 @@ export default function EvaluationPage() {
       enabled: !!projectId,
     });
 
+  const { data: review } = useQuery({
+    queryKey: ["review", reviewId],
+    queryFn: () => reviewQueries.getReviewById(reviewId),
+    enabled: !!reviewId,
+  });
+
+  const { data: team } = useQuery({
+    queryKey: ["team", project?.teamId],
+    queryFn: () => teamQueries.getTeamById(project!.teamId),
+    enabled: !!project?.teamId,
+  });
+
+  // Function to create directory path: teamname-teamid/projectname-projectid/reviewname-reviewid
+  // This is now handled by the backend automatically based on the parameters sent
+
   const { data: summary, isLoading: isLoadingSummary } = useQuery({
     queryKey: ["evaluationSummary", reviewId, projectId],
     queryFn: () =>
@@ -207,6 +226,21 @@ export default function EvaluationPage() {
             Evaluate team members based on defined criteria
           </p>
         </div>
+
+        {project && (
+          <div className="space-y-6">
+            <FileList
+              projectId={projectId}
+              projectName={project.title}
+              reviewId={reviewId}
+              reviewName={review?.name}
+              teamId={project.teamId}
+              teamName={team?.name}
+            />
+
+            <ReviewResults reviewId={reviewId} projectId={projectId} />
+          </div>
+        )}
 
         {!courseId && project && summary && (
           <CourseSelector
