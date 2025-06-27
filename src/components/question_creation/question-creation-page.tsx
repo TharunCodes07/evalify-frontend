@@ -1,32 +1,48 @@
 "use client";
 
 import React from "react";
-import TopBar from "./top-bar";
-import QuestionTypeSelector from "./question-type-selector";
-import QuestionEditor from "./question-editor";
+import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
+import QuestionTypeSelector, { QuestionType } from "./question-type-selector";
+import QuestionEditor, { QuestionData } from "./question-editor";
 import QuestionSettings from "./question-settings";
 import ValidationErrorModal from "./validation-error-modal";
-import { validateQuestionData } from "./validation";
+import { validateQuestionData, ValidationError } from "./validation";
 import { useToast } from "@/hooks/use-toast";
 import { questionsService } from "@/app/api/services/questions";
-import {
-  QuestionType,
-  QuestionData,
-  QuestionCreationSettings,
-  QuestionCreationPageProps,
-  ValidationError,
-  createDefaultQuestionData,
-  createDefaultQuestionSettings,
-} from "./question-creation-types";
-import { Difficulty, Taxonomy } from "@/components/render-questions/types";
+import Bank from "@/repo/bank/bank";
+import { transformQuestionDataForAPI } from "./question-transformer";
+
+interface QuestionCreationSettings {
+  marks: number;
+  difficulty: string;
+  bloomsTaxonomy: string;
+  courseOutcome: string;
+  topics: { value: string; label: string }[];
+}
+
+type QuestionMode = "bank" | "quiz";
+
+interface QuestionCreationPageProps {
+  isEdit?: boolean;
+  initialQuestionData?: QuestionData;
+  initialQuestionSettings?: QuestionCreationSettings;
+  questionId?: string;
+  mode?: QuestionMode;
+  bankId?: string;
+  quizId?: string;
+}
 
 const QuestionCreationPage: React.FC<QuestionCreationPageProps> = ({
   isEdit = false,
   initialQuestionData,
   initialQuestionSettings,
   questionId,
+  mode = "bank",
+  bankId,
+  quizId,
 }) => {
-  // Initialize toast hook
+  const router = useRouter();
   const { info, success, error } = useToast();
 
   // Initialize question type from initial data or default to "mcq"
@@ -36,13 +52,26 @@ const QuestionCreationPage: React.FC<QuestionCreationPageProps> = ({
 
   // Initialize question data from initial data or use defaults
   const [questionData, setQuestionData] = React.useState<QuestionData>(
-    initialQuestionData || createDefaultQuestionData("mcq"),
+    initialQuestionData || {
+      type: "mcq",
+      question: "",
+      explanation: "",
+      showExplanation: false,
+      allowMultipleCorrect: false,
+      options: [],
+    },
   );
 
   // Initialize question settings from initial data or use defaults
   const [questionSettings, setQuestionSettings] =
     React.useState<QuestionCreationSettings>(
-      initialQuestionSettings || createDefaultQuestionSettings(),
+      initialQuestionSettings || {
+        marks: 1,
+        difficulty: "medium",
+        bloomsTaxonomy: "",
+        courseOutcome: "",
+        topics: [],
+      },
     );
 
   // Store initial state for change tracking
@@ -84,15 +113,146 @@ const QuestionCreationPage: React.FC<QuestionCreationPageProps> = ({
   const [validationErrors, setValidationErrors] = React.useState<
     ValidationError[]
   >([]);
-  const [showValidationModal, setShowValidationModal] = React.useState(false); // Handle question type change
+  const [showValidationModal, setShowValidationModal] = React.useState(false);
+
+  // Mutation for saving questions to bank
+  const saveQuestionToBankMutation = useMutation({
+    mutationFn: async (data: any) => {
+      if (!bankId) throw new Error("Bank ID is required");
+      const transformedData = transformQuestionDataForAPI(questionData, questionSettings);
+      return await Bank.addQuestionToBank(bankId, transformedData);
+    },
+    onSuccess: (response, variables, context) => {
+      success("Question added to bank successfully!", {
+        description: "Question has been saved to the question bank",
+      });
+    },
+    onError: (err: any) => {
+      console.error("Error saving question to bank:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to save question to bank";
+      error("Failed to save question", { description: errorMessage });
+    },
+  });
+
+  // Mutation for updating questions
+  const updateQuestionMutation = useMutation({
+    mutationFn: async () => {
+      if (!questionId) throw new Error("Question ID is required");
+      return await questionsService.updateQuestion(questionId, {
+        type: selectedType,
+        data: questionData,
+        settings: questionSettings,
+      });
+    },
+    onSuccess: (response) => {
+      success("Question updated successfully!", {
+        description: `Question ID: ${response.id}`,
+      });
+      // Update initial state ref to reflect the new saved state
+      initialStateRef.current = {
+        type: selectedType,
+        data: questionData,
+        settings: questionSettings,
+      };
+    },
+    onError: (err: any) => {
+      console.error("Error updating question:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to update question";
+      error("Failed to update question", { description: errorMessage });
+    },
+  });
+
+  const isLoading = saveQuestionToBankMutation.isPending || updateQuestionMutation.isPending;
+
+  // Handle question type change
   const handleTypeSelect = (type: QuestionType) => {
     if (isEdit) {
       // In edit mode, don't allow type changes
       return;
     }
     setSelectedType(type);
+
     // Reset question data to default for the new type
-    setQuestionData(createDefaultQuestionData(type));
+    const baseData = {
+      question: "",
+      explanation: "",
+      showExplanation: false,
+    };
+
+    let newQuestionData: QuestionData;
+
+    switch (type) {
+      case "mcq":
+        newQuestionData = {
+          ...baseData,
+          type: "mcq",
+          allowMultipleCorrect: false,
+          options: [],
+        };
+        break;
+      case "fillup":
+        newQuestionData = {
+          ...baseData,
+          type: "fillup",
+          blanks: [],
+          strictMatch: false,
+          useHybridEvaluation: false,
+        };
+        break;
+      case "match-following":
+        newQuestionData = {
+          ...baseData,
+          type: "match-following",
+          matchItems: [],
+        };
+        break;
+      case "descriptive":
+        newQuestionData = {
+          ...baseData,
+          type: "descriptive",
+          sampleAnswer: "",
+          wordLimit: 500,
+          gradingCriteria: "",
+        };
+        break;
+      case "true-false":
+        newQuestionData = {
+          ...baseData,
+          type: "true-false",
+          correctAnswer: null,
+        };
+        break;
+      case "coding":
+        newQuestionData = {
+          ...baseData,
+          type: "coding",
+          language: "",
+          starterCode: "",
+          testCases: [],
+          timeLimit: 30,
+          memoryLimit: 256,
+          functionName: "",
+        };
+        break;
+      case "file-upload":
+        newQuestionData = {
+          ...baseData,
+          type: "file-upload",
+          allowedFileTypes: [],
+          maxFileSize: 10,
+          maxFiles: 1,
+        };
+        break;
+      default:
+        newQuestionData = {
+          ...baseData,
+          type: "mcq",
+          allowMultipleCorrect: false,
+          options: [],
+        };
+    }
+
+    setQuestionData(newQuestionData);
   };
 
   // Handle preview
@@ -108,15 +268,26 @@ const QuestionCreationPage: React.FC<QuestionCreationPageProps> = ({
 
   const resetForm = () => {
     setSelectedType("mcq");
-    setQuestionData(createDefaultQuestionData("mcq"));
-    setQuestionSettings(createDefaultQuestionSettings());
+    setQuestionData({
+      type: "mcq",
+      question: "",
+      explanation: "",
+      showExplanation: false,
+      allowMultipleCorrect: false,
+      options: [],
+    });
+    setQuestionSettings({
+      marks: 1,
+      difficulty: "medium",
+      bloomsTaxonomy: "",
+      courseOutcome: "",
+      topics: [],
+    });
     setValidationErrors([]);
     setShowValidationModal(false);
   };
-  // Handle save
-  const [isLoading, setIsLoading] = React.useState(false);
-
-  const handleSave = async () => {
+  // Validate and prepare data
+  const validateAndPrepareData = () => {
     // Comprehensive validation using the validation system
     const validationResult = validateQuestionData(
       questionData,
@@ -126,66 +297,93 @@ const QuestionCreationPage: React.FC<QuestionCreationPageProps> = ({
     if (!validationResult.isValid) {
       setValidationErrors(validationResult.errors);
       setShowValidationModal(true);
-      return;
+      return false;
     }
 
-    setIsLoading(true);
+    // Validate required IDs based on mode
+    if (mode === "bank" && !bankId) {
+      error("Bank ID is required for adding questions to bank");
+      return false;
+    }
+
+    if (mode === "quiz" && !quizId) {
+      error("Quiz ID is required for adding questions to quiz");
+      return false;
+    }
+
+    return true;
+  };
+
+  // Handle save (redirect to bank after save)
+  const handleSave = async () => {
+    if (!validateAndPrepareData()) return;
 
     try {
-      let response;
-
       if (isEdit && questionId) {
-        // Update existing question
-        response = await questionsService.updateQuestion(questionId, {
-          type: selectedType,
-          data: questionData,
-          settings: questionSettings,
-        });
-
-        console.log("Question updated successfully:", response);
-
-        // Show success toast
-        success("Question updated successfully!", {
-          description: `Question ID: ${response.id}`,
-        });
-
-        // Update initial state ref to reflect the new saved state
-        initialStateRef.current = {
-          type: selectedType,
-          data: questionData,
-          settings: questionSettings,
-        };
+        await updateQuestionMutation.mutateAsync();
       } else {
-        // Create new question
-        response = await questionsService.createQuestion({
-          type: selectedType,
-          data: questionData,
-          settings: questionSettings,
-        });
+        if (mode === "bank" && bankId) {
+          await saveQuestionToBankMutation.mutateAsync({});
 
-        console.log("Question saved successfully:", response);
+          // Redirect to bank questions page after successful save
+          router.push(`/question-bank/${bankId}`);
+        } else if (mode === "quiz" && quizId) {
+          // TODO: Implement quiz API call when available
+          // For now, use the existing questionsService
+          const response = await questionsService.createQuestion({
+            type: selectedType,
+            data: questionData,
+            settings: questionSettings,
+          });
 
-        // Show success toast
-        success("Question saved successfully!", {
-          description: `Question ID: ${response.id}`,
-        });
+          success("Question added to quiz successfully!", {
+            description: `Question ID: ${response.id}`,
+          });
 
-        // Reset the form after successful save (only for create mode)
-        resetForm();
+          // Redirect to quiz questions page (when available)
+          // router.push(`/quiz/${quizId}`);
+        }
       }
     } catch (err) {
-      console.error(`Error ${isEdit ? "updating" : "saving"} question:`, err);
+      // Error handling is done in the mutations
+      console.error("Save operation failed:", err);
+    }
+  };
 
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : `Failed to ${isEdit ? "update" : "save"} question. Please try again.`;
+  // Handle save and add new (reset form for new question)
+  const handleSaveAndAddNew = async () => {
+    if (!validateAndPrepareData()) return;
 
-      error(`Failed to ${isEdit ? "update" : "save"} question`, {
-        description: errorMessage,
-      });
-    } finally {
-      setIsLoading(false);
+    try {
+      if (mode === "bank" && bankId) {
+        await saveQuestionToBankMutation.mutateAsync({});
+
+        // Reset form for new question
+        resetForm();
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (mode === "quiz" && quizId) {
+        // TODO: Implement quiz API call when available
+        const response = await questionsService.createQuestion({
+          type: selectedType,
+          data: questionData,
+          settings: questionSettings,
+        });
+
+        success("Question added to quiz successfully!", {
+          description: `Question ID: ${response.id}`,
+        });
+
+        // Reset form for new question
+        resetForm();
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } catch (err) {
+      // Error handling is done in the mutations
+      console.error("Save and add new operation failed:", err);
     }
   };
 
@@ -199,19 +397,12 @@ const QuestionCreationPage: React.FC<QuestionCreationPageProps> = ({
   const handleMarksChange = (marks: number) => {
     setQuestionSettings((prev) => ({ ...prev, marks }));
   };
-
   const handleDifficultyChange = (difficulty: string) => {
-    setQuestionSettings((prev) => ({
-      ...prev,
-      difficulty: difficulty as Difficulty,
-    }));
+    setQuestionSettings((prev) => ({ ...prev, difficulty }));
   };
 
   const handleBloomsTaxonomyChange = (bloomsTaxonomy: string) => {
-    setQuestionSettings((prev) => ({
-      ...prev,
-      bloomsTaxonomy: bloomsTaxonomy as Taxonomy | "",
-    }));
+    setQuestionSettings((prev) => ({ ...prev, bloomsTaxonomy }));
   };
 
   const handleCourseOutcomeChange = (courseOutcome: string) => {
@@ -223,16 +414,16 @@ const QuestionCreationPage: React.FC<QuestionCreationPageProps> = ({
   };
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Top Bar */}
-      <TopBar /> {/* Question Type Selector */}
       <QuestionTypeSelector
         selectedType={selectedType}
         onTypeSelect={handleTypeSelect}
         onPreview={handlePreview}
         onSave={handleSave}
+        onSaveAndAddNew={handleSaveAndAddNew}
         isLoading={isLoading}
         isEdit={isEdit}
         hasChanges={hasChanges}
+        mode={mode}
       />
       {/* Main Content Area - Fixed Layout */}
       <div className="flex-1 overflow-hidden flex">

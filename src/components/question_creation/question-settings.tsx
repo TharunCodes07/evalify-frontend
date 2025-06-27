@@ -32,19 +32,21 @@ const difficultyOptions = [
 ];
 
 const bloomOptions = [
-  { value: "remember", label: "Remember" },
-  { value: "understand", label: "Understand" },
-  { value: "apply", label: "Apply" },
-  { value: "analyze", label: "Analyze" },
-  { value: "evaluate", label: "Evaluate" },
-  { value: "create", label: "Create" },
+  { value: "REMEMBER", label: "Remember" },
+  { value: "UNDERSTAND", label: "Understand" },
+  { value: "APPLY", label: "Apply" },
+  { value: "ANALYZE", label: "Analyze" },
+  { value: "EVALUATE", label: "Evaluate" },
+  { value: "CREATE", label: "Create" },
 ];
 
 const courseOutcomeOptions = [
-  { value: "co1", label: "CO 1" },
-  { value: "co2", label: "CO 2" },
-  { value: "co3", label: "CO 3" },
-  { value: "co4", label: "CO 4" },
+  { value: 1, label: "CO 1" },
+  { value: 2, label: "CO 2" },
+  { value: 3, label: "CO 3" },
+  { value: 4, label: "CO 4" },
+  { value: 5, label: "CO 5" },
+  { value: 6, label: "CO 6" },
 ];
 
 const initialTopics: { value: string; label: string }[] = [
@@ -134,9 +136,9 @@ const QuestionSettings = ({
               </div>
               {availableTopics.length > 0 && (
                 <div>                  <div className="flex items-center gap-2 text-sm font-semibold mb-2">
-                    <Tags className="h-4 w-4 text-primary" />
-                    <label>Related Topics</label>
-                  </div>
+                  <Tags className="h-4 w-4 text-primary" />
+                  <label>Related Topics</label>
+                </div>
                   <SelectBox
                     id="topics"
                     label=""
@@ -156,7 +158,8 @@ const QuestionSettings = ({
                     allowMultiple={true}
                   />
                 </div>
-              )}            </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

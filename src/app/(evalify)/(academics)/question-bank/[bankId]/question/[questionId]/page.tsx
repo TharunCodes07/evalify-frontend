@@ -15,9 +15,10 @@ export default function CreateQuestionPage({
   if (!bankId) {
     throw new Error("Bank ID is required");
   }
+
   if (questionId === "create") {
-    return <QuestionCreationPage />;
+    return <QuestionCreationPage mode="bank" bankId={bankId} />;
   } else {
-    return <QuestionCreationPage questionId={questionId} isEdit={true} />;
+    return <QuestionCreationPage questionId={questionId} isEdit={true} mode="bank" bankId={bankId} />;
   }
 }

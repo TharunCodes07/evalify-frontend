@@ -27,15 +27,16 @@ export enum Difficulty {
 
 // Base Question Interface - using backend format directly
 export interface BaseQuestion {
-  id?: string; // Optional for backend compatibility
+  id?: string;
   question: string;
   explanation?: string | null;
-  hintText?: string | null; // Backend format
-  markValue: number; // Backend format
-  taxonomy: string; // Backend format
-  coValue: number; // Backend format
+  hintText?: string | null;
+  bloomsTaxonomy: Taxonomy;
+  co: number;
   negativeMark?: number;
-  difficultyLevel: string; // Backend format
+  difficulty: string;
+  hint?: string;
+  marks?: number;
   bank?: {
     id: string;
     name: string;
@@ -108,15 +109,15 @@ export interface FileUploadQuestion extends BaseQuestion {
 }
 
 export interface FunctionParam {
-  param: string; // Backend format
+  name: string; // Changed from 'param' to 'name' to match usage
   type: string;
   description?: string;
 }
 
 export interface TestCase {
   id?: string;
-  input: unknown[]; // Backend format
-  expected: unknown; // Backend format
+  input: string; // Changed from unknown[] to string to match sample data
+  expectedOutput: string; // Changed from 'expected' to 'expectedOutput' and type to string
   isHidden?: boolean;
   points?: number;
 }
@@ -240,9 +241,9 @@ export interface CodingAnswer {
 export interface TestResult {
   testCaseId: string;
   passed: boolean;
-  input: unknown[];
-  expected: unknown;
-  actual?: unknown;
+  input: string; // Changed from unknown[] to string
+  expectedOutput: string; // Changed from 'expected' to 'expectedOutput'
+  actual?: string; // Changed from unknown to string
   error?: string;
 }
 

@@ -17,6 +17,15 @@ type BankSchema = {
   access: User[];
 };
 
+type BankQuestion = {
+  id: string;
+  question: string;
+  type: string;
+  marks?: number;
+  difficulty?: string;
+  created_at: string;
+};
+
 type BankTopic = {
   id: string;
   name: string;
@@ -37,7 +46,7 @@ class Bank {
       createdAt: new Date().toISOString(), // Adds "2025-06-07T09:02:11.036Z"
     };
 
-    const response = await axiosInstance.post("/api/bank", payload);
+    const response = await axiosInstance.post("/api/bank/", payload);
     return response.data;
   }
 
@@ -95,6 +104,17 @@ class Bank {
     );
     return response.data;
   }
+
+  static async getBankQuestions(bankId: string): Promise<BankQuestion[]> {
+    const response = await axiosInstance.get(`/api/bank/${bankId}/questions`);
+    return response.data;
+  }
+
+  static async addQuestionToBank(bankId: string, questionData: Record<string, unknown>): Promise<BankQuestion> {
+    const response = await axiosInstance.put(`/api/bank/${bankId}/questions/add-question/`, questionData);
+    return response.data;
+  }
+
 }
 
 export default Bank;

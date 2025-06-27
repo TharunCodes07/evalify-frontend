@@ -596,10 +596,11 @@ const ManageQuizPage = () => {
                       value: course.id,
                       label: `${course.code} - ${course.name}`,
                     }))}
-                    value={formData.course || []}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, course: value }))
-                    }
+                    selected={formData.course || []}
+                    onChange={(value) => {
+                      const newValue = typeof value === 'function' ? value(formData.course || []) : value;
+                      setFormData((prev) => ({ ...prev, course: newValue }));
+                    }}
                     placeholder="Select courses..."
                   />
                 ) : (
@@ -650,10 +651,11 @@ const ManageQuizPage = () => {
                       value: student.id,
                       label: `${student.rollNumber} - ${student.name}`,
                     }))}
-                    value={formData.student || []}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, student: value }))
-                    }
+                    selected={formData.student || []}
+                    onChange={(value) => {
+                      const newValue = typeof value === 'function' ? value(formData.student || []) : value;
+                      setFormData((prev) => ({ ...prev, student: newValue }));
+                    }}
                     placeholder="Select students..."
                   />
                 ) : (
@@ -704,10 +706,11 @@ const ManageQuizPage = () => {
                       value: lab.id,
                       label: `${lab.name} - ${lab.location}`,
                     }))}
-                    value={formData.lab || []}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, lab: value }))
-                    }
+                    selected={formData.lab || []}
+                    onChange={(value) => {
+                      const newValue = typeof value === 'function' ? value(formData.lab || []) : value;
+                      setFormData((prev) => ({ ...prev, lab: newValue }));
+                    }}
                     placeholder="Select labs..."
                   />
                 ) : (
@@ -756,10 +759,11 @@ const ManageQuizPage = () => {
                       value: batch.id,
                       label: `${batch.name} (${batch.year})`,
                     }))}
-                    value={formData.batch || []}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, batch: value }))
-                    }
+                    selected={formData.batch || []}
+                    onChange={(value) => {
+                      const newValue = typeof value === 'function' ? value(formData.batch || []) : value;
+                      setFormData((prev) => ({ ...prev, batch: newValue }));
+                    }}
                     placeholder="Select batches..."
                   />
                 ) : (

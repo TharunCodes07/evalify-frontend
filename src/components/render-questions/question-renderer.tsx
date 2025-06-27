@@ -108,8 +108,8 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   const handleEditMarks = () => {
     if (actions?.onEditMarks) {
-      const currentMarks = question.markValue;
-      const newMarks = prompt("Enter new marks:", currentMarks.toString());
+      const currentMarks = question.marks;
+      const newMarks = prompt("Enter new marks:", currentMarks?.toString());
       if (newMarks && !isNaN(Number(newMarks))) {
         actions.onEditMarks(
           question.id || `question-${questionNumber || 1}`,
@@ -213,9 +213,11 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   return (
     <TooltipProvider>
       <Card className={cn("w-full", config.compact && "shadow-sm", className)}>
+        {" "}
         <CardHeader className={cn("pb-4", config.compact && "pb-2")}>
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
+              {" "}
               {/* min-w-0 prevents flex item from overflowing */}
               {/* Question Number and Type */}
               <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -231,8 +233,8 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                 {config.showMarks && (
                   <Badge variant="outline" className="font-medium text-xs">
                     <Award className="w-3 h-3 mr-1" />
-                    {question.markValue}
-                    {question.markValue === 1 ? "mark" : "marks"}
+                    {question.marks}{" "}
+                    {question.marks === 1 ? "mark" : "marks"}
                   </Badge>
                 )}
               </div>
@@ -244,12 +246,12 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                       <TooltipTrigger>
                         <Badge
                           className={cn(
-                            getDifficultyColor(question.difficultyLevel),
+                            getDifficultyColor(question.difficulty),
                             "text-xs",
                           )}
                         >
                           <Target className="w-3 h-3 mr-1" />
-                          {question.difficultyLevel}
+                          {question.difficulty}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -263,12 +265,12 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                       <TooltipTrigger>
                         <Badge
                           className={cn(
-                            getTaxonomyColor(question.taxonomy),
+                            getTaxonomyColor(question.bloomsTaxonomy),
                             "text-xs",
                           )}
                         >
                           <BookOpen className="w-3 h-3 mr-1" />
-                          {question.taxonomy}
+                          {question.bloomsTaxonomy}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -277,15 +279,15 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                     </Tooltip>
                   )}
 
-                  {question.coValue && (
+                  {question.co && (
                     <Tooltip>
                       <TooltipTrigger>
                         <Badge variant="outline" className="text-xs">
-                          CO-{question.coValue}
+                          CO-{question.co}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Course Outcome {question.coValue}</p>
+                        <p>Course Outcome {question.co}</p>
                       </TooltipContent>
                     </Tooltip>
                   )}
@@ -302,7 +304,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                     ))}
                 </div>
               )}
-            </div>
+            </div>{" "}
             {/* Score Display for Student Mode or Review Mode */}
             {shouldShowScore && config.userAnswers ? (
               <div className="flex items-center gap-2 lg:ml-4">
@@ -316,7 +318,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                   )}
                 >
                   <Award className="w-3 h-3 mr-1" />
-                  Score: {config.userAnswers.score ?? 0}/{question.markValue}
+                  Score: {config.userAnswers.score ?? 0}/{question.marks}
                 </Badge>
               </div>
             ) : (
@@ -391,13 +393,13 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Delete Question</p>
-                      </TooltipContent>
+                      </TooltipContent>{" "}
                     </Tooltip>
                   )}
                 </div>
               )
             )}
-          </div>
+          </div>{" "}
           {/* Hint Toggle */}
           {config.showHint && question.hintText && (
             <div className="flex items-center gap-2 mt-2">
@@ -443,6 +445,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
           )}
         </CardHeader>
         <CardContent className={cn("pt-0", config.compact && "px-4 pb-4")}>
+          {" "}
           {/* Question Type Specific Content */}
           {renderQuestionContent()}
           {/* Explanation */}

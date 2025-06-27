@@ -86,17 +86,16 @@ function TopicSidebar({
           <CardTitle className="text-lg">Topics ({topics.length})</CardTitle>
           <Separator />
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex justify-between flex-col h-full">
           <ScrollArea className="h-[calc(100vh-250px)]">
             <div className="p-2 space-y-2">
               {topics.map((topic) => (
                 <div
                   key={topic.id}
-                  className={`flex items-center gap-2 p-3 rounded-lg border hover:bg-accent/50 transition-colors group ${
-                    selectedTopics.includes(topic.id)
+                  className={`flex items-center gap-2 p-3 rounded-lg border hover:bg-accent/50 transition-colors group ${selectedTopics.includes(topic.id)
                       ? "bg-accent border-primary"
                       : ""
-                  }`}
+                    }`}
                 >
                   {editingTopic?.id === topic.id ? (
                     <div className="flex-1 flex gap-2">
@@ -237,6 +236,12 @@ export default function BankPage({
     enabled: !!bank,
   });
 
+  const { data: questions, isLoading: isLoadingQuestions } = useQuery({
+    queryKey: ["bankQuestions", bankId],
+    queryFn: () => Bank.getBankQuestions(bankId),
+    enabled: !!bank,
+  });
+
   const createTopicMutation = useMutation({
     mutationFn: (topicName: string) => Bank.addBankTopic(bankId, topicName),
     onSuccess: () => {
@@ -295,7 +300,7 @@ export default function BankPage({
     editTopicMutation.mutate({ topicId, name });
   };
 
-  if (bankLoading || isLoadingTopics) {
+  if (bankLoading || isLoadingTopics || isLoadingQuestions) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-lg">Loading...</div>
@@ -372,19 +377,14 @@ export default function BankPage({
 
         {/* Main Content Area */}
         <div className="mt-8">
-          {selectedTopics.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              Select one or more topics to view questions
-            </div>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              Questions for selected topics will be displayed here
-              <div className="mt-2 text-sm">
-                {selectedTopics.length} topic
-                {selectedTopics.length !== 1 ? "s" : ""} selected
-              </div>
-            </div>
-          )}
+
+          <pre>
+            {
+              questions &&
+              // JSON.parse(questions)?.questions[0].question
+              JSON.stringify(questions, null, 2)
+            }
+          </pre>
         </div>
       </div>
     </div>

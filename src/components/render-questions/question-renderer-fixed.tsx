@@ -81,21 +81,34 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     config.showCorrectAnswers || config.mode === "student",
   );
 
+  // Type for question with marks property
+  type QuestionWithMarks = typeof question & { marks: number };
+
+  // Type guard to check if question has marks property
+  const hasMarks = (q: typeof question): q is QuestionWithMarks => {
+    return 'marks' in q && typeof q.marks === 'number';
+  };
+
+  const getQuestionMarks = (q: typeof question): number => {
+    return hasMarks(q) ? q.marks : 1;
+  };
+
   const handleEdit = () => {
-    if (actions?.onEdit) {
+    if (actions?.onEdit && question.id) {
       actions.onEdit(question.id);
     }
   };
 
   const handleDelete = () => {
-    if (actions?.onDelete) {
+    if (actions?.onDelete && question.id) {
       actions.onDelete(question.id);
     }
   };
 
   const handleEditMarks = () => {
-    if (actions?.onEditMarks) {
-      const newMarks = prompt("Enter new marks:", question.marks.toString());
+    if (actions?.onEditMarks && question.id) {
+      const currentMarks = getQuestionMarks(question);
+      const newMarks = prompt("Enter new marks:", currentMarks.toString());
       if (newMarks && !isNaN(Number(newMarks))) {
         actions.onEditMarks(question.id, Number(newMarks));
         showSuccess("Marks updated successfully");
@@ -104,7 +117,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   };
 
   const handleDuplicate = () => {
-    if (actions?.onDuplicate) {
+    if (actions?.onDuplicate && question.id) {
       actions.onDuplicate(question.id);
       showSuccess("Question duplicated successfully");
     }
@@ -205,7 +218,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                 {config.showMarks && (
                   <Badge variant="outline" className="font-medium">
                     <Award className="w-3 h-3 mr-1" />
-                    {question.marks} {question.marks === 1 ? "mark" : "marks"}
+                    {getQuestionMarks(question)} {getQuestionMarks(question) === 1 ? "mark" : "marks"}
                   </Badge>
                 )}
               </div>
@@ -349,7 +362,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
           </div>
 
           {/* Hint Toggle */}
-          {config.showHint && question.hint && (
+          {config.showHint && question.hintText && (
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -377,13 +390,13 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
           </div>
 
           {/* Hint Display */}
-          {showHint && question.hint && (
+          {showHint && question.hintText && (
             <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md">
               <div className="flex items-start gap-2">
                 <Lightbulb className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
                   <ContentPreview
-                    content={question.hint}
+                    content={question.hintText}
                     className="border-none p-0 bg-transparent"
                   />
                 </div>

@@ -12,6 +12,8 @@ const sampleQuestionData: QuestionData = {
   explanation:
     "Paris is the capital and largest city of France, located in the north-central part of the country.",
   showExplanation: true,
+  strictMatch: false,
+  useHybridEvaluation: true,
   blanks: [
     {
       id: "blank-1",

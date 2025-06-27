@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { QuestionType } from "./question-type-selector";
 import MCQQuestion from "./question-types/mcq-question";
 import TrueFalseQuestion from "./question-types/true-false-question";
 import FillupQuestion from "./question-types/fillup-question";
@@ -8,103 +9,207 @@ import DescriptiveQuestion from "./question-types/descriptive-question";
 import CodingQuestion from "./question-types/coding-question";
 import MatchFollowingQuestion from "./question-types/match-following-question";
 import FileUploadQuestion from "./question-types/file-upload-question";
-import {
-  QuestionData,
-  QuestionEditorProps,
-  createDefaultQuestionData,
-} from "./question-creation-types";
-import {
-  MCQOption,
-  Blank,
-  MatchPair,
-  TestCase,
-} from "@/components/render-questions/types";
+import { FunctionMetadata } from "./types";
 
-// Import types from question type components for type adapters
-interface MCQOptionComponent {
+// Type definitions for different question data
+interface MCQOption {
   id: string;
   text: string;
   isCorrect: boolean;
 }
 
-interface FillupBlankComponent {
+interface FillupBlank {
   id: string;
   position: number;
   acceptedAnswers: string[];
 }
 
-interface MatchItemComponent {
+interface MatchItem {
   id: string;
   leftText: string;
   rightText: string;
 }
 
-interface TestCaseComponent {
+interface TestCase {
   id: string;
   inputs: Record<string, string>;
   expectedOutput: string;
   isHidden: boolean;
 }
 
-// Type adapter functions
-const adaptMCQOptions = (options: MCQOption[]): MCQOptionComponent[] => {
-  return options.map((option, index) => ({
-    id: option.id || `opt-${index + 1}`,
-    text: option.text || "",
-    isCorrect: option.isCorrect || false,
-  }));
-};
+// Base question data interface
+interface BaseQuestionData {
+  question: string;
+  explanation?: string;
+  showExplanation: boolean;
+}
 
-const adaptBlanks = (blanks: Blank[]): FillupBlankComponent[] => {
-  return blanks.map((blank, index) => ({
-    id: blank.id || `blank-${index + 1}`,
-    position: index,
-    acceptedAnswers: blank.answers || [],
-  }));
-};
+// Specific question data interfaces
+interface MCQData extends BaseQuestionData {
+  type: "mcq";
+  options: MCQOption[];
+  allowMultipleCorrect: boolean;
+}
 
-const adaptMatchItems = (matchItems: MatchPair[]): MatchItemComponent[] => {
-  return matchItems.map((item, index) => ({
-    id: item.id || `match-${index + 1}`,
-    leftText: item.leftPair || "",
-    rightText: item.rightPair || "",
-  }));
-};
+interface TrueFalseData extends BaseQuestionData {
+  type: "true-false";
+  correctAnswer: boolean | null;
+}
 
-const adaptTestCases = (testCases: TestCase[]): TestCaseComponent[] => {
-  return testCases.map((testCase, index) => {
-    let inputs: Record<string, string> = {};
+interface FillupData extends BaseQuestionData {
+  type: "fillup";
+  blanks: FillupBlank[];
+  strictMatch: boolean;
+  useHybridEvaluation: boolean;
+}
 
-    if (Array.isArray(testCase.input)) {
-      inputs = testCase.input.reduce(
-        (acc: Record<string, string>, val, idx) => {
-          acc[`param${idx}`] = String(val);
-          return acc;
-        },
-        {},
-      );
-    } else {
-      inputs = { input: String(testCase.input || "") };
-    }
+interface DescriptiveData extends BaseQuestionData {
+  type: "descriptive";
+  sampleAnswer?: string;
+  wordLimit?: number;
+  gradingCriteria?: string;
+}
 
-    return {
-      id: testCase.id || `test-${index + 1}`,
-      inputs,
-      expectedOutput: String(testCase.expected || ""),
-      isHidden: testCase.isHidden || false,
-    };
-  });
-};
+interface CodingData extends BaseQuestionData {
+  [x: string]: boolean;
+  type: "coding";
+  language: string;
+  starterCode?: string;
+  testCases: TestCase[];
+  timeLimit?: number;
+  memoryLimit?: number;
+  functionName?: string;
+  functionMetadata?: FunctionMetadata;
+}
+
+interface MatchFollowingData extends BaseQuestionData {
+  type: "match-following";
+  matchItems: MatchItem[];
+}
+
+interface FileUploadData extends BaseQuestionData {
+  type: "file-upload";
+  allowedFileTypes: string[];
+  maxFileSize: number;
+  maxFiles: number;
+}
+
+type QuestionData =
+  | MCQData
+  | TrueFalseData
+  | FillupData
+  | DescriptiveData
+  | CodingData
+  | MatchFollowingData
+  | FileUploadData;
+
+interface QuestionEditorProps {
+  questionType: QuestionType;
+  questionData: QuestionData;
+  onQuestionDataChange: (data: QuestionData) => void;
+}
 
 const QuestionEditor: React.FC<QuestionEditorProps> = ({
   questionType,
   questionData,
   onQuestionDataChange,
 }) => {
+  // Helper function to create default data for each question type
+  const createDefaultData = (type: QuestionType): QuestionData => {
+    const baseData = {
+      question: "",
+      explanation: "",
+      showExplanation: false,
+    };
+
+    switch (type) {
+      case "mcq":
+        return {
+          ...baseData,
+          type: "mcq",
+          options: [
+            { id: "opt-1", text: "", isCorrect: false },
+            { id: "opt-2", text: "", isCorrect: false },
+            { id: "opt-3", text: "", isCorrect: false },
+            { id: "opt-4", text: "", isCorrect: false },
+          ],
+          allowMultipleCorrect: false,
+        };
+
+      case "true-false":
+        return {
+          ...baseData,
+          type: "true-false",
+          correctAnswer: null,
+        };
+      case "fillup":
+        return {
+          ...baseData,
+          type: "fillup",
+          blanks: [],
+          strictMatch: false,
+          useHybridEvaluation: false,
+        };
+
+      case "descriptive":
+        return {
+          ...baseData,
+          type: "descriptive",
+          sampleAnswer: "",
+          wordLimit: undefined,
+          gradingCriteria: "",
+        };
+      case "coding":
+        return {
+          ...baseData,
+          type: "coding",
+          language: "python",
+          starterCode: "",
+          testCases: [
+            { id: "test-1", inputs: {}, expectedOutput: "", isHidden: false },
+          ],
+          timeLimit: undefined,
+          memoryLimit: undefined,
+          functionName: "",
+          functionMetadata: {
+            name: "",
+            parameters: [],
+            returnType: "int",
+            language: "python",
+          },
+        };
+
+      case "match-following":
+        return {
+          ...baseData,
+          type: "match-following",
+          matchItems: [
+            { id: "match-1", leftText: "", rightText: "" },
+            { id: "match-2", leftText: "", rightText: "" },
+          ],
+        };
+
+      case "file-upload":
+        return {
+          ...baseData,
+          type: "file-upload",
+          allowedFileTypes: [],
+          maxFileSize: 5,
+          maxFiles: 1,
+        };
+      default:
+        return {
+          ...baseData,
+          type: "mcq",
+          options: [],
+          allowMultipleCorrect: false,
+        } as QuestionData;
+    }
+  };
   // Initialize data if type doesn't match
   React.useEffect(() => {
     if (questionData.type !== questionType) {
-      const defaultData = createDefaultQuestionData(questionType);
+      const defaultData = createDefaultData(questionType);
       // Preserve common fields if they exist
       defaultData.question = questionData.question || "";
       defaultData.explanation = questionData.explanation || "";
@@ -136,54 +241,18 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
           return (
             <MCQQuestion
               question={questionData.question}
-              options={adaptMCQOptions(questionData.options)}
+              options={questionData.options}
               explanation={questionData.explanation}
               showExplanation={questionData.showExplanation}
               allowMultipleCorrect={questionData.allowMultipleCorrect}
               onQuestionChange={(question) => updateData({ question })}
-              onOptionsChange={(options) =>
-                updateData({
-                  options: options.map((opt) => ({
-                    id: opt.id || null,
-                    text: opt.text,
-                    isCorrect: opt.isCorrect,
-                  })),
-                })
-              }
+              onOptionsChange={(options) => updateData({ options })}
               onExplanationChange={(explanation) => updateData({ explanation })}
               onShowExplanationChange={(showExplanation) =>
                 updateData({ showExplanation })
               }
               onAllowMultipleCorrectChange={(allowMultipleCorrect) =>
                 updateData({ allowMultipleCorrect })
-              }
-            />
-          );
-        }
-        break;
-
-      case "mmcq":
-        if (questionData.type === "mmcq") {
-          return (
-            <MCQQuestion
-              question={questionData.question}
-              options={adaptMCQOptions(questionData.options)}
-              explanation={questionData.explanation}
-              showExplanation={questionData.showExplanation}
-              allowMultipleCorrect={true}
-              onQuestionChange={(question) => updateData({ question })}
-              onOptionsChange={(options) =>
-                updateData({
-                  options: options.map((opt) => ({
-                    id: opt.id || null,
-                    text: opt.text,
-                    isCorrect: opt.isCorrect,
-                  })),
-                })
-              }
-              onExplanationChange={(explanation) => updateData({ explanation })}
-              onShowExplanationChange={(showExplanation) =>
-                updateData({ showExplanation })
               }
             />
           );
@@ -215,26 +284,21 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
           return (
             <FillupQuestion
               question={questionData.question}
-              blanks={adaptBlanks(questionData.blanks)}
+              blanks={questionData.blanks}
               explanation={questionData.explanation}
               showExplanation={questionData.showExplanation}
-              strictMatch={questionData.strictMatch || false}
-              useHybridEvaluation={false}
+              strictMatch={questionData.strictMatch}
+              useHybridEvaluation={questionData.useHybridEvaluation}
               onQuestionChange={(question) => updateData({ question })}
-              onBlanksChange={(blanks) =>
-                updateData({
-                  blanks: blanks.map((blank) => ({
-                    id: blank.id,
-                    answers: blank.acceptedAnswers,
-                  })),
-                })
-              }
+              onBlanksChange={(blanks) => updateData({ blanks })}
               onExplanationChange={(explanation) => updateData({ explanation })}
               onShowExplanationChange={(showExplanation) =>
                 updateData({ showExplanation })
               }
               onStrictMatchChange={(strictMatch) => updateData({ strictMatch })}
-              onUseHybridEvaluationChange={() => {}}
+              onUseHybridEvaluationChange={(useHybridEvaluation) =>
+                updateData({ useHybridEvaluation })
+              }
             />
           );
         }
@@ -269,30 +333,26 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
           return (
             <CodingQuestion
               question={questionData.question}
-              language={questionData.language[0] || "python"}
+              language={questionData.language}
               starterCode={questionData.starterCode}
-              testCases={adaptTestCases(questionData.testCases)}
+              testCases={questionData.testCases}
               explanation={questionData.explanation}
               showExplanation={questionData.showExplanation}
               functionName={questionData.functionName}
+              functionMetadata={questionData.functionMetadata}
               onQuestionChange={(question) => updateData({ question })}
-              onLanguageChange={(language) =>
-                updateData({ language: [language] })
-              }
+              onLanguageChange={(language) => updateData({ language })}
               onStarterCodeChange={(starterCode) => updateData({ starterCode })}
-              onTestCasesChange={(testCases) =>
-                updateData({
-                  testCases: testCases.map((tc) => ({
-                    id: tc.id || undefined,
-                    input: Object.values(tc.inputs || {}),
-                    expected: tc.expectedOutput,
-                    isHidden: tc.isHidden,
-                  })),
-                })
-              }
+              onTestCasesChange={(testCases) => updateData({ testCases })}
               onExplanationChange={(explanation) => updateData({ explanation })}
               onShowExplanationChange={(showExplanation) =>
                 updateData({ showExplanation })
+              }
+              onFunctionMetadataChange={(functionMetadata) =>
+                updateData({
+                  functionMetadata,
+                  functionName: functionMetadata.name,
+                })
               }
             />
           );
@@ -304,19 +364,11 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
           return (
             <MatchFollowingQuestion
               question={questionData.question}
-              matchItems={adaptMatchItems(questionData.matchItems)}
+              matchItems={questionData.matchItems}
               explanation={questionData.explanation}
               showExplanation={questionData.showExplanation}
               onQuestionChange={(question) => updateData({ question })}
-              onMatchItemsChange={(matchItems) =>
-                updateData({
-                  matchItems: matchItems.map((item) => ({
-                    id: item.id,
-                    leftPair: item.leftText,
-                    rightPair: item.rightText,
-                  })),
-                })
-              }
+              onMatchItemsChange={(matchItems) => updateData({ matchItems })}
               onExplanationChange={(explanation) => updateData({ explanation })}
               onShowExplanationChange={(showExplanation) =>
                 updateData({ showExplanation })
@@ -375,10 +427,4 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
 };
 
 export default QuestionEditor;
-export type {
-  QuestionData,
-  MCQOptionComponent,
-  FillupBlankComponent,
-  MatchItemComponent,
-  TestCaseComponent,
-};
+export type { QuestionData, MCQOption, FillupBlank, MatchItem, TestCase };
