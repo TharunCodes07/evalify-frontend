@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { evaluationQueries } from "@/repo/evaluation-queries";
+import { evaluationQueries } from "@/repo/evaluation-queries/evaluation-queries";
 import ReviewCard from "./ReviewCard";
 import { ProjectReviewsResponse } from "@/types/types";
 import { useState, Suspense } from "react";

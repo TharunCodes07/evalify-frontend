@@ -9,7 +9,7 @@ import { FileList } from "./file-list";
 import { useToast } from "@/hooks/use-toast";
 import fileUploadQueries, {
   FileUploadParams,
-} from "@/repo/file-upload-queries";
+} from "@/repo/file-upload-queries/file-upload-queries";
 import reviewQueries from "@/repo/review-queries/review-queries";
 import teamQueries from "@/repo/team-queries/team-queries";
 import { projectQueries } from "@/repo/project-queries/project-queries";
@@ -52,13 +52,11 @@ export function FileUploadSection({
     enabled: !!project?.teamId,
   });
 
-  // Calculate review status and permissions
   const reviewStatus = review
     ? calculateReviewStatus(review.startDate, review.endDate)
     : null;
   const isReviewComplete = reviewStatus === "COMPLETED";
 
-  // Check if user can upload files
   const userGroups = (currentUser?.groups as string[]) || [];
   const canUpload =
     currentUser &&

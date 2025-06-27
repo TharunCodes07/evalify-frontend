@@ -5,7 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import fileUploadQueries, { FileListParams } from "@/repo/file-upload-queries";
+import fileUploadQueries, {
+  FileListParams,
+} from "@/repo/file-upload-queries/file-upload-queries";
 import { Download, File, Trash2, ExternalLink } from "lucide-react";
 
 interface FileListProps {

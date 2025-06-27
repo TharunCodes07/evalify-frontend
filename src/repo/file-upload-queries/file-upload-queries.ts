@@ -108,7 +108,7 @@ const fileUploadQueries = {
 
   constructMinioUrl: (objectName: string): string => {
     const minioUrl =
-      process.env.NEXT_PUBLIC_MINIO_URL || "http://172.17.9.74:9002/";
+      process.env.NEXT_PUBLIC_MINIO_URL || "http://localhost:9000";
     const bucketName = process.env.NEXT_PUBLIC_MINIO_BUCKET_NAME || "devlabs";
     return `${minioUrl.replace(/\/$/, "")}/${bucketName}/${objectName}`;
   },

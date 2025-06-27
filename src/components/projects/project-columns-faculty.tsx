@@ -1,6 +1,8 @@
 import { Project } from "@/types/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table/column-header";
+import { Button } from "@/components/ui/button";
+import { BadgeCheck } from "lucide-react";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -143,6 +145,19 @@ export const getColumnsFaculty = (): ColumnDef<Project>[] => {
       },
       meta: { label: "Last Updated" },
       enableSorting: true,
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-center">Actions</div>,
+      cell: ({ row: _row }) => (
+        <div className="flex justify-center">
+          <Button variant="outline" size="sm">
+            Approve <BadgeCheck className="h-6 w-6 text-green-500" />
+          </Button>
+        </div>
+      ),
+      enableSorting: false,
+      meta: { label: "Actions" },
     },
   ];
 };
