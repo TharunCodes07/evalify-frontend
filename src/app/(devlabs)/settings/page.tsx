@@ -19,7 +19,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { User, Bell, Palette, Monitor, Smartphone, Eye, RotateCcw } from "lucide-react";
+import {
+  User,
+  Bell,
+  Palette,
+  Monitor,
+  Smartphone,
+  Eye,
+  RotateCcw,
+} from "lucide-react";
 
 function capitalizeWord(word: string) {
   return word.charAt(0).toUpperCase() + word.slice(1);

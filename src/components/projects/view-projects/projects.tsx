@@ -169,7 +169,9 @@ export function Projects({ teamId }: ProjectsProps) {
                       className="ml-2 flex items-center gap-1 text-xs"
                     >
                       {getStatusIcon(project.status)}
-                      {project.status}
+                      {project.status === ProjectStatus.ONGOING
+                        ? "Live"
+                        : project.status}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">

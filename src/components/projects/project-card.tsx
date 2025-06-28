@@ -75,8 +75,10 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
             <Badge className={`${getStatusColor(project.status)} border`}>
               <span className="flex items-center gap-1">
                 {getStatusIcon(project.status)}
-                {project.status.charAt(0).toUpperCase() +
-                  project.status.slice(1).toLowerCase()}
+                {project.status === "ONGOING"
+                  ? "Live"
+                  : project.status.charAt(0).toUpperCase() +
+                    project.status.slice(1).toLowerCase()}
               </span>
             </Badge>
           </div>

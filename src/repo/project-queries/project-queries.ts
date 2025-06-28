@@ -25,10 +25,19 @@ export const projectQueries = {
     return response.data;
   },
 
-  updateProject: async (project: Project) => {
+  updateProject: async (
+    projectId: string,
+    updateData: {
+      userId: string;
+      title?: string;
+      description?: string;
+      objectives?: string;
+      githubUrl?: string;
+    }
+  ) => {
     const response = await axiosInstance.put(
-      `/projects/${project.id}`,
-      project
+      `/projects/${projectId}`,
+      updateData
     );
     return response.data;
   },

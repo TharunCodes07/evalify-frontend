@@ -59,7 +59,7 @@ export const getColumns = (
       const status = row.getValue("status") as ProjectStatus;
       return (
         <Badge variant={getStatusBadgeVariant(status)}>
-          {status.replace("_", " ")}
+          {status === ProjectStatus.ONGOING ? "Live" : status.replace("_", " ")}
         </Badge>
       );
     },

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { BadgeCheck, X } from "lucide-react";
+import { BadgeCheck, X, RefreshCw } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectQueries } from "@/repo/project-queries/project-queries";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -39,6 +39,17 @@ export function ProjectActions({ project }: ProjectActionsProps) {
     },
   });
 
+  const reProposeMutation = useMutation({
+    mutationFn: () => projectQueries.reProposeProject(project.id),
+    onSuccess: () => {
+      success("Project re-proposed successfully");
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+    onError: (err: Error) => {
+      error(err.message || "Failed to re-propose project");
+    },
+  });
+
   const handleApprove = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
@@ -55,6 +66,15 @@ export function ProjectActions({ project }: ProjectActionsProps) {
       return;
     }
     rejectMutation.mutate();
+  };
+
+  const handleRePropose = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      error("You must be logged in to re-propose projects");
+      return;
+    }
+    reProposeMutation.mutate();
   };
 
   if (project.status === "COMPLETED") {
@@ -116,6 +136,23 @@ export function ProjectActions({ project }: ProjectActionsProps) {
           ) : (
             <>
               Reject <X className="ml-1 h-4 w-4" />
+            </>
+          )}
+        </Button>
+      )}
+      {project.status === "REJECTED" && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRePropose}
+          disabled={reProposeMutation.isPending}
+          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+        >
+          {reProposeMutation.isPending ? (
+            "Re-proposing..."
+          ) : (
+            <>
+              Re-propose <RefreshCw className="ml-1 h-4 w-4" />
             </>
           )}
         </Button>

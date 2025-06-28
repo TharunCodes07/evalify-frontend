@@ -89,6 +89,10 @@ export const getColumnsFaculty = (): ColumnDef<Project>[] => {
       ),
       cell: ({ row }) => {
         const status = row.getValue("status") as string;
+        const getDisplayStatus = (status: string) => {
+          if (status === "ONGOING") return "Live";
+          return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+        };
         return (
           <div className="flex justify-center">
             <span
@@ -96,7 +100,7 @@ export const getColumnsFaculty = (): ColumnDef<Project>[] => {
                 status
               )}`}
             >
-              {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
+              {getDisplayStatus(status)}
             </span>
           </div>
         );

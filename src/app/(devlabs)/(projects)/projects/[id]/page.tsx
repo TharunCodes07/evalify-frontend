@@ -1,9 +1,10 @@
 "use client";
 import { projectQueries } from "@/repo/project-queries/project-queries";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { ProjectWithTeam } from "@/types/types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import KanbanBoardPage from "@/components/projects/kanban-board/kanban";
 import ProjectReviews from "@/components/projects/reviews/ProjectReviews";
 import {
@@ -17,9 +18,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getInitials } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { RefreshCw, Edit3 } from "lucide-react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useToast } from "@/hooks/use-toast";
+import { UpdateProjectForm } from "@/components/projects/update-project-form";
+import { useState } from "react";
 
 export default function DevlabsProjectPage() {
   const params = useParams();
+  const queryClient = useQueryClient();
+  const user = useCurrentUser();
+  const { success, error: toastError } = useToast();
+  const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
+
   const {
     data: project,
     isLoading,
@@ -28,6 +39,54 @@ export default function DevlabsProjectPage() {
     queryKey: ["project", params.id],
     queryFn: () => projectQueries.fetchProjectByProjectId(params.id as string),
   });
+
+  const reProposeProjectMutation = useMutation({
+    mutationFn: () => projectQueries.reProposeProject(params.id as string),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", params.id] });
+      success("The project has been re-proposed successfully.");
+    },
+    onError: (error: Error) => {
+      toastError(error.message || "Failed to re-propose project");
+    },
+  });
+
+  const updateProjectMutation = useMutation({
+    mutationFn: (updateData: {
+      title?: string;
+      description?: string;
+      objectives?: string;
+      githubUrl?: string;
+    }) =>
+      projectQueries.updateProject(params.id as string, {
+        userId: user?.id || "",
+        ...updateData,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", params.id] });
+      success("Project updated successfully.");
+      setIsUpdateFormOpen(false);
+    },
+    onError: (error: Error) => {
+      toastError(error.message || "Failed to update project");
+    },
+  });
+
+  const handleRepropose = () => {
+    reProposeProjectMutation.mutate();
+  };
+
+  const handleUpdateProject = (updateData: {
+    title?: string;
+    description?: string;
+    objectives?: string;
+    githubUrl?: string;
+  }) => {
+    updateProjectMutation.mutate(updateData);
+  };
+
+  const isUserTeamMember =
+    user && project?.teamMembers?.some((member) => member.id === user.id);
 
   if (isLoading) {
     return (
@@ -131,9 +190,48 @@ export default function DevlabsProjectPage() {
   return (
     <main className="container mx-auto p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">{project.title}</h1>
-        <div className="flex items-center gap-2 mt-2">
-          <Badge>{project.status}</Badge>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold tracking-tight">
+              {project.title}
+            </h1>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge>{project.status}</Badge>
+            </div>
+          </div>
+
+          {isUserTeamMember && (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsUpdateFormOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edit Project
+              </Button>
+
+              {project.status === "REJECTED" && (
+                <Button
+                  onClick={handleRepropose}
+                  disabled={reProposeProjectMutation.isPending}
+                  className="flex items-center gap-2"
+                >
+                  {reProposeProjectMutation.isPending ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Re-proposing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      Re-propose Project
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -202,6 +300,16 @@ export default function DevlabsProjectPage() {
             projectCourses={project.courses}
           />
         </div>
+      )}
+
+      {isUserTeamMember && (
+        <UpdateProjectForm
+          project={project}
+          isOpen={isUpdateFormOpen}
+          onClose={() => setIsUpdateFormOpen(false)}
+          onSubmit={handleUpdateProject}
+          isLoading={updateProjectMutation.isPending}
+        />
       )}
     </main>
   );
