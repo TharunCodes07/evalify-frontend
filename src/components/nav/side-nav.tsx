@@ -17,6 +17,8 @@ import {
   ChevronsUpDown,
   Home,
   Archive,
+  Settings,
+  Palette,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -49,73 +51,111 @@ interface NavItem {
   roles: string[];
 }
 
-const navItems: NavItem[] = [
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
   {
-    title: "Dashboard",
-    icon: Home,
-    url: "/dashboard",
-    roles: ["admin", "faculty", "student", "manager"],
+    label: "Platform",
+    items: [
+      {
+        title: "Dashboard",
+        icon: Home,
+        url: "/dashboard",
+        roles: ["admin", "faculty", "student", "manager"],
+      },
+      {
+        title: "Reviews",
+        icon: FileText,
+        url: "/reviews",
+        roles: ["admin", "faculty", "manager"],
+      },
+      {
+        title: "Teams",
+        icon: Users,
+        url: "/teams",
+        roles: ["admin", "student", "manager"],
+      },
+      {
+        title: "Courses",
+        icon: Book,
+        url: "/courses",
+        roles: ["faculty", "manager", "student"],
+      },
+      {
+        title: "Archives",
+        icon: Archive,
+        url: "/archives",
+        roles: ["faculty", "student"],
+      },
+    ],
   },
   {
-    title: "Users",
-    icon: Users,
-    url: "/user",
-    roles: ["admin"],
+    label: "Administration",
+    items: [
+      {
+        title: "Users",
+        icon: Users,
+        url: "/user",
+        roles: ["admin"],
+      },
+      {
+        title: "Semester",
+        icon: CalendarDays,
+        url: "/semester",
+        roles: ["admin"],
+      },
+      {
+        title: "Batch",
+        icon: Users2,
+        url: "/batch",
+        roles: ["admin"],
+      },
+      {
+        title: "Department",
+        icon: Building,
+        url: "/department",
+        roles: ["admin"],
+      },
+    ],
   },
   {
-    title: "Semester",
-    icon: CalendarDays,
-    url: "/semester",
-    roles: ["admin"],
-  },
-  {
-    title: "Batch",
-    icon: Users2,
-    url: "/batch",
-    roles: ["admin"],
-  },
-  {
-    title: "Department",
-    icon: Building,
-    url: "/department",
-    roles: ["admin"],
-  },
-  {
-    title: "Reviews",
-    icon: FileText,
-    url: "/reviews",
-    roles: ["admin", "faculty", "manager"],
-  },
-  {
-    title: "Teams",
-    icon: Users,
-    url: "/teams",
-    roles: ["admin", "student", "manager"],
-  },
-  {
-    title: "Courses",
-    icon: Book,
-    url: "/courses",
-    roles: ["faculty", "manager", "student"],
-  },
-  {
-    title: "Archives",
-    icon: Archive,
-    url: "/archives",
-    roles: ["faculty", "student"],
+    label: "Device",
+    items: [
+      {
+        title: "Settings",
+        icon: Settings,
+        url: "/settings",
+        roles: ["admin", "faculty", "student", "manager"],
+      },
+      {
+        title: "Theme",
+        icon: Palette,
+        url: "#theme",
+        roles: ["admin", "faculty", "student", "manager"],
+      },
+    ],
   },
 ];
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
-  const accessibleNavItems = React.useMemo(() => {
+
+  const accessibleNavGroups = React.useMemo(() => {
     if (!session?.user?.groups?.length) return [];
 
-    return navItems.filter((item) =>
-      item.roles.some((role) =>
-        (session.user.groups as string[]).includes(role)
-      )
-    );
+    return navGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) =>
+          item.roles.some((role) =>
+            (session.user.groups as string[]).includes(role)
+          )
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
   }, [session?.user?.groups]);
 
   return (
@@ -138,28 +178,31 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <ThemeToggle />
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
 
         <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
-            <SidebarMenu>
-              {accessibleNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton tooltip={item.title} asChild>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
+          {accessibleNavGroups.map((group) => (
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    {item.url === "#theme" ? (
+                      <ThemeToggle />
+                    ) : (
+                      <SidebarMenuButton tooltip={item.title} asChild>
+                        <Link href={item.url}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    )}
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
+          ))}
         </SidebarContent>
 
         <SidebarFooter>
