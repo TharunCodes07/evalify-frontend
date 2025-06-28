@@ -97,12 +97,22 @@ function RegisterPageContent() {
     }
   }, [status, router]);
 
-  // Redirect if user already exists
+  // Redirect if user already exists and update session
   useEffect(() => {
-    if (userExistsData?.exists) {
+    if (userExistsData?.exists && session?.needsRegistration) {
+      // Update session to remove needsRegistration flag
+      update({ needsRegistration: false })
+        .then(() => {
+          router.push("/dashboard");
+        })
+        .catch(() => {
+          // If session update fails, still redirect
+          router.push("/dashboard");
+        });
+    } else if (userExistsData?.exists) {
       router.push("/dashboard");
     }
-  }, [userExistsData, router]);
+  }, [userExistsData, router, session, update]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({

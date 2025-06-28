@@ -196,8 +196,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }
           } catch (error) {
             console.error("Failed to verify user in backend:", error);
-            // On error, prevent session creation
-            return null;
+
+            // If backend is unavailable, allow session creation without registration check
+            // This prevents infinite loops when backend comes back online
+            if (
+              error instanceof Error &&
+              error.message === "BACKEND_UNAVAILABLE"
+            ) {
+              console.warn(
+                "Backend unavailable during user verification. Creating session without registration check."
+              );
+              // Continue to create session without needsRegistration flag
+            } else {
+              // For other errors, prevent session creation
+              console.error(
+                "Unexpected error during user verification:",
+                error
+              );
+              return null;
+            }
           }
         }
 

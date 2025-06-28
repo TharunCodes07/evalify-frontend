@@ -1,5 +1,6 @@
 import axiosInstance from "@/lib/axios/axios-client";
 import { User } from "@/components/admin/users/types/types";
+import { isNetworkError } from "./auth-helpers";
 
 interface VerifyUserParams {
   email: string;
@@ -50,6 +51,10 @@ export async function verifyAndCreateUser(
     return { exists, user: null };
   } catch (error) {
     console.error("Error verifying user:", error);
+    // Use the network error detection utility
+    if (isNetworkError(error)) {
+      throw new Error("BACKEND_UNAVAILABLE");
+    }
     return { exists: false, user: null };
   }
 }

@@ -85,7 +85,22 @@ export const projectQueries = {
     );
     return response.data.data || response.data;
   },
-  
+
+  approveProject: async (projectId: string) => {
+    const response = await axiosInstance.put(`/projects/${projectId}/approve`);
+    return response.data;
+  },
+
+  rejectProject: async (projectId: string) => {
+    const response = await axiosInstance.put(`/projects/${projectId}/reject`);
+    return response.data;
+  },
+  reProposeProject: async (projectId: string) => {
+    const response = await axiosInstance.put(
+      `/projects/${projectId}/re-propose`
+    );
+    return response.data;
+  },
 };
 
 export { archiveQueries } from "./archive-queries";

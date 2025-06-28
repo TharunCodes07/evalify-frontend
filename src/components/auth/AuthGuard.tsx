@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { UserType, hasAccess } from "@/lib/utils/auth-utils";
 import AccessDenied from "./access-denied";
+import { useQuery } from "@tanstack/react-query";
+import userQueries from "@/repo/user-queries/user-queries";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -22,11 +24,20 @@ export default function AuthGuard({
   fallbackComponent = <AccessDenied />,
   allowPublicAccess = false,
 }: AuthGuardProps) {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
 
+  // Check if user exists when needsRegistration is true (prevents infinite loop)
+  const { data: userExistsData, isLoading: checkingUserExists } = useQuery({
+    queryKey: ["checkUserExists", session?.user?.email],
+    queryFn: () => userQueries.checkUserExists(session?.user?.email || ""),
+    enabled: !!session?.user?.email && !!session?.needsRegistration,
+    retry: 3,
+    retryDelay: 1000,
+  });
+
   useEffect(() => {
-    if (status === "loading") return;
+    if (status === "loading" || checkingUserExists) return;
 
     // Allow public access if specified
     if (allowPublicAccess) return;
@@ -36,12 +47,32 @@ export default function AuthGuard({
       return;
     }
 
-    if (session?.needsRegistration) {
+    // If user is marked for registration but actually exists, update session
+    if (session?.needsRegistration && userExistsData?.exists) {
+      update({ needsRegistration: false });
+      return;
+    }
+
+    if (session?.needsRegistration && !userExistsData?.exists) {
       router.push("/register");
       return;
     }
-  }, [session, status, router, allowPublicAccess]);
+  }, [
+    session,
+    status,
+    router,
+    allowPublicAccess,
+    userExistsData,
+    checkingUserExists,
+    update,
+  ]);
+
   if (status === "loading" && !allowPublicAccess) {
+    return <LoadingScreen />;
+  }
+
+  // Show loading while checking user existence to prevent flicker
+  if (session?.needsRegistration && checkingUserExists) {
     return <LoadingScreen />;
   }
 
@@ -54,7 +85,7 @@ export default function AuthGuard({
     return null;
   }
 
-  if (session?.needsRegistration) {
+  if (session?.needsRegistration && !userExistsData?.exists) {
     return null;
   }
 
@@ -77,15 +108,31 @@ export function RegistrationGuard({
   children: React.ReactNode;
   fallbackComponent?: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
 
+  // Check if user exists to prevent infinite loops
+  const { data: userExistsData, isLoading: checkingUserExists } = useQuery({
+    queryKey: ["checkUserExists", session?.user?.email],
+    queryFn: () => userQueries.checkUserExists(session?.user?.email || ""),
+    enabled: !!session?.user?.email,
+    retry: 3,
+    retryDelay: 1000,
+  });
+
   useEffect(() => {
-    if (status === "loading") return;
+    if (status === "loading" || checkingUserExists) return;
 
     // Redirect to login if not authenticated
     if (!session?.user) {
       router.push("/login");
+      return;
+    }
+
+    // If user exists but is marked for registration, update session and redirect to dashboard
+    if (userExistsData?.exists && session?.needsRegistration) {
+      update({ needsRegistration: false });
+      router.push("/dashboard");
       return;
     }
 
@@ -94,9 +141,9 @@ export function RegistrationGuard({
       router.push("/dashboard");
       return;
     }
-  }, [session, status, router]);
+  }, [session, status, router, userExistsData, checkingUserExists, update]);
 
-  if (status === "loading") {
+  if (status === "loading" || checkingUserExists) {
     return <LoadingScreen />;
   }
 
@@ -107,6 +154,7 @@ export function RegistrationGuard({
   if (session && !session.needsRegistration) {
     return null;
   }
+
   // Show access denied if no session or no needsRegistration flag
   if (!session || !session.needsRegistration) {
     return <>{fallbackComponent}</>;
