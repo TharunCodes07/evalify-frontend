@@ -13,12 +13,24 @@ import {
 import { kanbanAPI } from "@/repo/project-queries/kanban-queries";
 import { useState, useEffect } from "react";
 import { AddTaskModal } from "./add-task-modal";
+import { EditTaskModal } from "./edit-task-modal";
+import { DeleteTaskDialog } from "./delete-task-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
+import { Edit, Trash2, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ProjectWithTeam } from "@/types/types";
 
 interface KanbanBoardPageProps {
   id?: string;
+  projectData?: ProjectWithTeam;
 }
 
 interface EnhancedKanbanItem extends KanbanItemProps {
@@ -88,8 +100,18 @@ function KanbanBoardSkeleton() {
   );
 }
 
-export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
+export default function KanbanBoardPage({
+  id,
+  projectData,
+}: KanbanBoardPageProps) {
   const [kanbanTasks, setKanbanTasks] = useState<EnhancedKanbanItem[]>([]);
+  const [editingTask, setEditingTask] = useState<{
+    id: string;
+    title: string;
+    description?: string;
+    assignedToId?: string;
+  } | null>(null);
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
   const { data: session } = useSession();
   const {
     data: kanbanData,
@@ -246,6 +268,16 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
     };
     return colors[columnName] || "#6B7280";
   };
+
+  const canUserEditTask = (task: EnhancedKanbanItem) => {
+    const currentUserId = session?.user?.id;
+    if (!currentUserId) return false;
+
+    return (
+      task.createdBy?.id === currentUserId ||
+      projectData?.teamMembers?.some((member) => member.id === currentUserId)
+    );
+  };
   const columns: EnhancedKanbanColumn[] = kanbanData.columns.map((col) => ({
     id: col.id,
     name: col.name,
@@ -280,12 +312,49 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
             </KanbanHeader>
             <KanbanCards id={column.id}>
               {(task: EnhancedKanbanItem) => (
-                <KanbanCard key={task.id} {...task}>
+                <KanbanCard key={task.id} {...task} className="group">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
-                      <p className="m-0 font-medium text-sm line-clamp-2">
-                        {task.name}
-                      </p>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="m-0 font-medium text-sm line-clamp-2 flex-1">
+                          {task.name}
+                        </p>
+                        {canUserEditTask(task) && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <MoreVertical className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setEditingTask({
+                                    id: task.id,
+                                    title: task.name,
+                                    description: task.description,
+                                    assignedToId: task.assignedTo?.id,
+                                  })
+                                }
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => setDeletingTaskId(task.id)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
                       {task.description && (
                         <p className="m-0 text-muted-foreground text-xs line-clamp-2">
                           {task.description}
@@ -327,6 +396,30 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
           </KanbanBoard>
         )}
       </KanbanProvider>
+
+      {editingTask && (
+        <EditTaskModal
+          taskId={editingTask.id}
+          taskTitle={editingTask.title}
+          taskDescription={editingTask.description}
+          projectId={id!}
+          teamMembers={projectData?.teamMembers || []}
+          isOpen={!!editingTask}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
+
+      {deletingTaskId && (
+        <DeleteTaskDialog
+          taskId={deletingTaskId}
+          taskTitle={
+            kanbanTasks.find((t) => t.id === deletingTaskId)?.name || ""
+          }
+          projectId={id!}
+          isOpen={!!deletingTaskId}
+          onClose={() => setDeletingTaskId(null)}
+        />
+      )}
     </div>
   );
 }

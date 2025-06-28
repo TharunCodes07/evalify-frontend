@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getInitials } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { RefreshCw, Edit3 } from "lucide-react";
+import { RefreshCw, Edit3, CheckCircle, RotateCcw } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useToast } from "@/hooks/use-toast";
 import { UpdateProjectForm } from "@/components/projects/update-project-form";
@@ -72,6 +72,29 @@ export default function DevlabsProjectPage() {
     },
   });
 
+  const completeProjectMutation = useMutation({
+    mutationFn: () => projectQueries.completeProject(params.id as string),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", params.id] });
+      success("Project completed successfully.");
+    },
+    onError: (error: Error) => {
+      toastError(error.message || "Failed to complete project");
+    },
+  });
+
+  const revertCompletionMutation = useMutation({
+    mutationFn: () =>
+      projectQueries.revertProjectCompletion(params.id as string),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", params.id] });
+      success("Project completion reverted successfully.");
+    },
+    onError: (error: Error) => {
+      toastError(error.message || "Failed to revert project completion");
+    },
+  });
+
   const handleRepropose = () => {
     reProposeProjectMutation.mutate();
   };
@@ -83,6 +106,14 @@ export default function DevlabsProjectPage() {
     githubUrl?: string;
   }) => {
     updateProjectMutation.mutate(updateData);
+  };
+
+  const handleCompleteProject = () => {
+    completeProjectMutation.mutate();
+  };
+
+  const handleRevertCompletion = () => {
+    revertCompletionMutation.mutate();
   };
 
   const isUserTeamMember =
@@ -196,7 +227,19 @@ export default function DevlabsProjectPage() {
               {project.title}
             </h1>
             <div className="flex items-center gap-2 mt-2">
-              <Badge>{project.status}</Badge>
+              <Badge
+                className={
+                  project.status === "ONGOING"
+                    ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                    : project.status === "COMPLETED"
+                    ? "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
+                    : project.status === "REJECTED"
+                    ? "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                    : "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800"
+                }
+              >
+                {project.status === "ONGOING" ? "Live" : project.status}
+              </Badge>
             </div>
           </div>
 
@@ -211,11 +254,52 @@ export default function DevlabsProjectPage() {
                 Edit Project
               </Button>
 
+              {project.status === "ONGOING" && (
+                <Button
+                  onClick={handleCompleteProject}
+                  disabled={completeProjectMutation.isPending}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {completeProjectMutation.isPending ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 animate-spin" />
+                      Completing...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Complete Project
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {project.status === "COMPLETED" && (
+                <Button
+                  onClick={handleRevertCompletion}
+                  disabled={revertCompletionMutation.isPending}
+                  className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                  variant="outline"
+                >
+                  {revertCompletionMutation.isPending ? (
+                    <>
+                      <RotateCcw className="w-4 h-4 animate-spin" />
+                      Reverting...
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="w-4 h-4" />
+                      Revert to Live
+                    </>
+                  )}
+                </Button>
+              )}
+
               {project.status === "REJECTED" && (
                 <Button
                   onClick={handleRepropose}
                   disabled={reProposeProjectMutation.isPending}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white"
                 >
                   {reProposeProjectMutation.isPending ? (
                     <>
@@ -285,21 +369,22 @@ export default function DevlabsProjectPage() {
             <CardDescription>Manage your project&apos;s tasks</CardDescription>
           </CardHeader>
           <CardContent>
-            <KanbanBoardPage id={params.id as string} />
+            <KanbanBoardPage id={params.id as string} projectData={project} />
           </CardContent>
         </Card>
       </div>
 
-      <Separator className="my-12" />
-
       {project.courses && project.courses.length > 0 && (
-        <div className="space-y-8">
-          <h1 className="text-3xl font-bold tracking-tight">Reviews</h1>
-          <ProjectReviews
-            projectId={project.id}
-            projectCourses={project.courses}
-          />
-        </div>
+        <>
+          <Separator className="my-12" />
+          <div className="space-y-8">
+            <h1 className="text-3xl font-bold tracking-tight">Reviews</h1>
+            <ProjectReviews
+              projectId={project.id}
+              projectCourses={project.courses}
+            />
+          </div>
+        </>
       )}
 
       {isUserTeamMember && (

@@ -110,6 +110,18 @@ export const projectQueries = {
     );
     return response.data;
   },
+
+  completeProject: async (projectId: string) => {
+    const response = await axiosInstance.put(`/projects/${projectId}/complete`);
+    return response.data;
+  },
+
+  revertProjectCompletion: async (projectId: string) => {
+    const response = await axiosInstance.put(
+      `/projects/${projectId}/revert-completion`
+    );
+    return response.data;
+  },
 };
 
 export { archiveQueries } from "./archive-queries";
