@@ -268,7 +268,7 @@ export default function DevlabsProjectPage() {
                   ) : (
                     <>
                       <CheckCircle className="w-4 h-4" />
-                      Complete Project
+                      Mark as Completed
                     </>
                   )}
                 </Button>
@@ -369,7 +369,7 @@ export default function DevlabsProjectPage() {
             <CardDescription>Manage your project&apos;s tasks</CardDescription>
           </CardHeader>
           <CardContent>
-            <KanbanBoardPage id={params.id as string} projectData={project} />
+            <KanbanBoardPage id={params.id as string} />
           </CardContent>
         </Card>
       </div>

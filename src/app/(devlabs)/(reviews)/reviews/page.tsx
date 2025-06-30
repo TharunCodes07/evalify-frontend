@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { ViewToggle, ViewMode } from "@/components/view-toggle";
+import { ViewToggle, ViewMode } from "@/components/data-grid/view-toggle";
 import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataGrid } from "@/components/data-grid/data-grid";

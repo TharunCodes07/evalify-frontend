@@ -78,7 +78,7 @@ export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
   return (
     <div
       className={cn(
-        "flex size-full min-h-40 flex-col divide-y overflow-hidden rounded-md border bg-secondary text-xs shadow-sm ring-2 transition-all",
+        "flex size-full min-h-40 flex-col divide-y overflow-hidden rounded-md border bg-card text-xs shadow-sm ring-2 transition-all",
         isOver ? "ring-primary" : "ring-transparent",
         className
       )}
@@ -122,24 +122,32 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
       <div style={style} {...listeners} {...attributes} ref={setNodeRef}>
         <Card
           className={cn(
-            "cursor-grab gap-4 rounded-md p-3 shadow-sm",
+            "cursor-grab gap-4 rounded-md p-3 shadow-sm bg-card border-border hover:shadow-md transition-all duration-200",
             isDragging && "pointer-events-none cursor-grabbing opacity-30",
             className
           )}
         >
-          {children ?? <p className="m-0 font-medium text-sm">{name}</p>}
+          {children ?? (
+            <p className="m-0 font-medium text-sm text-card-foreground">
+              {name}
+            </p>
+          )}
         </Card>
       </div>
       {activeCardId === id && (
         <t.In>
           <Card
             className={cn(
-              "cursor-grab gap-4 rounded-md p-3 shadow-sm ring-2 ring-primary",
+              "cursor-grab gap-4 rounded-md p-3 shadow-lg ring-2 ring-primary bg-card border-border",
               isDragging && "cursor-grabbing",
               className
             )}
           >
-            {children ?? <p className="m-0 font-medium text-sm">{name}</p>}
+            {children ?? (
+              <p className="m-0 font-medium text-sm text-card-foreground">
+                {name}
+              </p>
+            )}
           </Card>
         </t.In>
       )}
@@ -173,8 +181,8 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
         <div
           ref={setDroppableRef}
           className={cn(
-            "flex flex-grow flex-col gap-2 p-2 min-h-[100px]",
-            isOver && "bg-accent/20",
+            "flex flex-grow flex-col gap-2 p-2 min-h-[100px] transition-colors duration-200",
+            isOver && "bg-accent/30 rounded-md",
             className
           )}
           {...props}
@@ -190,7 +198,13 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
 export type KanbanHeaderProps = HTMLAttributes<HTMLDivElement>;
 
 export const KanbanHeader = ({ className, ...props }: KanbanHeaderProps) => (
-  <div className={cn("m-0 p-2 font-semibold text-sm", className)} {...props} />
+  <div
+    className={cn(
+      "m-0 p-2 font-semibold text-sm text-card-foreground bg-card/50 border-b border-border",
+      className
+    )}
+    {...props}
+  />
 );
 
 export type KanbanProviderProps<

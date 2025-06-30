@@ -85,8 +85,8 @@ export function AddTaskModal({ columnId, projectId }: AddTaskModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="h-8 gap-1">
-          <Plus className="h-4 w-4" />
+        <Button size="sm" className="h-6 px-2 gap-1 text-xs">
+          <Plus className="h-3 w-3" />
           Add Task
         </Button>
       </DialogTrigger>

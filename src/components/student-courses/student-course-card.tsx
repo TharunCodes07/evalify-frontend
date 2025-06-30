@@ -54,7 +54,7 @@ export const StudentCourseCard = ({
         <CardContent>
           <p className="text-sm text-muted-foreground">
             {course.reviewCount}
-            {course.reviewCount === 1 ? "Review " : "Reviews "}
+            {course.reviewCount === 1 ? " Review " : " Reviews "}
             Completed
           </p>
         </CardContent>

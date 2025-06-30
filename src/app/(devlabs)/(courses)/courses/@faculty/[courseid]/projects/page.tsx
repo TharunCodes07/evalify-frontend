@@ -1,13 +1,13 @@
 "use client";
 import { useProjectsByCourse } from "@/components/projects/hooks/use-projects-by-course";
-import { ViewMode } from "@/components/view-toggle";
+import { ViewMode } from "@/components/data-grid/view-toggle";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Project } from "@/types/types";
 import { getColumnsFaculty } from "@/components/projects/project-columns-faculty";
 import { GridItem } from "@/components/data-grid/grid-item";
 import { Users } from "lucide-react";
-import { ViewToggle } from "@/components/view-toggle";
+import { ViewToggle } from "@/components/data-grid/view-toggle";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataGrid } from "@/components/data-grid/data-grid";
 
