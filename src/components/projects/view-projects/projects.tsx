@@ -61,18 +61,17 @@ const getStatusIcon = (status: ProjectStatus) => {
   }
 };
 
-const getStatusVariant = (status: ProjectStatus) => {
+const getStatusColor = (status: ProjectStatus) => {
   switch (status) {
-    case ProjectStatus.PROPOSED:
-      return "secondary";
     case ProjectStatus.ONGOING:
-      return "default";
+      return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800";
     case ProjectStatus.COMPLETED:
-      return "outline";
+      return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800";
     case ProjectStatus.REJECTED:
-      return "destructive";
+      return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800";
+    case ProjectStatus.PROPOSED:
     default:
-      return "secondary";
+      return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800";
   }
 };
 
@@ -165,8 +164,9 @@ export function Projects({ teamId }: ProjectsProps) {
                       {project.title}
                     </h4>
                     <Badge
-                      variant={getStatusVariant(project.status)}
-                      className="ml-2 flex items-center gap-1 text-xs"
+                      className={`ml-2 flex items-center gap-1 text-xs ${getStatusColor(
+                        project.status
+                      )}`}
                     >
                       {getStatusIcon(project.status)}
                       {project.status === ProjectStatus.ONGOING
