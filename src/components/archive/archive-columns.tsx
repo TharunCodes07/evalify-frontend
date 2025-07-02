@@ -1,15 +1,8 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Users, Calendar, BookOpen } from "lucide-react";
+import { Users, Calendar, BookOpen } from "lucide-react";
 import { Project, ProjectStatus } from "@/types/types";
 // Date formatting utility
 const formatDateString = (dateString: string) => {
@@ -35,9 +28,7 @@ const getStatusBadgeVariant = (status: ProjectStatus) => {
   }
 };
 
-export const getColumns = (
-  handleView: (project: Project) => void
-): ColumnDef<Project>[] => [
+export const getColumns = (): ColumnDef<Project>[] => [
   {
     accessorKey: "title",
     header: "Project Title",
@@ -58,9 +49,13 @@ export const getColumns = (
     cell: ({ row }) => {
       const status = row.getValue("status") as ProjectStatus;
       return (
-        <Badge variant={getStatusBadgeVariant(status)}>
-          {status === ProjectStatus.ONGOING ? "Live" : status.replace("_", " ")}
-        </Badge>
+        <div className="flex justify-center">
+          <Badge variant={getStatusBadgeVariant(status)}>
+            {status === ProjectStatus.ONGOING
+              ? "Live"
+              : status.replace("_", " ")}
+          </Badge>
+        </div>
       );
     },
   },
@@ -70,7 +65,7 @@ export const getColumns = (
     cell: ({ row }) => {
       const teamMembers = row.original.teamMembers || [];
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           <Users className="h-4 w-4 text-muted-foreground" />
           <span>{teamMembers.length}</span>
         </div>
@@ -82,8 +77,17 @@ export const getColumns = (
     header: "Courses",
     cell: ({ row }) => {
       const courses = row.original.courses || [];
+
+      if (courses.length === 0) {
+        return (
+          <div className="flex items-center justify-center">
+            <span className="text-muted-foreground text-4xl">-</span>
+          </div>
+        );
+      }
+
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           <BookOpen className="h-4 w-4 text-muted-foreground" />
           <div className="flex flex-wrap gap-1">
             {courses.slice(0, 2).map((course) => (
@@ -106,35 +110,12 @@ export const getColumns = (
     header: "Completed On",
     cell: ({ row }) => {
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm">
             {formatDateString(row.getValue("updatedAt"))}
           </span>
         </div>
-      );
-    },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const project = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleView(project)}>
-              <Eye className="mr-2 h-4 w-4" />
-              View Details
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       );
     },
   },

@@ -50,7 +50,7 @@ export default function ArchivesPage() {
   };
 
   const columnsWrapper = () => {
-    return getColumns(handleView);
+    return getColumns();
   };
 
   const renderArchiveGrid = (
@@ -133,7 +133,7 @@ export default function ArchivesPage() {
               enableDateFilter: false,
             }}
             exportConfig={{
-              entityName: "archived-projects",
+              entityName: "archived",
               columnMapping: {},
               columnWidths: [],
               headers: [],
@@ -149,7 +149,7 @@ export default function ArchivesPage() {
               enableUrlState: false,
             }}
             exportConfig={{
-              entityName: "archived-projects",
+              entityName: "archived",
               columnMapping: {},
               columnWidths: [],
               headers: [],
