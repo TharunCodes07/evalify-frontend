@@ -122,8 +122,8 @@ export function BatchDialog({
       resetForm();
       setIsOpen(false);
     },
-    onError: (error) => {
-      toast.error(error.message || "Failed to create batch");
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || error.message || "Failed to create batch");
     },
   });
 
@@ -136,8 +136,8 @@ export function BatchDialog({
       queryClient.invalidateQueries({ queryKey: ["batches"] });
       setIsOpen(false);
     },
-    onError: (error) => {
-      toast.error(error.message || "Failed to update batch");
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || error.message || "Failed to update batch");
     },
   });
 

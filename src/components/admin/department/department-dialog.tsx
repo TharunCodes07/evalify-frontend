@@ -76,9 +76,8 @@ export function DepartmentDialog({
           resetForm();
           setIsOpen(false);
         },
-        onError: (e: Error) => {
-          console.error("Error creating department:", e);
-          error("Failed to create department. Please try again later.");
+        onError: (e: any) => {
+          error(e.response?.data?.message || e.message || "Failed to create department");
         },
       });
     } else if (mode === "edit" && department) {
@@ -89,9 +88,8 @@ export function DepartmentDialog({
             success("Department updated successfully!");
             setIsOpen(false);
           },
-          onError: (e: Error) => {
-            console.error("Error updating department:", e);
-            error("Failed to update department. Please try again later.");
+          onError: (e: any) => {
+            error(e.response?.data?.message || e.message || "Failed to update department");
           },
         }
       );

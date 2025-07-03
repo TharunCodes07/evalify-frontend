@@ -54,8 +54,8 @@ export default function UsersPage() {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       success("Users deleted successfully");
     },
-    onError: (err) => {
-      error(err.message || "Failed to delete users");
+    onError: (err: any) => {
+      error(err.response?.data?.message || err.message || "Failed to delete users");
     },
   });
 
@@ -70,8 +70,8 @@ export default function UsersPage() {
       success("Users assigned successfully");
       setIsAssignDialogOpen(false);
     },
-    onError: (err) => {
-      error(err.message || "Failed to assign users");
+    onError: (err: any) => {
+      error(err.response?.data?.message || err.message || "Failed to assign users");
     },
   });
 

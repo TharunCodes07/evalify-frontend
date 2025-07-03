@@ -90,9 +90,8 @@ export function UserDialog({
       setIsOpen(false);
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },
-    onError: (e: Error) => {
-      console.error("Error creating user:", e);
-      error("Failed to create user. Please try again later.");
+    onError: (e: any) => {
+      error(e.response?.data?.message || e.message || "Failed to create user");
     },
   });
 
@@ -109,9 +108,8 @@ export function UserDialog({
       setIsOpen(false);
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },
-    onError: (e: Error) => {
-      console.error("Error updating user:", e);
-      error("Failed to update user. Please try again later.");
+    onError: (e: any) => {
+      error(e.response?.data?.message || e.message || "Failed to update user");
     },
   });
 

@@ -36,9 +36,8 @@ export function DeleteDepartmentDialog({
       await deleteDepartmentMutation.mutateAsync(departmentId);
       success("Department deleted successfully!");
       onClose();
-    } catch (e) {
-      console.error("Error deleting department:", e);
-      error("Failed to delete department. Please try again later.");
+    } catch (e: any) {
+      error(e.response?.data?.message || e.response?.data || e.message || "Failed to delete department");
     } finally {
       setIsDeleting(false);
     }

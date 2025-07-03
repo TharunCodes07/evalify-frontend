@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table/data-table";
 import { getColumns } from "@/components/admin/semesters/semester-columns";
@@ -13,6 +14,7 @@ import semesterQueries from "@/repo/semester-queries/semester-queries";
 
 export default function SemesterPage() {
   const router = useRouter();
+  const { success, error } = useToast();
   const [selectedSemester, setSelectedSemester] =
     React.useState<Semester | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
@@ -29,7 +31,11 @@ export default function SemesterPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["semesters"] });
+      success("Semester created successfully");
     },
+    onError: (e: any) => {
+      error(e.response?.data?.message || e.message || "Failed to create semester");
+    }
   });
 
   const updateSemester = useMutation({
@@ -39,7 +45,11 @@ export default function SemesterPage() {
     onSuccess: (data: Semester) => {
       queryClient.invalidateQueries({ queryKey: ["semesters"] });
       queryClient.invalidateQueries({ queryKey: ["semester", data.id] });
+      success("Semester updated successfully");
     },
+    onError: (e: any) => {
+      error(e.response?.data?.message || e.message || "Failed to update semester");
+    }
   });
 
   const deleteSemester = useMutation({
@@ -48,7 +58,11 @@ export default function SemesterPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["semesters"] });
+      success("Semester deleted successfully");
     },
+    onError: (e: any) => {
+      error(e.response?.data?.message || e.response?.data || e.message || "Failed to delete semester");
+    }
   });
 
   const handleAction = (semester: Semester, action: string) => {
@@ -72,8 +86,8 @@ export default function SemesterPage() {
     try {
       await createSemester.mutateAsync(data);
       setIsCreateDialogOpen(false);
-    } catch (error) {
-      console.error("Error creating semester:", error);
+    } catch (e: any) {
+      
     }
   };
 
@@ -88,8 +102,8 @@ export default function SemesterPage() {
       });
       setIsEditDialogOpen(false);
       setSelectedSemester(null);
-    } catch (error) {
-      console.error("Error updating semester:", error);
+    } catch (e: any) {
+      
     }
   };
 
@@ -99,9 +113,9 @@ export default function SemesterPage() {
       await deleteSemester.mutateAsync(semesterToDelete.id);
       setIsDeleteDialogOpen(false);
       setSemesterToDelete(null);
-    } catch (error) {
-      console.error("Error deleting semester:", error);
-    }
+    } catch (e: any) {
+      
+    }       
   };
 
   return (

@@ -39,7 +39,7 @@ export default function BatchesPage() {
   const [batchToDelete, setBatchToDelete] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { toast } = useToast();
+  const { success, error } = useToast();
 
   const { mutate: bulkDelete } = useMutation({
     mutationFn: (batchIds: (string | number)[]) => {
@@ -47,9 +47,10 @@ export default function BatchesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["batches"] });
-      toast("Batch deleted successfully", {
-        description: "The batch has been successfully deleted.",
-      });
+      success("Batch deleted successfully");
+    },
+    onError: (err: any) => {
+      error(err.response?.data?.message || err.message || "Failed to delete batch");
     },
   });
 
