@@ -46,6 +46,7 @@ export const getColumns = (
       ),
       enableSorting: false,
       enableHiding: false,
+      size: 50,
     },
     {
       accessorKey: "name",

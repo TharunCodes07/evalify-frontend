@@ -322,7 +322,7 @@ export default function DevlabsProjectPage() {
       <div className="space-y-6 mb-12">
         <div>
           <h2 className="text-xl font-semibold mb-2">Description</h2>
-          <p className="text-gray-700">{project.description}</p>
+          <p className="text-gray-400">{project.description}</p>
         </div>
 
         <div>

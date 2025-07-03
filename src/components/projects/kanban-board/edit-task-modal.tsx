@@ -42,7 +42,7 @@ interface EditTaskModalProps {
   taskTitle: string;
   taskDescription?: string;
   projectId: string;
-  teamMembers: User[];
+  teamMembers?: User[];
   isOpen: boolean;
   onClose: () => void;
 }
@@ -52,6 +52,7 @@ export function EditTaskModal({
   taskTitle,
   taskDescription,
   projectId,
+  teamMembers: _teamMembers = [],
   isOpen,
   onClose,
 }: EditTaskModalProps) {

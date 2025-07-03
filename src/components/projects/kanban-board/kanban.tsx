@@ -13,9 +13,13 @@ import {
 import { kanbanAPI } from "@/repo/project-queries/kanban-queries";
 import { useState, useEffect } from "react";
 import { AddTaskModal } from "./add-task-modal";
+import { EditTaskModal } from "./edit-task-modal";
+import { DeleteTaskDialog } from "./delete-task-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "next-auth/react";
+import { Edit, Trash2 } from "lucide-react";
 
 interface KanbanBoardPageProps {
   id?: string;
@@ -90,6 +94,11 @@ function KanbanBoardSkeleton() {
 
 export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
   const [kanbanTasks, setKanbanTasks] = useState<EnhancedKanbanItem[]>([]);
+  const [selectedTask, setSelectedTask] = useState<EnhancedKanbanItem | null>(
+    null
+  );
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { data: session } = useSession();
   const {
     data: kanbanData,
@@ -137,6 +146,27 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
       }
     },
   });
+
+  const handleEditTask = (task: EnhancedKanbanItem) => {
+    setSelectedTask(task);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteTask = (task: EnhancedKanbanItem) => {
+    setSelectedTask(task);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedTask(null);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
+    setSelectedTask(null);
+  };
+
   useEffect(() => {
     if (kanbanData) {
       const tasks: EnhancedKanbanItem[] = [];
@@ -280,7 +310,7 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
             </KanbanHeader>
             <KanbanCards id={column.id}>
               {(task: EnhancedKanbanItem) => (
-                <KanbanCard key={task.id} {...task}>
+                <KanbanCard key={task.id} {...task} className="group">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
                       <p className="m-0 font-medium text-sm line-clamp-2">
@@ -297,14 +327,40 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
                         </p>
                       )}
                     </div>
-                    {task.assignedTo && (
-                      <Avatar className="h-6 w-6 shrink-0">
-                        <AvatarImage src={task.assignedTo.image} />
-                        <AvatarFallback className="text-xs">
-                          {task.assignedTo.name?.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:bg-blue-100 dark:hover:bg-blue-900 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditTask(task);
+                        }}
+                        title="Edit task"
+                      >
+                        <Edit className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTask(task);
+                        }}
+                        title="Delete task"
+                      >
+                        <Trash2 className="h-3 w-3 text-red-600 dark:text-red-400" />
+                      </Button>
+                      {task.assignedTo && (
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={task.assignedTo.image} />
+                          <AvatarFallback className="text-xs">
+                            {task.assignedTo.name?.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
                   </div>
                   {(task.createdAt || task.updatedAt) && (
                     <p className="m-0 text-muted-foreground text-xs mt-2">
@@ -327,6 +383,27 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
           </KanbanBoard>
         )}
       </KanbanProvider>
+
+      {selectedTask && (
+        <EditTaskModal
+          taskId={selectedTask.id}
+          taskTitle={selectedTask.name}
+          taskDescription={selectedTask.description}
+          projectId={id!}
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+        />
+      )}
+
+      {selectedTask && (
+        <DeleteTaskDialog
+          taskId={selectedTask.id}
+          taskTitle={selectedTask.name}
+          projectId={id!}
+          isOpen={isDeleteDialogOpen}
+          onClose={handleCloseDeleteDialog}
+        />
+      )}
     </div>
   );
 }
