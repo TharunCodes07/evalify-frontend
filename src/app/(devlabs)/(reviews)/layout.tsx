@@ -8,8 +8,6 @@ export default function ReviewsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthGuard requiredGroups={["admin", "faculty", "manager"]}>
-      {children}
-    </AuthGuard>
+    <AuthGuard requiredGroups={["faculty", "manager"]}>{children}</AuthGuard>
   );
 }

@@ -33,9 +33,14 @@ export default function SemesterPage() {
       queryClient.invalidateQueries({ queryKey: ["semesters"] });
       success("Semester created successfully");
     },
-    onError: (e: any) => {
-      error(e.response?.data?.message || e.message || "Failed to create semester");
-    }
+    onError: (err: Error) => {
+      const errorMessage =
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ||
+        err.message ||
+        "Failed to create semester";
+      error(errorMessage);
+    },
   });
 
   const updateSemester = useMutation({
@@ -47,9 +52,14 @@ export default function SemesterPage() {
       queryClient.invalidateQueries({ queryKey: ["semester", data.id] });
       success("Semester updated successfully");
     },
-    onError: (e: any) => {
-      error(e.response?.data?.message || e.message || "Failed to update semester");
-    }
+    onError: (err: Error) => {
+      const errorMessage =
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ||
+        err.message ||
+        "Failed to update semester";
+      error(errorMessage);
+    },
   });
 
   const deleteSemester = useMutation({
@@ -60,9 +70,15 @@ export default function SemesterPage() {
       queryClient.invalidateQueries({ queryKey: ["semesters"] });
       success("Semester deleted successfully");
     },
-    onError: (e: any) => {
-      error(e.response?.data?.message || e.response?.data || e.message || "Failed to delete semester");
-    }
+    onError: (err: Error) => {
+      const errorMessage =
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ||
+        (err as { response?: { data?: string } }).response?.data ||
+        err.message ||
+        "Failed to delete semester";
+      error(errorMessage);
+    },
   });
 
   const handleAction = (semester: Semester, action: string) => {
@@ -83,39 +99,27 @@ export default function SemesterPage() {
   };
 
   const handleCreateSemester = async (data: Omit<Semester, "id">) => {
-    try {
-      await createSemester.mutateAsync(data);
-      setIsCreateDialogOpen(false);
-    } catch (e: any) {
-      
-    }
+    await createSemester.mutateAsync(data);
+    setIsCreateDialogOpen(false);
   };
 
   const handleUpdateSemester = async (data: Omit<Semester, "id">) => {
     if (!selectedSemester) return;
-    try {
-      await updateSemester.mutateAsync({
-        id: selectedSemester.id,
-        name: data.name as string,
-        year: data.year as number,
-        isActive: data.isActive as boolean,
-      });
-      setIsEditDialogOpen(false);
-      setSelectedSemester(null);
-    } catch (e: any) {
-      
-    }
+    await updateSemester.mutateAsync({
+      id: selectedSemester.id,
+      name: data.name as string,
+      year: data.year as number,
+      isActive: data.isActive as boolean,
+    });
+    setIsEditDialogOpen(false);
+    setSelectedSemester(null);
   };
 
   const handleDeleteSemester = async () => {
     if (!semesterToDelete) return;
-    try {
-      await deleteSemester.mutateAsync(semesterToDelete.id);
-      setIsDeleteDialogOpen(false);
-      setSemesterToDelete(null);
-    } catch (e: any) {
-      
-    }       
+    await deleteSemester.mutateAsync(semesterToDelete.id);
+    setIsDeleteDialogOpen(false);
+    setSemesterToDelete(null);
   };
 
   return (

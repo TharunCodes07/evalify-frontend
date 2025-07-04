@@ -70,7 +70,7 @@ const navGroups: NavGroup[] = [
         title: "Reviews",
         icon: FileText,
         url: "/reviews",
-        roles: ["admin", "faculty", "manager"],
+        roles: ["faculty", "manager"],
       },
       {
         title: "Teams",

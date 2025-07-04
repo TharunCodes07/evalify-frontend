@@ -49,8 +49,13 @@ export default function BatchesPage() {
       queryClient.invalidateQueries({ queryKey: ["batches"] });
       success("Batch deleted successfully");
     },
-    onError: (err: any) => {
-      error(err.response?.data?.message || err.message || "Failed to delete batch");
+    onError: (err: Error) => {
+      const errorMessage =
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ||
+        err.message ||
+        "Failed to delete batch";
+      error(errorMessage);
     },
   });
 

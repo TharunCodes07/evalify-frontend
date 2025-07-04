@@ -76,8 +76,13 @@ export function DepartmentDialog({
           resetForm();
           setIsOpen(false);
         },
-        onError: (e: any) => {
-          error(e.response?.data?.message || e.message || "Failed to create department");
+        onError: (err: Error) => {
+          const errorMessage =
+            (err as { response?: { data?: { message?: string } } }).response
+              ?.data?.message ||
+            err.message ||
+            "Failed to create department";
+          error(errorMessage);
         },
       });
     } else if (mode === "edit" && department) {
@@ -88,8 +93,13 @@ export function DepartmentDialog({
             success("Department updated successfully!");
             setIsOpen(false);
           },
-          onError: (e: any) => {
-            error(e.response?.data?.message || e.message || "Failed to update department");
+          onError: (err: Error) => {
+            const errorMessage =
+              (err as { response?: { data?: { message?: string } } }).response
+                ?.data?.message ||
+              err.message ||
+              "Failed to update department";
+            error(errorMessage);
           },
         }
       );

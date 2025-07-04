@@ -70,14 +70,24 @@ export default function EditReviewPage() {
   useEffect(() => {
     if (review) {
       // Extract unique semesters from courses
-      const semesters = review.courses?.map((course: any) => ({
-        id: course.semesterInfo.id,
-        name: course.semesterInfo.name
-      })) || [];
-      
+      interface SemesterOption {
+        id: string;
+        name: string;
+      }
+
+      const semesters =
+        review.courses?.map(
+          (course: Review["courses"][0]) =>
+            ({
+              id: course.semesterInfo.id,
+              name: course.semesterInfo.name,
+            } as SemesterOption)
+        ) || [];
+
       // Remove duplicates
-      const uniqueSemesters = semesters.filter((semester: any, index: number, self: any[]) => 
-        index === self.findIndex((s: any) => s.id === semester.id)
+      const uniqueSemesters = semesters.filter(
+        (semester: SemesterOption, index: number, self: SemesterOption[]) =>
+          index === self.findIndex((s: SemesterOption) => s.id === semester.id)
       );
 
       form.reset({
@@ -87,20 +97,22 @@ export default function EditReviewPage() {
         rubricId: review.rubricsInfo?.id || undefined,
         semesters: uniqueSemesters,
         batches: [],
-        courses: review.courses?.map((course: any) => ({
-          id: course.id,
-          name: course.name
-        })) || [],
-        projects: review.projects?.map((project: any) => ({
-          id: project.id,
-          name: project.title
-        })) || [],
+        courses:
+          review.courses?.map((course: Review["courses"][0]) => ({
+            id: course.id,
+            name: course.name,
+          })) || [],
+        projects:
+          review.projects?.map((project: Review["projects"][0]) => ({
+            id: project.id,
+            name: project.title,
+          })) || [],
       });
     }
   }, [review, form]);
 
   const { mutate: updateReview, isPending } = useMutation({
-    mutationFn: (data: UpdateReviewRequest) => 
+    mutationFn: (data: UpdateReviewRequest) =>
       reviewQueries.updateReview(reviewId, data),
     onSuccess: () => {
       success("Review updated successfully!");
@@ -191,12 +203,10 @@ export default function EditReviewPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600">Review not found</h1>
           <p className="text-muted-foreground mt-2">
-            The review you're looking for doesn't exist or has been deleted.
+            The review you&apos;re looking for doesn&apos;t exist or has been
+            deleted.
           </p>
-          <Button 
-            onClick={() => router.push("/reviews")}
-            className="mt-4"
-          >
+          <Button onClick={() => router.push("/reviews")} className="mt-4">
             Back to Reviews
           </Button>
         </div>
@@ -207,17 +217,13 @@ export default function EditReviewPage() {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
         <h1 className="text-3xl font-bold">Edit Review</h1>
         <p className="text-muted-foreground">
-          Update the details of "{review.name}"
+          Update the details of &quot;{review.name}&quot;
         </p>
       </div>
 

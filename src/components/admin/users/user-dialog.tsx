@@ -90,8 +90,13 @@ export function UserDialog({
       setIsOpen(false);
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },
-    onError: (e: any) => {
-      error(e.response?.data?.message || e.message || "Failed to create user");
+    onError: (err: Error) => {
+      const errorMessage =
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ||
+        err.message ||
+        "Failed to create user";
+      error(errorMessage);
     },
   });
 
@@ -108,8 +113,13 @@ export function UserDialog({
       setIsOpen(false);
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },
-    onError: (e: any) => {
-      error(e.response?.data?.message || e.message || "Failed to update user");
+    onError: (err: Error) => {
+      const errorMessage =
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ||
+        err.message ||
+        "Failed to update user";
+      error(errorMessage);
     },
   });
 

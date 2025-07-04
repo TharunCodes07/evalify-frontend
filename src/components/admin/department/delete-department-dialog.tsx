@@ -36,8 +36,14 @@ export function DeleteDepartmentDialog({
       await deleteDepartmentMutation.mutateAsync(departmentId);
       success("Department deleted successfully!");
       onClose();
-    } catch (e: any) {
-      error(e.response?.data?.message || e.response?.data || e.message || "Failed to delete department");
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ||
+        (err as { response?: { data?: string } }).response?.data ||
+        (err as Error).message ||
+        "Failed to delete department";
+      error(errorMessage);
     } finally {
       setIsDeleting(false);
     }

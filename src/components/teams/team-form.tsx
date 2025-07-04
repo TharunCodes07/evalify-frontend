@@ -106,10 +106,9 @@ export function TeamForm({
             email: m.email,
             role: m.role,
             image: m.profileImage,
-            // Dummy data to satisfy User type
+            profileId: m.id, // Use member id as profileId
             phoneNumber: "",
             isActive: true,
-            createdAt: new Date().toISOString(),
           } as User)
       );
       setSelectedMembers(members);

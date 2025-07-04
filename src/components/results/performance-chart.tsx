@@ -17,13 +17,6 @@ interface PerformanceChartProps {
   data: CourseData[];
 }
 
-interface TooltipPayload {
-  name: string;
-  value: number;
-  color: string;
-  dataKey: string;
-}
-
 // Custom tooltip component
 const CustomTooltip = ({
   active,
@@ -41,7 +34,7 @@ const CustomTooltip = ({
           })}
         </p>
         <div className="space-y-2">
-          {payload.map((entry: TooltipPayload, index: number) => (
+          {payload.map((entry, index: number) => (
             <div
               key={index}
               className="flex items-center justify-between gap-4"
@@ -54,7 +47,10 @@ const CustomTooltip = ({
                 <span className="text-sm font-medium">{entry.dataKey}</span>
               </div>
               <span className="text-sm font-bold text-primary">
-                {entry.value.toFixed(1)}%
+                {typeof entry.value === "number"
+                  ? entry.value.toFixed(1)
+                  : "0.0"}
+                %
               </span>
             </div>
           ))}

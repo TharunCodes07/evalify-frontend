@@ -38,8 +38,14 @@ export function DeleteBatchDialog({
       queryClient.invalidateQueries({ queryKey: ["batches"] });
       onClose();
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || error.response?.data || error.message || "Failed to delete batch");
+    onError: (error: Error) => {
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ||
+        (error as { response?: { data?: string } }).response?.data ||
+        error.message ||
+        "Failed to delete batch";
+      toast.error(errorMessage);
     },
   });
 

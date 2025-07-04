@@ -138,26 +138,36 @@ export const getColumns = (
       cell: ({ row }) => {
         const batch = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0 mx-auto">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit?.(batch)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Batch
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-red-600"
-                onClick={() => onDelete?.(batch.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Batch
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0 mx-auto">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit?.(batch);
+                  }}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Batch
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete?.(batch.id);
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Batch
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         );
       },
       meta: { label: "Actions" },

@@ -122,8 +122,13 @@ export function BatchDialog({
       resetForm();
       setIsOpen(false);
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || error.message || "Failed to create batch");
+    onError: (error: Error) => {
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ||
+        error.message ||
+        "Failed to create batch";
+      toast.error(errorMessage);
     },
   });
 
@@ -136,8 +141,13 @@ export function BatchDialog({
       queryClient.invalidateQueries({ queryKey: ["batches"] });
       setIsOpen(false);
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || error.message || "Failed to update batch");
+    onError: (error: Error) => {
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ||
+        error.message ||
+        "Failed to update batch";
+      toast.error(errorMessage);
     },
   });
 
