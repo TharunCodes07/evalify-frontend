@@ -73,11 +73,6 @@ const administrationItems = [
     icon: Users,
   },
   {
-    title: "Teacher Results",
-    url: "/teacher-results",
-    icon: BarChart3,
-  },
-  {
     title: "Batches",
     url: "/batch",
     icon: GraduationCap,
