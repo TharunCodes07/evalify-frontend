@@ -18,6 +18,8 @@ interface FileUploadProps {
   uploadError?: string | null;
   uploadSuccess?: boolean;
   className?: string;
+  multiple?: boolean;
+  onValidationError?: (error: string) => void;
 }
 
 const DEFAULT_MAX_SIZE_MB = 70;
@@ -47,6 +49,8 @@ export function FileUpload({
   uploadError = null,
   uploadSuccess = false,
   className,
+  multiple = false,
+  onValidationError,
 }: FileUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -93,6 +97,9 @@ export function FileUpload({
       const error = validateFile(file);
       if (error) {
         setFileError(error);
+        if (onValidationError) {
+          onValidationError(error);
+        }
         return;
       }
 
@@ -100,15 +107,22 @@ export function FileUpload({
       setSelectedFile(file);
       onFileSelect(file);
     },
-    [onFileSelect, validateFile]
+    [onFileSelect, validateFile, onValidationError]
   );
 
   const handleFileInputChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      handleFileSelection(file);
+    const files = event.target.files;
+    if (files) {
+      if (multiple) {
+        Array.from(files).forEach((file) => handleFileSelection(file));
+      } else {
+        const file = files[0];
+        if (file) {
+          handleFileSelection(file);
+        }
+      }
     }
   };
 
@@ -119,12 +133,19 @@ export function FileUpload({
 
       if (disabled || isUploading) return;
 
-      const file = event.dataTransfer.files[0];
-      if (file) {
-        handleFileSelection(file);
+      const files = event.dataTransfer.files;
+      if (files) {
+        if (multiple) {
+          Array.from(files).forEach((file) => handleFileSelection(file));
+        } else {
+          const file = files[0];
+          if (file) {
+            handleFileSelection(file);
+          }
+        }
       }
     },
-    [disabled, isUploading, handleFileSelection]
+    [disabled, isUploading, handleFileSelection, multiple]
   );
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -155,7 +176,8 @@ export function FileUpload({
   };
 
   const renderUploadArea = () => {
-    if (selectedFile && !fileError) {
+    // Don't show the selected file card when multiple is true, let parent handle the display
+    if (selectedFile && !fileError && !multiple) {
       return (
         <Card className="w-full">
           <CardContent className="p-4">
@@ -180,7 +202,6 @@ export function FileUpload({
                   {isUploading && (
                     <div className="mt-2 space-y-1">
                       <div className="flex justify-between text-xs">
-                        <span>Uploading...</span>
                         <span>{uploadProgress.toFixed(0)}%</span>
                       </div>
                       <Progress value={uploadProgress} className="h-1" />
@@ -201,7 +222,7 @@ export function FileUpload({
                   variant="ghost"
                   size="sm"
                   onClick={handleRemoveFile}
-                  className="flex-shrink-0 ml-2"
+                  className="flex-shrink-0 ml-2 cursor-pointer hover:cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -220,6 +241,7 @@ export function FileUpload({
             ? "border-primary bg-primary/5"
             : "border-muted-foreground/25 hover:border-muted-foreground/50",
           disabled && "opacity-50 cursor-not-allowed",
+          !disabled && "hover:cursor-pointer",
           className
         )}
         onDrop={handleDrop}
@@ -238,7 +260,13 @@ export function FileUpload({
           </div>
           <div className="space-y-2">
             <p className="text-lg font-medium">
-              {isDragOver ? "Drop file here" : "Choose file or drag & drop"}
+              {isDragOver
+                ? multiple
+                  ? "Drop files here"
+                  : "Drop file here"
+                : multiple
+                ? "Choose files or drag & drop"
+                : "Choose file or drag & drop"}
             </p>
             <p className="text-sm text-muted-foreground">
               Maximum file size: {maxSizeInMB}MB
@@ -256,6 +284,7 @@ export function FileUpload({
           accept={acceptedFileTypes.join(",")}
           className="hidden"
           disabled={disabled}
+          multiple={multiple}
         />
       </div>
     );

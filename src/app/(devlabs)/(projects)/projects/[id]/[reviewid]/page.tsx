@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import reviewQueries from "@/repo/review-queries/review-queries";
 import { FileUploadSection } from "@/components/file-upload/file-upload-section";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, Clock, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -31,8 +32,48 @@ export default function ProjectReviewPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-        <h1 className="text-2xl font-bold mb-4">Loading Review...</h1>
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+        {/* Review Header Skeleton */}
+        <div className="space-y-4">
+          <Skeleton className="h-9 w-80" />
+          <div className="flex items-center gap-4 flex-wrap">
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-6 w-24" />
+          </div>
+        </div>
+
+        {/* Review Information Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <div className="mb-4">
+              <Skeleton className="h-6 w-40" />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* File Upload Section Skeleton */}
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <div className="border-2 border-dashed border-muted-foreground/20 rounded-lg p-8 bg-muted/5">
+            <div className="text-center space-y-4">
+              <Skeleton className="h-12 w-12 mx-auto rounded-full" />
+              <Skeleton className="h-5 w-64 mx-auto" />
+              <Skeleton className="h-4 w-48 mx-auto" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
