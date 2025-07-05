@@ -1,12 +1,12 @@
 import axiosInstance from "@/lib/axios/axios-client";
 
-type User = {
+export type User = {
   id: string;
   name: string;
   email: string;
 };
 
-type BankSchema = {
+export type BankSchema = {
   id: string;
   name: string;
   courseCode: string;
@@ -26,14 +26,29 @@ type BankQuestion = {
   created_at: string;
 };
 
-type BankTopic = {
+export type BankTopic = {
   id: string;
   name: string;
 };
 
+// Add paginated response type
+export type PaginatedResponse<T> = {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+  hasNext: boolean;
+  hasPrevious: boolean;
+};
+
 class Bank {
-  static async getAllBanks(params?: URLSearchParams): Promise<BankSchema[]> {
-    const url = params ? `/bank?${params.toString()}` : "/api/bank/";
+  static async getAllBanks(
+    params?: URLSearchParams,
+  ): Promise<PaginatedResponse<BankSchema>> {
+    const url = params ? `/api/bank?${params.toString()}` : "/api/bank";
     const response = await axiosInstance.get(url);
     return response.data;
   }
@@ -110,11 +125,16 @@ class Bank {
     return response.data;
   }
 
-  static async addQuestionToBank(bankId: string, questionData: Record<string, unknown>): Promise<BankQuestion> {
-    const response = await axiosInstance.put(`/api/bank/${bankId}/questions/add-question/`, questionData);
+  static async addQuestionToBank(
+    bankId: string,
+    questionData: Record<string, unknown>,
+  ): Promise<BankQuestion> {
+    const response = await axiosInstance.put(
+      `/api/bank/${bankId}/questions/add-question/`,
+      questionData,
+    );
     return response.data;
   }
-
 }
 
 export default Bank;

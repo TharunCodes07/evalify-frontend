@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/pagination";
 
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   MoreHorizontal,
   Plus,
@@ -61,7 +61,6 @@ import {
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Bank from "@/repo/bank/bank";
 import { useRouter } from "next/navigation";
 
@@ -76,12 +75,34 @@ interface QuestionBank {
   lastUpdated: string;
 }
 
+interface BankApiResponse {
+  id?: string;
+  bankId?: string;
+  name?: string;
+  courseCode?: string;
+  semester?: string;
+  questions?: number;
+  created_at?: string;
+}
+
 const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
 
-const BankDialog = ({ mode, bank, onClose }: { mode: 'add' | 'edit', bank?: QuestionBank, onClose: () => void }) => {
+const BankDialog = ({
+  mode,
+  bank,
+  onClose,
+}: {
+  mode: "add" | "edit";
+  bank?: QuestionBank;
+  onClose: () => void;
+}) => {
   const [open, setOpen] = useState(true);
-  const [selectedCourseCode, setSelectedCourseCode] = useState<string>(bank?.courseCode || "");
-  const [selectedSemester, setSelectedSemester] = useState<number | undefined>(bank?.semester);
+  const [selectedCourseCode, setSelectedCourseCode] = useState<string>(
+    bank?.courseCode || "",
+  );
+  const [selectedSemester, setSelectedSemester] = useState<number | undefined>(
+    bank?.semester,
+  );
   const [bankName, setBankName] = useState<string>(bank?.name || "");
   const description = bank?.description || "";
 
@@ -165,13 +186,13 @@ const BankDialog = ({ mode, bank, onClose }: { mode: 'add' | 'edit', bank?: Ques
       return;
     }
 
-    if (mode === 'add') {
+    if (mode === "add") {
       createBankMutation.mutate({
         name: bankName,
         semester: selectedSemester,
         description: selectedCourseCode,
       });
-    } else if (mode === 'edit' && bank) {
+    } else if (mode === "edit" && bank) {
       editBankMutation.mutate({
         id: bank.id,
         name: bankName,
@@ -191,11 +212,13 @@ const BankDialog = ({ mode, bank, onClose }: { mode: 'add' | 'edit', bank?: Ques
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{mode === 'add' ? 'Create' : 'Edit'} Question Bank</DialogTitle>
+          <DialogTitle>
+            {mode === "add" ? "Create" : "Edit"} Question Bank
+          </DialogTitle>
           <DialogDescription>
-            {mode === 'add'
-              ? 'Create a new question bank to organize your questions for different subjects and categories.'
-              : 'Update the details of your question bank.'}
+            {mode === "add"
+              ? "Create a new question bank to organize your questions for different subjects and categories."
+              : "Update the details of your question bank."}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -239,11 +262,19 @@ const BankDialog = ({ mode, bank, onClose }: { mode: 'add' | 'edit', bank?: Ques
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={mode === 'add' ? createBankMutation.isPending : editBankMutation.isPending}
+            disabled={
+              mode === "add"
+                ? createBankMutation.isPending
+                : editBankMutation.isPending
+            }
           >
-            {mode === 'add'
-              ? (createBankMutation.isPending ? "Creating..." : "Create Bank")
-              : (editBankMutation.isPending ? "Saving..." : "Save Changes")}
+            {mode === "add"
+              ? createBankMutation.isPending
+                ? "Creating..."
+                : "Create Bank"
+              : editBankMutation.isPending
+                ? "Saving..."
+                : "Save Changes"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -261,7 +292,7 @@ export default function QuestionBankPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentBank, setCurrentBank] = useState<QuestionBank | null>(null);
-  const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
+  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
 
   const { toast } = useToast();
 
@@ -300,19 +331,21 @@ export default function QuestionBankPage() {
         // This would depend on backend API capabilities
 
         // Make the API call
-        const response = await Bank.getAllBanks();
+        const response = await Bank.getAllBanks(queryParams);
 
         // Transform API response to match QuestionBank interface
-        let filteredBanks: QuestionBank[] = response.map((bank) => ({
-          id: bank.id,
-          name: bank.name,
-          courseCode: bank.courseCode,
-          semester: parseInt(bank.semester) || 0,
-          description: bank.courseCode,
-          topics: [],
-          questionCount: bank.questions,
-          lastUpdated: bank.created_at
-        }));
+        let filteredBanks: QuestionBank[] = response.content.map(
+          (bank: BankApiResponse) => ({
+            id: bank.id || bank.bankId || "",
+            name: bank.name || "",
+            courseCode: bank.courseCode || "",
+            semester: parseInt(bank.semester || "0") || 0,
+            description: bank.courseCode || "", // Use courseCode as description fallback
+            topics: [],
+            questionCount: bank.questions || 0,
+            lastUpdated: bank.created_at || new Date().toISOString(),
+          }),
+        );
 
         if (searchTerm) {
           filteredBanks = filteredBanks.filter(
@@ -351,8 +384,8 @@ export default function QuestionBankPage() {
         });
 
         // Get pagination info from response
-        const totalBanks = filteredBanks.length;
-        const totalPages = Math.ceil(totalBanks / pageSize);
+        const totalBanks = response.totalElements || 0;
+        const totalPages = response.totalPages || 0;
 
         return {
           banks: filteredBanks,
@@ -481,7 +514,7 @@ export default function QuestionBankPage() {
 
   const handleEditBank = (bank: QuestionBank) => {
     setCurrentBank(bank);
-    setDialogMode('edit');
+    setDialogMode("edit");
     setDialogOpen(true);
   };
 
@@ -497,10 +530,12 @@ export default function QuestionBankPage() {
               Manage your question banks for quizzes and assessments
             </CardDescription>
           </div>
-          <Button onClick={() => {
-            setDialogMode('add');
-            setDialogOpen(true);
-          }}>
+          <Button
+            onClick={() => {
+              setDialogMode("add");
+              setDialogOpen(true);
+            }}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Bank
           </Button>
@@ -670,9 +705,12 @@ export default function QuestionBankPage() {
                     </TableRow>
                   ) : (
                     data?.banks.map((bank) => (
-                      <TableRow key={bank.id} onClick={() => {
-                        router.push(`/question-bank/${bank.id}`);
-                      }}>
+                      <TableRow
+                        key={bank.id}
+                        onClick={() => {
+                          router.push(`/question-bank/${bank.id}`);
+                        }}
+                      >
                         <TableCell>
                           <div className="font-medium">{bank.name}</div>
                         </TableCell>
@@ -799,7 +837,7 @@ export default function QuestionBankPage() {
                   {generatePageNumbers().map((pageNumber, index) => (
                     <PaginationItem key={index}>
                       {pageNumber === "ellipsis-start" ||
-                        pageNumber === "ellipsis-end" ? (
+                      pageNumber === "ellipsis-end" ? (
                         <PaginationEllipsis />
                       ) : (
                         <PaginationLink
