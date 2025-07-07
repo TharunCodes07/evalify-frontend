@@ -1,5 +1,15 @@
 import React from "react";
-import { QuestionRendererProps } from "./types";
+import {
+  QuestionRendererProps,
+  MCQQuestion,
+  MMCQQuestion,
+  TrueFalseQuestion,
+  FillUpQuestion,
+  MatchTheFollowingQuestion,
+  DescriptiveQuestion,
+  FileUploadQuestion,
+  CodingQuestion,
+} from "./types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -10,7 +20,6 @@ import {
   Edit,
   Trash2,
   Hash,
-  Copy,
   Eye,
   EyeOff,
   Lightbulb,
@@ -36,8 +45,8 @@ import { DescriptiveRenderer } from "./question-types/descriptive-renderer";
 import { FileUploadRenderer } from "./question-types/file-upload-renderer";
 import { CodingRenderer } from "./question-types/coding-renderer";
 
-const getDifficultyColor = (difficulty: string) => {
-  switch (difficulty) {
+const getDifficultyColor = (difficultyLevel: string) => {
+  switch (difficultyLevel) {
     case "EASY":
       return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
     case "MEDIUM":
@@ -108,7 +117,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   const handleEditMarks = () => {
     if (actions?.onEditMarks) {
-      const currentMarks = question.marks;
+      const currentMarks = (question as any).marks;
       const newMarks = prompt("Enter new marks:", currentMarks?.toString());
       if (newMarks && !isNaN(Number(newMarks))) {
         actions.onEditMarks(
@@ -120,14 +129,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     }
   };
 
-  const handleDuplicate = () => {
-    if (actions?.onDuplicate) {
-      actions.onDuplicate(question.id || `question-${questionNumber || 1}`);
-      showSuccess("Question duplicated successfully");
-    }
-  };
   const renderQuestionContent = () => {
-    // Create enhanced config for child components
     const enhancedConfig = {
       ...config,
       showCorrectAnswers: shouldShowCorrectAnswers,
@@ -140,7 +142,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       case "MCQ":
         return (
           <MCQRenderer
-            question={question}
+            question={question as MCQQuestion}
             config={enhancedConfig}
             onAnswerChange={onAnswerChange}
           />
@@ -148,15 +150,15 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       case "MMCQ":
         return (
           <MMCQRenderer
-            question={question}
+            question={question as MMCQQuestion}
             config={enhancedConfig}
             onAnswerChange={onAnswerChange}
           />
         );
-      case "TRUE_FALSE":
+      case "TRUEFALSE":
         return (
           <TrueFalseRenderer
-            question={question}
+            question={question as TrueFalseQuestion}
             config={enhancedConfig}
             onAnswerChange={onAnswerChange}
           />
@@ -164,7 +166,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       case "FILL_UP":
         return (
           <FillUpRenderer
-            question={question}
+            question={question as FillUpQuestion}
             config={enhancedConfig}
             onAnswerChange={onAnswerChange}
           />
@@ -172,7 +174,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       case "MATCH_THE_FOLLOWING":
         return (
           <MatchTheFollowingRenderer
-            question={question}
+            question={question as MatchTheFollowingQuestion}
             config={enhancedConfig}
             onAnswerChange={onAnswerChange}
           />
@@ -180,7 +182,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       case "DESCRIPTIVE":
         return (
           <DescriptiveRenderer
-            question={question}
+            question={question as DescriptiveQuestion}
             config={enhancedConfig}
             onAnswerChange={onAnswerChange}
           />
@@ -188,7 +190,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       case "FILE_UPLOAD":
         return (
           <FileUploadRenderer
-            question={question}
+            question={question as FileUploadQuestion}
             config={enhancedConfig}
             onAnswerChange={onAnswerChange}
           />
@@ -196,7 +198,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       case "CODING":
         return (
           <CodingRenderer
-            question={question}
+            question={question as CodingQuestion}
             config={enhancedConfig}
             onAnswerChange={onAnswerChange}
           />
@@ -231,8 +233,8 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                 {config.showMarks && (
                   <Badge variant="outline" className="font-medium text-xs">
                     <Award className="w-3 h-3 mr-1" />
-                    {question.markValue}
-                    {question.markValue === 1 ? "mark" : "marks"}
+                    {(question as any).marks}
+                    {(question as any).marks === 1 ? " mark" : " marks"}
                   </Badge>
                 )}
               </div>
@@ -244,12 +246,16 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                       <TooltipTrigger>
                         <Badge
                           className={cn(
-                            getDifficultyColor(question.difficulty),
+                            getDifficultyColor(
+                              (question as any).difficultyLevel ||
+                                (question as any).difficulty,
+                            ),
                             "text-xs",
                           )}
                         >
                           <Target className="w-3 h-3 mr-1" />
-                          {question.difficulty}
+                          {(question as any).difficultyLevel ||
+                            (question as any).difficulty}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -263,12 +269,12 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                       <TooltipTrigger>
                         <Badge
                           className={cn(
-                            getTaxonomyColor(question.bloomsTaxonomy),
+                            getTaxonomyColor((question as any).bloomsTaxonomy),
                             "text-xs",
                           )}
                         >
                           <BookOpen className="w-3 h-3 mr-1" />
-                          {question.bloomsTaxonomy}
+                          {(question as any).bloomsTaxonomy}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -277,18 +283,19 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                     </Tooltip>
                   )}
 
-                  {question.co && (
+                  {(question as any).co !== undefined &&
+                  (question as any).co !== null ? (
                     <Tooltip>
                       <TooltipTrigger>
                         <Badge variant="outline" className="text-xs">
-                          CO-{question.co}
+                          CO-{(question as any).co}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Course Outcome {question.co}</p>
+                        <p>Course Outcome {(question as any).co}</p>
                       </TooltipContent>
                     </Tooltip>
-                  )}
+                  ) : null}
 
                   {config.showTopics &&
                     question.topics?.map((topic) => (
@@ -316,7 +323,8 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                   )}
                 >
                   <Award className="w-3 h-3 mr-1" />
-                  Score: {config.userAnswers.score ?? 0}/{question.marks}
+                  Score: {config.userAnswers.score ?? 0}/
+                  {(question as any).marks}
                 </Badge>
               </div>
             ) : (
@@ -355,24 +363,6 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Edit Marks</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-
-                  {actions.onDuplicate && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleDuplicate}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Duplicate Question</p>
                       </TooltipContent>
                     </Tooltip>
                   )}

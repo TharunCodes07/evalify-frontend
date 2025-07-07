@@ -61,7 +61,7 @@ class Bank {
       createdAt: new Date().toISOString(), // Adds "2025-06-07T09:02:11.036Z"
     };
 
-    const response = await axiosInstance.post("/api/bank/", payload);
+    const response = await axiosInstance.post("/api/bank", payload);
     return response.data;
   }
 
@@ -130,8 +130,19 @@ class Bank {
     questionData: Record<string, unknown>,
   ): Promise<BankQuestion> {
     const response = await axiosInstance.put(
-      `/api/bank/${bankId}/questions/add-question/`,
+      `/api/bank/${bankId}/questions/add-question`,
       questionData,
+    );
+    return response.data;
+  }
+
+  static async getBankQuestionsByTopic(
+    bankId: string,
+    topicIds: string[],
+  ): Promise<BankQuestion[]> {
+    const response = await axiosInstance.post(
+      `/api/bank/${bankId}/questions/by-topic`,
+      topicIds,
     );
     return response.data;
   }

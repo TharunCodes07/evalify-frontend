@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import Counter from "@/components/ui/counter";
 import SelectBox from "@/components/ui/select-box";
+import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Award as AwardIcon,
   BrainCircuit,
@@ -18,11 +19,12 @@ interface QuestionSettingsProps {
   bloomsTaxonomy: string;
   courseOutcome: string;
   topics: { value: string; label: string }[];
+  availableTopics?: { value: string; label: string }[];
   onMarksChange: (marks: number) => void;
   onDifficultyChange: (difficulty: string) => void;
   onBloomsTaxonomyChange: (bloomsTaxonomy: string) => void;
   onCourseOutcomeChange: (courseOutcome: string) => void;
-  onTopicsChange: (topics: { value: string; label: string }[]) => void;
+  onTopicsChange: (topicIds: string[]) => void;
 }
 
 const difficultyOptions = [
@@ -32,25 +34,19 @@ const difficultyOptions = [
 ];
 
 const bloomOptions = [
-  { value: "REMEMBER", label: "Remember" },
-  { value: "UNDERSTAND", label: "Understand" },
-  { value: "APPLY", label: "Apply" },
-  { value: "ANALYZE", label: "Analyze" },
-  { value: "EVALUATE", label: "Evaluate" },
-  { value: "CREATE", label: "Create" },
+  { value: "remember", label: "Remember" },
+  { value: "understand", label: "Understand" },
+  { value: "apply", label: "Apply" },
+  { value: "analyse", label: "Analyse" },
+  { value: "evaluate", label: "Evaluate" },
+  { value: "create", label: "Create" },
 ];
 
 const courseOutcomeOptions = [
-  { value: 1, label: "CO 1" },
-  { value: 2, label: "CO 2" },
-  { value: 3, label: "CO 3" },
-  { value: 4, label: "CO 4" },
-  { value: 5, label: "CO 5" },
-  { value: 6, label: "CO 6" },
-];
-
-const initialTopics: { value: string; label: string }[] = [
-  // Empty array - Topics will only show if populated from API/props
+  { value: "co1", label: "CO 1" },
+  { value: "co2", label: "CO 2" },
+  { value: "co3", label: "CO 3" },
+  { value: "co4", label: "CO 4" },
 ];
 
 const QuestionSettings = ({
@@ -59,13 +55,13 @@ const QuestionSettings = ({
   bloomsTaxonomy,
   courseOutcome,
   topics,
+  availableTopics = [],
   onMarksChange,
   onDifficultyChange,
   onBloomsTaxonomyChange,
   onCourseOutcomeChange,
   onTopicsChange,
 }: QuestionSettingsProps) => {
-  const [availableTopics] = useState(initialTopics);
   const [selectedTopics, setSelectedTopics] =
     useState<{ value: string; label: string }[]>(topics);
 
@@ -135,30 +131,29 @@ const QuestionSettings = ({
                 />
               </div>
               {availableTopics.length > 0 && (
-                <div>                  <div className="flex items-center gap-2 text-sm font-semibold mb-2">
-                  <Tags className="h-4 w-4 text-primary" />
-                  <label>Related Topics</label>
-                </div>
-                  <SelectBox
-                    id="topics"
-                    label=""
-                    placeholder="Select topics..."
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold mb-2">
+                    <Tags className="h-4 w-4 text-primary" />
+                    <label>Related Topics</label>
+                  </div>
+                  <MultiSelect
                     options={availableTopics}
-                    value={selectedTopics.map((t) => t.value)}
-                    onValueChange={(values: string[]) => {
-                      const selectedOptions = values.map(
-                        (v) =>
-                          availableTopics.find((t) => t.value === v) || {
-                            value: v,
-                            label: v,
-                          },
-                      );
-                      onTopicsChange(selectedOptions);
+                    selected={selectedTopics.map((t) => t.value)}
+                    onChange={(values) => {
+                      if (typeof values === "function") {
+                        const newValues = values(
+                          selectedTopics.map((t) => t.value),
+                        );
+                        onTopicsChange(newValues);
+                      } else {
+                        onTopicsChange(values);
+                      }
                     }}
-                    allowMultiple={true}
+                    placeholder="Select topics..."
+                    className="w-full"
                   />
                 </div>
-              )}
+              )}{" "}
             </div>
           </div>
         </CardContent>

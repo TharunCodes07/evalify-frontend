@@ -24,6 +24,7 @@ import { Plus, MoreVertical, Edit2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { use, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { QuestionRenderer } from "@/components/render-questions";
 
 interface Topic {
   id: string;
@@ -86,16 +87,17 @@ function TopicSidebar({
           <CardTitle className="text-lg">Topics ({topics.length})</CardTitle>
           <Separator />
         </CardHeader>
-        <CardContent className="p-0 flex justify-between flex-col h-full">
+        <CardContent className="p-0">
           <ScrollArea className="h-[calc(100vh-250px)]">
             <div className="p-2 space-y-2">
               {topics.map((topic) => (
                 <div
                   key={topic.id}
-                  className={`flex items-center gap-2 p-3 rounded-lg border hover:bg-accent/50 transition-colors group ${selectedTopics.includes(topic.id)
+                  className={`flex items-center gap-2 p-3 rounded-lg border hover:bg-accent/50 transition-colors group ${
+                    selectedTopics.includes(topic.id)
                       ? "bg-accent border-primary"
                       : ""
-                    }`}
+                  }`}
                 >
                   {editingTopic?.id === topic.id ? (
                     <div className="flex-1 flex gap-2">
@@ -250,7 +252,6 @@ export default function BankPage({
     },
     onError: (err) => {
       error("Failed to create topic");
-      console.error("Error creating topic:", err);
     },
   });
 
@@ -263,7 +264,6 @@ export default function BankPage({
     },
     onError: (err) => {
       error("Failed to delete topic");
-      console.error("Error deleting topic:", err);
     },
   });
 
@@ -276,7 +276,6 @@ export default function BankPage({
     },
     onError: (err) => {
       error("Failed to update topic");
-      console.error("Error updating topic:", err);
     },
   });
 
@@ -285,6 +284,13 @@ export default function BankPage({
       prev.includes(topicId)
         ? prev.filter((id) => id !== topicId)
         : [...prev, topicId],
+    );
+  };
+
+  const handleCreateQuestion = () => {
+    const topicParam = selectedTopics.join(",");
+    router.push(
+      `/question-bank/${bankId}/question/create?topics=${topicParam}`,
     );
   };
 
@@ -300,7 +306,7 @@ export default function BankPage({
     editTopicMutation.mutate({ topicId, name });
   };
 
-  if (bankLoading || isLoadingTopics || isLoadingQuestions) {
+  if (bankLoading || isLoadingTopics) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-lg">Loading...</div>
@@ -321,9 +327,9 @@ export default function BankPage({
     .filter(Boolean);
 
   return (
-    <div className="flex bg-background">
-      {/* Topic Sidebar */}
-      <div className="border-r">
+    <div className="flex bg-background min-h-screen">
+      {/* Topic Sidebar - Fixed */}
+      <div className="border-r sticky top-0 h-screen">
         <TopicSidebar
           topics={topics}
           selectedTopics={selectedTopics}
@@ -335,56 +341,105 @@ export default function BankPage({
         />
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-6">
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <CardTitle className="text-2xl">{bank.name}</CardTitle>
-                <div className="flex gap-4 text-sm text-muted-foreground mt-2">
-                  <span>Course Code: {bank.courseCode}</span>
-                  <span>Semester: {bank.semester}</span>
-                  <span>Questions: {bank.questions}</span>
-                </div>
-                {selectedTopicNames.length > 0 && (
-                  <div className="mt-3">
-                    <div className="flex flex-wrap gap-1">
-                      {selectedTopicNames.map((name, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="text-xs"
-                        >
-                          {name}
-                        </Badge>
-                      ))}
-                    </div>
+      {/* Main Content - Scrollable */}
+      <div className="flex-1">
+        <div className="p-6">
+          <Card className="mb-6 overflow-hidden">
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between min-w-0">
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <CardTitle className="text-xl sm:text-2xl break-words overflow-hidden">
+                    <span className="block truncate sm:whitespace-normal">
+                      {bank.name}
+                    </span>
+                  </CardTitle>
+                  <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground mt-2 overflow-hidden">
+                    <span className="whitespace-nowrap truncate">
+                      Course Code: {bank.courseCode}
+                    </span>
+                    <span className="whitespace-nowrap truncate">
+                      Semester: {bank.semester}
+                    </span>
+                    <span className="whitespace-nowrap truncate">
+                      Questions: {bank.questions}
+                    </span>
                   </div>
-                )}
+                  {selectedTopicNames.length > 0 && (
+                    <div className="mt-3 overflow-hidden">
+                      <div className="flex flex-wrap gap-1">
+                        {selectedTopicNames.map((name, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="text-xs break-all max-w-full"
+                          >
+                            <span className="truncate">{name}</span>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <Button
+                  onClick={() => handleCreateQuestion()}
+                  className="w-full sm:w-auto shrink-0 text-sm"
+                >
+                  Add Question
+                </Button>
               </div>
-              <Button
-                onClick={() =>
-                  router.push(`/question-bank/${bankId}/question/create`)
-                }
-                disabled={selectedTopics.length === 0}
-              >
-                Add Question
-              </Button>
+            </CardHeader>
+          </Card>
+
+          {/* Questions Content */}
+          {isLoadingQuestions ? (
+            <div className="text-center py-12 text-muted-foreground">
+              Loading questions...
             </div>
-          </CardHeader>
-        </Card>
+          ) : questions && questions.length > 0 ? (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">
+                  Questions ({questions.length})
+                </h3>
+              </div>
 
-        {/* Main Content Area */}
-        <div className="mt-8">
-
-          <pre>
-            {
-              questions &&
-              // JSON.parse(questions)?.questions[0].question
-              JSON.stringify(questions, null, 2)
-            }
-          </pre>
+              {/* Questions List */}
+              <div className="space-y-4">
+                {questions.map((question, index) => (
+                  <QuestionRenderer
+                    key={`question-${question.id}-${index}`}
+                    question={question as any}
+                    questionNumber={index + 1}
+                    config={{
+                      mode: "display",
+                      showActions: true,
+                      showMarks: true,
+                      showDifficulty: true,
+                      showBloomsTaxonomy: true,
+                      showTopics: true,
+                      showExplanation: true,
+                      showCorrectAnswers: true,
+                      readOnly: true,
+                    }}
+                    actions={{
+                      onEdit: (questionId) => {
+                        router.push(
+                          `/question-bank/${bankId}/question/${questionId}`,
+                        );
+                      },
+                      onDelete: (questionId) => {
+                        // Add delete functionality here
+                      },
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              No questions found in this bank
+            </div>
+          )}
         </div>
       </div>
     </div>
