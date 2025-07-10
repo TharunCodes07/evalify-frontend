@@ -53,6 +53,11 @@ const userQueries = {
     const response = await axiosInstance.get(`/api/user/${userId}`);
     return response.data;
   },
+
+  fetchAllStaff: async (): Promise<User[]> => {
+    const response = await axiosInstance.get("/api/user/faculty/all");
+    return response.data;
+  },
 };
 
 export default userQueries;

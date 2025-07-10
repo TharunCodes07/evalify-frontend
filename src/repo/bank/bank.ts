@@ -43,6 +43,14 @@ export type PaginatedResponse<T> = {
   hasNext: boolean;
   hasPrevious: boolean;
 };
+interface SharedUser {
+  user: User;
+  tag: string;
+}
+
+export interface SharedUsers {
+  sharedUsers: SharedUser[];
+}
 
 class Bank {
   static async getAllBanks(
@@ -50,6 +58,11 @@ class Bank {
   ): Promise<PaginatedResponse<BankSchema>> {
     const url = params ? `/api/bank?${params.toString()}` : "/api/bank";
     const response = await axiosInstance.get(url);
+    return response.data;
+  }
+
+  static async getBankUsers(bankId: string): Promise<SharedUsers> {
+    const response = await axiosInstance.get(`/api/bank/${bankId}/share`);
     return response.data;
   }
 
@@ -144,6 +157,26 @@ class Bank {
       `/api/bank/${bankId}/questions/by-topic`,
       topicIds,
     );
+    return response.data;
+  }
+
+  static async shareBank(
+    bankId: string,
+    userIds: string[],
+  ): Promise<SharedUsers> {
+    const response = await axiosInstance.post(`/api/bank/${bankId}/share`, {
+      userID: userIds,
+    });
+    return response.data;
+  }
+
+  static async unshareBank(
+    bankId: string,
+    userIds: string[],
+  ): Promise<SharedUsers> {
+    const response = await axiosInstance.delete(`/api/bank/${bankId}/share`, {
+      data: { userID: userIds },
+    });
     return response.data;
   }
 }

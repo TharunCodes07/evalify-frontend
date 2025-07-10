@@ -63,6 +63,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import Bank from "@/repo/bank/bank";
 import { useRouter } from "next/navigation";
+import ShareDialog from "@/components/bank/ShareDialog";
 
 interface QuestionBank {
   id: string;
@@ -293,6 +294,7 @@ export default function QuestionBankPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentBank, setCurrentBank] = useState<QuestionBank | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
+  const [isOpen, setIsOpen] = useState(false);
 
   const { toast } = useToast();
 
@@ -516,6 +518,13 @@ export default function QuestionBankPage() {
     setCurrentBank(bank);
     setDialogMode("edit");
     setDialogOpen(true);
+  };
+
+  const handleShare = (bank: QuestionBank) => (e: React.MouseEvent) => {
+    setCurrentBank(bank);
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(true);
   };
 
   const router = useRouter();
@@ -755,6 +764,7 @@ export default function QuestionBankPage() {
                             size="sm"
                             variant="ghost"
                             className="rounded-full"
+                            onClick={handleShare(bank)}
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -879,6 +889,14 @@ export default function QuestionBankPage() {
           mode={dialogMode}
           bank={currentBank || undefined}
           onClose={() => setDialogOpen(false)}
+        />
+      )}
+
+      {isOpen && (
+        <ShareDialog
+          bankId={currentBank?.id || ""}
+          open={isOpen}
+          onClose={() => setIsOpen(false)}
         />
       )}
     </div>
