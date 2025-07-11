@@ -147,18 +147,18 @@ export default function ReviewCard({
           </div>
         </div>
       </CardContent>{" "}
-      <CardFooter>
+      <CardFooter className="p-4">
         {review.status === "LIVE" && canEvaluate && (
-          <div className="flex gap-2 w-full">
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
             <Link
               href={`/evaluate/${projectId}/${review.id}`}
-              className="flex-1"
+              className="flex-1 min-w-0"
             >
-              <Button className="w-full">Evaluate</Button>
+              <Button className="w-full text-sm">Evaluate</Button>
             </Link>
             <Button
               variant="outline"
-              className="flex-1"
+              className="flex-1 min-w-0 text-sm"
               onClick={handleViewReview}
             >
               View Review
@@ -166,17 +166,17 @@ export default function ReviewCard({
           </div>
         )}
         {review.status === "COMPLETED" && canEvaluate && (
-          <div className="flex gap-2 w-full">
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
             <Button
               variant="outline"
-              className="flex-1"
+              className="flex-1 min-w-0 text-sm"
               onClick={handleViewResults}
             >
               View Results
             </Button>
             <Button
               variant="outline"
-              className="flex-1"
+              className="flex-1 min-w-0 text-sm"
               onClick={handleViewReview}
             >
               View Review
@@ -186,17 +186,17 @@ export default function ReviewCard({
         {review.status === "SCHEDULED" && canEvaluate && (
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full text-sm"
             onClick={handleViewReview}
           >
             View Review
           </Button>
         )}
         {isStudent && (
-          <div className="flex gap-2 w-full">
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
             <Button
               variant="outline"
-              className="flex-1"
+              className="flex-1 min-w-0 text-sm"
               onClick={handleViewReview}
             >
               View Review
@@ -204,7 +204,7 @@ export default function ReviewCard({
             {review.status === "COMPLETED" && (
               <Button
                 variant="outline"
-                className={`flex-1 ${
+                className={`flex-1 min-w-0 text-sm ${
                   !review.isPublished ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 onClick={handleStudentResultsClick}
@@ -215,17 +215,17 @@ export default function ReviewCard({
           </div>
         )}
         {review.status === "SCHEDULED" && !canEvaluate && !isStudent && (
-          <Button variant="outline" className="w-full" disabled>
+          <Button variant="outline" className="w-full text-sm" disabled>
             Upcoming
           </Button>
         )}
         {review.status === "CANCELLED" && (
-          <Button variant="outline" className="w-full" disabled>
+          <Button variant="outline" className="w-full text-sm" disabled>
             Cancelled
           </Button>
         )}
         {review.status === "LIVE" && !canEvaluate && !isStudent && (
-          <Button variant="outline" className="w-full" disabled>
+          <Button variant="outline" className="w-full text-sm" disabled>
             Live Review
           </Button>
         )}

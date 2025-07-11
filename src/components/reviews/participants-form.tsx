@@ -180,7 +180,7 @@ function SelectedItemsDisplay() {
 export function ParticipantsForm() {
   return (
     <div className="grid md:grid-cols-2 gap-8">
-      <div className="space-y-4">
+      <div className="space-y-4 flex-1 min-w-0">
         <Tabs defaultValue="semesters" className="w-full">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
             <TabsTrigger value="semesters">Semesters</TabsTrigger>

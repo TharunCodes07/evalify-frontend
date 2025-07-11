@@ -192,7 +192,7 @@ export default function EvaluationPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="space-y-6">
         {courseId && (
           <div className="w-fit border rounded-sm bg-background shadow-sm">
@@ -237,8 +237,6 @@ export default function EvaluationPage() {
               teamId={project.teamId}
               teamName={team?.name}
             />
-
-            <ReviewResults reviewId={reviewId} projectId={projectId} />
           </div>
         )}
 

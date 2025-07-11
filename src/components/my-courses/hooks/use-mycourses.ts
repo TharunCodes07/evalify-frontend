@@ -44,9 +44,7 @@ export const useMyCourses = (
         sort_order: sortOrder,
       };
 
-      const body: { [key: string]: string } = {
-        userId: user.id,
-      };
+      const body: { [key: string]: string } = {};
 
       if (searchQuery) {
         endpoint = `/api/course/my-courses/search`;

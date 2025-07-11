@@ -25,6 +25,8 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  BarChart3,
+  Target,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
@@ -224,6 +226,53 @@ export function CourseEvaluationForm({
           </CardContent>
         )}
       </Card>
+
+      {/* Team Statistics */}
+      <div className="flex flex-col sm:flex-row gap-25 py-4">
+        {/* Team Average */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
+            <BarChart3 className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-foreground">
+              {evaluationData.teamMembers.length > 0
+                ? Math.round(
+                    evaluationData.teamMembers.reduce(
+                      (totalSum, member) =>
+                        totalSum +
+                        evaluationData.criteria.reduce(
+                          (criteriaSum, criterion) =>
+                            criteriaSum +
+                            (formData[member.id][criterion.id].score || 0),
+                          0
+                        ),
+                      0
+                    ) / evaluationData.teamMembers.length
+                  )
+                : 0}
+            </div>
+            <div className="text-sm text-muted-foreground">Team Average</div>
+          </div>
+        </div>
+
+        {/* Maximum Score */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
+            <Target className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-foreground">
+              {evaluationData.criteria.reduce(
+                (sum, criterion) => sum + criterion.maxScore,
+                0
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground">Maximum Score</div>
+          </div>
+        </div>
+      </div>
+
       {/* Criteria-based Evaluation */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -338,6 +387,8 @@ export function CourseEvaluationForm({
                                     );
                                   }
                                 }}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                onFocus={(e) => e.target.select()}
                                 className="w-20 text-center"
                                 placeholder="0"
                               />
