@@ -44,7 +44,7 @@ export default function MyCoursesPage() {
     isError,
   } = useQuery({
     queryKey: ["studentCourses", studentId],
-    queryFn: () => courseQueries.getCourseByStudentId(studentId!),
+    queryFn: () => courseQueries.getCourseByStudentId(),
     enabled: status === "authenticated" && !!studentId,
   });
 

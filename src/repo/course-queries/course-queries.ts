@@ -12,9 +12,9 @@ export const courseQueries = {
     );
     return response.data;
   },
-  getCourseByStudentId: async (studentId: string): Promise<StudentCourse[]> => {
+  getCourseByStudentId: async (): Promise<StudentCourse[]> => {
     const response = await axiosInstance.get(
-      `/api/course/student/${studentId}/courses-with-scores`
+      `/api/course/student/courses-with-scores`
     );
     return response.data;
   },

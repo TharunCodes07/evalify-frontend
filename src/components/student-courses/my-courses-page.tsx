@@ -49,7 +49,7 @@ export function MyCoursesPage() {
     error: coursesError,
   } = useQuery({
     queryKey: ["studentCourses", studentId],
-    queryFn: () => courseQueries.getCourseByStudentId(studentId!),
+    queryFn: () => courseQueries.getCourseByStudentId(),
     enabled: !!studentId,
   });
 
