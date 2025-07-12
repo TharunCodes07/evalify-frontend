@@ -525,23 +525,19 @@ export default function BankPage({
 
     if (debouncedSearchQuery.trim()) {
       const query = debouncedSearchQuery.toLowerCase();
-      return questions.filter((question: unknown) => {
-        const q = question as Record<string, unknown>;
-        return (
-          (typeof q.question === "string" &&
-            q.question.toLowerCase().includes(query)) ||
-          (typeof q.explanation === "string" &&
-            q.explanation.toLowerCase().includes(query)) ||
-          (Array.isArray(q.topics) &&
-            q.topics.some((topic: unknown) => {
-              const t = topic as Record<string, unknown>;
-              return (
-                typeof t.name === "string" &&
-                t.name.toLowerCase().includes(query)
-              );
-            }))
-        );
-      });
+      return questions.filter(
+        (question: unknown) =>
+          (question as { question?: string }).question
+            ?.toLowerCase()
+            .includes(query) ||
+          (question as { explanation?: string }).explanation
+            ?.toLowerCase()
+            .includes(query) ||
+          (question as { topics?: Array<{ name?: string }> }).topics?.some(
+            (topic: unknown) =>
+              (topic as { name?: string }).name?.toLowerCase().includes(query),
+          ),
+      );
     }
 
     return questions;
@@ -592,7 +588,7 @@ export default function BankPage({
             <div className="flex-1 flex items-center justify-center text-muted-foreground">
               Loading questions...
             </div>
-          ) : questions && questions.length > 0 ? (
+          ) : questions ? (
             <div className="flex-1 min-h-0">
               <VirtualizedQuestionsList
                 questions={filteredQuestions}
