@@ -117,7 +117,8 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   const handleEditMarks = () => {
     if (actions?.onEditMarks) {
-      const currentMarks = (question as any).marks;
+      const currentMarks = (question as unknown as Record<string, unknown>)
+        .marks;
       const newMarks = prompt("Enter new marks:", currentMarks?.toString());
       if (newMarks && !isNaN(Number(newMarks))) {
         actions.onEditMarks(
@@ -233,8 +234,13 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                 {config.showMarks && (
                   <Badge variant="outline" className="font-medium text-xs">
                     <Award className="w-3 h-3 mr-1" />
-                    {(question as any).marks}
-                    {(question as any).marks === 1 ? " mark" : " marks"}
+                    {String(
+                      (question as unknown as Record<string, unknown>).marks,
+                    )}
+                    {(question as unknown as Record<string, unknown>).marks ===
+                    1
+                      ? " mark"
+                      : " marks"}
                   </Badge>
                 )}
               </div>
@@ -246,16 +252,12 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                       <TooltipTrigger>
                         <Badge
                           className={cn(
-                            getDifficultyColor(
-                              (question as any).difficultyLevel ||
-                                (question as any).difficulty,
-                            ),
+                            getDifficultyColor(question.difficulty),
                             "text-xs",
                           )}
                         >
                           <Target className="w-3 h-3 mr-1" />
-                          {(question as any).difficultyLevel ||
-                            (question as any).difficulty}
+                          {question.difficulty}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -269,12 +271,20 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                       <TooltipTrigger>
                         <Badge
                           className={cn(
-                            getTaxonomyColor((question as any).bloomsTaxonomy),
+                            getTaxonomyColor(
+                              String(
+                                (question as unknown as Record<string, unknown>)
+                                  .bloomsTaxonomy || "",
+                              ),
+                            ),
                             "text-xs",
                           )}
                         >
                           <BookOpen className="w-3 h-3 mr-1" />
-                          {(question as any).bloomsTaxonomy}
+                          {String(
+                            (question as unknown as Record<string, unknown>)
+                              .bloomsTaxonomy || "",
+                          )}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -283,29 +293,43 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                     </Tooltip>
                   )}
 
-                  {(question as any).co !== undefined &&
-                  (question as any).co !== null ? (
+                  {(question as unknown as Record<string, unknown>).co !==
+                    undefined &&
+                  (question as unknown as Record<string, unknown>).co !==
+                    null ? (
                     <Tooltip>
                       <TooltipTrigger>
                         <Badge variant="outline" className="text-xs">
-                          CO-{(question as any).co}
+                          CO-
+                          {String(
+                            (question as unknown as Record<string, unknown>).co,
+                          )}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Course Outcome {(question as any).co}</p>
+                        <p>Course Outcome {question.co}</p>
                       </TooltipContent>
                     </Tooltip>
                   ) : null}
 
                   {config.showTopics &&
-                    question.topics?.map((topic) => (
-                      <Badge
-                        key={topic.id}
-                        variant="outline"
-                        className="text-xs"
-                      >
-                        {topic.name}
-                      </Badge>
+                    question.topics &&
+                    question.topics.length > 0 &&
+                    question.topics.map((topic) => (
+                      <Tooltip key={topic.id}>
+                        <TooltipTrigger>
+                          <Badge
+                            variant="default"
+                            className="text-xs bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
+                          >
+                            <BookOpen className="w-3 h-3 mr-1" />
+                            {topic.name}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Topic: {topic.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     ))}
                 </div>
               )}
@@ -323,8 +347,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                   )}
                 >
                   <Award className="w-3 h-3 mr-1" />
-                  Score: {config.userAnswers.score ?? 0}/
-                  {(question as any).marks}
+                  Score: {config.userAnswers.score ?? 0}/{question.marks}
                 </Badge>
               </div>
             ) : (

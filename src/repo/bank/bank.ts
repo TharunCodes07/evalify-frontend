@@ -24,6 +24,7 @@ type BankQuestion = {
   marks?: number;
   difficulty?: string;
   created_at: string;
+  topics?: BankTopic[];
 };
 
 export type BankTopic = {
@@ -133,8 +134,16 @@ class Bank {
     return response.data;
   }
 
-  static async getBankQuestions(bankId: string): Promise<BankQuestion[]> {
-    const response = await axiosInstance.get(`/api/bank/${bankId}/questions`);
+  static async getBankQuestions(
+    bankId: string,
+    topicIds: string[],
+  ): Promise<unknown[]> {
+    const params = new URLSearchParams();
+    topicIds.forEach((id) => params.append("topicIds", id));
+
+    const response = await axiosInstance.get(
+      `/api/bank/${bankId}/questions/by-topic?${params.toString()}`,
+    );
     return response.data;
   }
 

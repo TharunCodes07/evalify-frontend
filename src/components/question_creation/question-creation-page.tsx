@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import TopBar from "./top-bar";
 import QuestionTypeSelector, { QuestionType } from "./question-type-selector";
 import QuestionEditor, { QuestionData } from "./question-editor";
 import QuestionSettings from "./question-settings";
@@ -439,9 +438,7 @@ const QuestionCreationPage: React.FC<QuestionCreationPageProps> = ({
     updateTopicsInUrl(topicIds);
   };
   return (
-    <div className="h-screen flex flex-col bg-background">
-      {/* Top Bar */}
-      <TopBar /> {/* Question Type Selector */}
+    <div className="min-h-screen flex flex-col bg-background">
       <QuestionTypeSelector
         selectedType={selectedType}
         onTypeSelect={handleTypeSelect}
@@ -451,18 +448,22 @@ const QuestionCreationPage: React.FC<QuestionCreationPageProps> = ({
         isEdit={isEdit}
         hasChanges={hasChanges}
       />
-      {/* Main Content Area - Fixed Layout */}
-      <div className="flex-1 overflow-hidden flex">
-        {/* Left Panel - Question Editor (fixed width) */}
-        <div className="flex-1 min-w-0 p-6 overflow-auto bg-background">
-          <QuestionEditor
-            questionType={selectedType}
-            questionData={questionData}
-            onQuestionDataChange={setQuestionData}
-          />
+
+      {/* Main Content Area - Two Column Layout */}
+      <div className="flex-grow flex flex-col lg:flex-row">
+        {/* Question Editor - Left Column (Full width on mobile, 2/3 on desktop) */}
+        <div className="flex-1 lg:w-2/3 order-1 lg:order-1">
+          <div className="p-4 lg:p-6 bg-background h-full">
+            <QuestionEditor
+              questionType={selectedType}
+              questionData={questionData}
+              onQuestionDataChange={setQuestionData}
+            />
+          </div>
         </div>
-        {/* Right Panel - Question Settings (fixed width) */}
-        <div className="w-96 border-l overflow-hidden">
+
+        {/* Question Settings - Right Column (Full width on mobile, 1/3 on desktop) */}
+        <div className="lg:w-1/3 order-2 lg:order-2 lg:border-l bg-background">
           <QuestionSettings
             marks={questionSettings.marks}
             difficulty={questionSettings.difficulty}
@@ -481,6 +482,7 @@ const QuestionCreationPage: React.FC<QuestionCreationPageProps> = ({
           />
         </div>
       </div>
+
       {/* Validation Error Modal */}
       <ValidationErrorModal
         isOpen={showValidationModal}

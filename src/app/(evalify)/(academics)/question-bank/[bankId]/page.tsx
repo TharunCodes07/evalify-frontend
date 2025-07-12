@@ -18,13 +18,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Bank from "@/repo/bank/bank";
+import Bank, { BankSchema } from "@/repo/bank/bank";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, MoreVertical, Edit2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { use, useState } from "react";
+import React, { use, useState, useMemo, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { QuestionRenderer } from "@/components/render-questions";
+import { Question } from "@/components/render-questions/types";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface Topic {
   id: string;
@@ -39,6 +42,8 @@ function TopicSidebar({
   onDeleteTopic,
   onEditTopic,
   isCreating = false,
+  bank,
+  selectedTopicNames,
 }: {
   topics: Topic[];
   selectedTopics: string[];
@@ -47,6 +52,8 @@ function TopicSidebar({
   onDeleteTopic: (topicId: string) => void;
   onEditTopic: (topicId: string, name: string) => void;
   isCreating?: boolean;
+  bank?: BankSchema;
+  selectedTopicNames?: string[];
 }) {
   const [newTopicName, setNewTopicName] = useState("");
   const [editingTopic, setEditingTopic] = useState<{
@@ -82,13 +89,68 @@ function TopicSidebar({
 
   return (
     <TooltipProvider>
-      <Card className="w-80 h-full">
-        <CardHeader className="">
-          <CardTitle className="text-lg">Topics ({topics.length})</CardTitle>
+      <Card className="w-80 h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] flex flex-col">
+        <CardHeader className="flex-shrink-0">
+          {bank && (
+            <CardTitle className="text-lg break-words">{bank.name}</CardTitle>
+          )}
           <Separator />
         </CardHeader>
-        <CardContent className="p-0">
-          <ScrollArea className="h-[calc(100vh-250px)]">
+
+        {/* Bank Metadata Section */}
+        {bank && (
+          <div className="px-4 pb-4 flex-shrink-0">
+            <div className="space-y-2 text-xs text-muted-foreground">
+              <div className="flex justify-between">
+                <span>Course Code:</span>
+                <span className="font-medium text-foreground">
+                  {bank.courseCode}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Semester:</span>
+                <span className="font-medium text-foreground">
+                  {bank.semester}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Questions:</span>
+                <span className="font-medium text-foreground">
+                  {bank.questions}
+                </span>
+              </div>
+            </div>
+            {selectedTopicNames && selectedTopicNames.length > 0 && (
+              <div className="mt-3">
+                <span className="text-xs text-muted-foreground mb-2 block">
+                  Selected Topics:
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {selectedTopicNames.map((name, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="text-xs break-all max-w-full"
+                    >
+                      <span className="truncate">{name}</span>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <Separator className="mt-4" />
+          </div>
+        )}
+
+        {/* Topics Section */}
+        <div className="px-4 pb-2 flex-shrink-0">
+          <h4 className="text-sm font-semibold text-foreground">
+            Topics ({topics.length})
+          </h4>
+        </div>
+
+        <CardContent className="p-0 flex-1 flex flex-col min-h-0">
+          <ScrollArea className="flex-1">
             <div className="p-2 space-y-2">
               {topics.map((topic) => (
                 <div
@@ -185,7 +247,7 @@ function TopicSidebar({
             </div>
           </ScrollArea>
 
-          <div className="p-4 border-t">
+          <div className="p-4 border-t flex-shrink-0">
             <div className="flex gap-2 justify-center items-center">
               <Input
                 placeholder="Enter topic name"
@@ -212,6 +274,154 @@ function TopicSidebar({
   );
 }
 
+const VirtualizedQuestionsList = React.forwardRef<
+  unknown,
+  {
+    questions: unknown[];
+    allQuestionsCount: number;
+    bankId: string;
+    router: unknown;
+    searchQuery: string;
+    onSearchChange: (query: string) => void;
+    onCreateQuestion: () => void;
+  }
+>(function VirtualizedQuestionsList(
+  {
+    questions,
+    allQuestionsCount,
+    bankId,
+    router,
+    searchQuery,
+    onSearchChange,
+    onCreateQuestion,
+  },
+  ref,
+) {
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  // Use TanStack Virtual with proper dynamic height measurement
+  const virtualizer = useVirtualizer({
+    count: questions.length,
+    getScrollElement: () => parentRef.current,
+    // Simple fallback estimate - actual heights will be measured
+    estimateSize: () => 300,
+    // Let TanStack Virtual measure the actual height of each question
+    measureElement: (element) => element.getBoundingClientRect().height,
+    overscan: 3,
+    getItemKey: (index) =>
+      `question-${(questions[index] as Record<string, unknown>)?.id || index}`,
+  });
+
+  React.useImperativeHandle(ref, () => virtualizer, [virtualizer]);
+
+  const items = virtualizer.getVirtualItems();
+
+  return (
+    <div className="space-y-6 h-full flex flex-col">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">
+            Questions ({questions.length}
+            {questions.length !== allQuestionsCount &&
+              ` of ${allQuestionsCount}`}
+            )
+          </h3>
+          <Button onClick={onCreateQuestion} className="shrink-0">
+            Add Question
+          </Button>
+        </div>
+
+        {/* Search Input */}
+        <div className="flex gap-2">
+          <Input
+            placeholder="Search questions, explanations, or topics..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="flex-1"
+          />
+          {searchQuery && (
+            <Button
+              variant="outline"
+              onClick={() => onSearchChange("")}
+              size="sm"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {questions.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          {searchQuery
+            ? "No questions match your search criteria"
+            : "No questions found in this bank"}
+        </div>
+      ) : (
+        <div
+          ref={parentRef}
+          className="flex-1 overflow-auto border rounded-lg bg-background"
+        >
+          <div
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+              width: "100%",
+              position: "relative",
+            }}
+          >
+            {items.map((virtualItem) => {
+              const question = questions[virtualItem.index];
+              return (
+                <div
+                  key={virtualItem.key}
+                  ref={virtualizer.measureElement}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                  data-index={virtualItem.index}
+                >
+                  <div className="p-4 border-b border-border/20">
+                    <QuestionRenderer
+                      key={`question-${(question as Record<string, unknown>).id}`}
+                      question={question as Question}
+                      questionNumber={virtualItem.index + 1}
+                      config={{
+                        mode: "display",
+                        showActions: true,
+                        showMarks: true,
+                        showDifficulty: true,
+                        showBloomsTaxonomy: true,
+                        showTopics: true,
+                        showExplanation: true,
+                        showCorrectAnswers: true,
+                        readOnly: true,
+                      }}
+                      actions={{
+                        onEdit: (questionId) => {
+                          (router as { push: (path: string) => void }).push(
+                            `/question-bank/${bankId}/question/${questionId}`,
+                          );
+                        },
+                        onDelete: () => {
+                          // Add delete functionality here
+                        },
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
 export default function BankPage({
   params,
 }: {
@@ -226,6 +436,9 @@ export default function BankPage({
   const queryClient = useQueryClient();
 
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300); // Debounce search by 300ms
+  const virtualizerRef = useRef<unknown>(null);
 
   const { data: bank, isLoading: bankLoading } = useQuery({
     queryKey: ["bank", bankId],
@@ -239,8 +452,8 @@ export default function BankPage({
   });
 
   const { data: questions, isLoading: isLoadingQuestions } = useQuery({
-    queryKey: ["bankQuestions", bankId],
-    queryFn: () => Bank.getBankQuestions(bankId),
+    queryKey: ["bankQuestions", bankId, selectedTopics],
+    queryFn: () => Bank.getBankQuestions(bankId, selectedTopics),
     enabled: !!bank,
   });
 
@@ -248,9 +461,10 @@ export default function BankPage({
     mutationFn: (topicName: string) => Bank.addBankTopic(bankId, topicName),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bankTopics", bankId] });
+      queryClient.invalidateQueries({ queryKey: ["bankQuestions", bankId] });
       success("Topic created successfully");
     },
-    onError: (err) => {
+    onError: () => {
       error("Failed to create topic");
     },
   });
@@ -262,7 +476,7 @@ export default function BankPage({
       setSelectedTopics((prev) => prev.filter((id) => id !== topicId));
       success("Topic deleted successfully");
     },
-    onError: (err) => {
+    onError: () => {
       error("Failed to delete topic");
     },
   });
@@ -274,7 +488,7 @@ export default function BankPage({
       queryClient.invalidateQueries({ queryKey: ["bankTopics", bankId] });
       success("Topic updated successfully");
     },
-    onError: (err) => {
+    onError: () => {
       error("Failed to update topic");
     },
   });
@@ -306,6 +520,33 @@ export default function BankPage({
     editTopicMutation.mutate({ topicId, name });
   };
 
+  const filteredQuestions = useMemo(() => {
+    if (!questions) return [];
+
+    if (debouncedSearchQuery.trim()) {
+      const query = debouncedSearchQuery.toLowerCase();
+      return questions.filter((question: unknown) => {
+        const q = question as Record<string, unknown>;
+        return (
+          (typeof q.question === "string" &&
+            q.question.toLowerCase().includes(query)) ||
+          (typeof q.explanation === "string" &&
+            q.explanation.toLowerCase().includes(query)) ||
+          (Array.isArray(q.topics) &&
+            q.topics.some((topic: unknown) => {
+              const t = topic as Record<string, unknown>;
+              return (
+                typeof t.name === "string" &&
+                t.name.toLowerCase().includes(query)
+              );
+            }))
+        );
+      });
+    }
+
+    return questions;
+  }, [questions, debouncedSearchQuery]);
+
   if (bankLoading || isLoadingTopics) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -324,12 +565,12 @@ export default function BankPage({
 
   const selectedTopicNames = selectedTopics
     .map((id) => topics.find((topic) => topic.id === id)?.name)
-    .filter(Boolean);
+    .filter((name): name is string => Boolean(name));
 
   return (
-    <div className="flex bg-background min-h-screen">
+    <div className="flex bg-background h-[calc(100vh-4rem)]">
       {/* Topic Sidebar - Fixed */}
-      <div className="border-r sticky top-0 h-screen">
+      <div className="border-r sticky top-0 h-[calc(100vh-4rem)]">
         <TopicSidebar
           topics={topics}
           selectedTopics={selectedTopics}
@@ -338,105 +579,34 @@ export default function BankPage({
           onDeleteTopic={handleDeleteTopic}
           onEditTopic={handleEditTopic}
           isCreating={createTopicMutation.isPending}
+          bank={bank}
+          selectedTopicNames={selectedTopicNames}
         />
       </div>
 
       {/* Main Content - Scrollable */}
-      <div className="flex-1">
-        <div className="p-6">
-          <Card className="mb-6 overflow-hidden">
-            <CardHeader className="p-4 sm:p-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between min-w-0">
-                <div className="flex-1 min-w-0 overflow-hidden">
-                  <CardTitle className="text-xl sm:text-2xl break-words overflow-hidden">
-                    <span className="block truncate sm:whitespace-normal">
-                      {bank.name}
-                    </span>
-                  </CardTitle>
-                  <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground mt-2 overflow-hidden">
-                    <span className="whitespace-nowrap truncate">
-                      Course Code: {bank.courseCode}
-                    </span>
-                    <span className="whitespace-nowrap truncate">
-                      Semester: {bank.semester}
-                    </span>
-                    <span className="whitespace-nowrap truncate">
-                      Questions: {bank.questions}
-                    </span>
-                  </div>
-                  {selectedTopicNames.length > 0 && (
-                    <div className="mt-3 overflow-hidden">
-                      <div className="flex flex-wrap gap-1">
-                        {selectedTopicNames.map((name, index) => (
-                          <Badge
-                            key={index}
-                            variant="secondary"
-                            className="text-xs break-all max-w-full"
-                          >
-                            <span className="truncate">{name}</span>
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <Button
-                  onClick={() => handleCreateQuestion()}
-                  className="w-full sm:w-auto shrink-0 text-sm"
-                >
-                  Add Question
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
-
+      <div className="flex-1 h-[calc(100vh-4rem)] overflow-hidden">
+        <div className="p-4 h-full flex flex-col">
           {/* Questions Content */}
           {isLoadingQuestions ? (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
               Loading questions...
             </div>
           ) : questions && questions.length > 0 ? (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">
-                  Questions ({questions.length})
-                </h3>
-              </div>
-
-              {/* Questions List */}
-              <div className="space-y-4">
-                {questions.map((question, index) => (
-                  <QuestionRenderer
-                    key={`question-${question.id}-${index}`}
-                    question={question as any}
-                    questionNumber={index + 1}
-                    config={{
-                      mode: "display",
-                      showActions: true,
-                      showMarks: true,
-                      showDifficulty: true,
-                      showBloomsTaxonomy: true,
-                      showTopics: true,
-                      showExplanation: true,
-                      showCorrectAnswers: true,
-                      readOnly: true,
-                    }}
-                    actions={{
-                      onEdit: (questionId) => {
-                        router.push(
-                          `/question-bank/${bankId}/question/${questionId}`,
-                        );
-                      },
-                      onDelete: (questionId) => {
-                        // Add delete functionality here
-                      },
-                    }}
-                  />
-                ))}
-              </div>
+            <div className="flex-1 min-h-0">
+              <VirtualizedQuestionsList
+                questions={filteredQuestions}
+                allQuestionsCount={questions.length}
+                bankId={bankId}
+                router={router}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                onCreateQuestion={handleCreateQuestion}
+                ref={virtualizerRef}
+              />
             </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
               No questions found in this bank
             </div>
           )}

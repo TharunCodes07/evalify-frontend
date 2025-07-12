@@ -420,9 +420,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
     );
   };
 
-  return (
-    <div className="h-full overflow-auto">{renderQuestionComponent()}</div>
-  );
+  return <div className="w-full">{renderQuestionComponent()}</div>;
 };
 
 export default QuestionEditor;
