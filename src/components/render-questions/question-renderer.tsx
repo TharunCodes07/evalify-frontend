@@ -105,13 +105,17 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
   const handleEdit = () => {
     if (actions?.onEdit) {
-      actions.onEdit(question.id || `question-${questionNumber || 1}`);
+      const questionId = (question as unknown as Record<string, unknown>)
+        .questionId as string;
+      actions.onEdit(questionId || `question-${questionNumber || 1}`);
     }
   };
 
   const handleDelete = () => {
     if (actions?.onDelete) {
-      actions.onDelete(question.id || `question-${questionNumber || 1}`);
+      const questionId = (question as unknown as Record<string, unknown>)
+        .questionId as string;
+      actions.onDelete(questionId || `question-${questionNumber || 1}`);
     }
   };
 
@@ -119,10 +123,12 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
     if (actions?.onEditMarks) {
       const currentMarks = (question as unknown as Record<string, unknown>)
         .marks;
+      const questionId = (question as unknown as Record<string, unknown>)
+        .questionId as string;
       const newMarks = prompt("Enter new marks:", currentMarks?.toString());
       if (newMarks && !isNaN(Number(newMarks))) {
         actions.onEditMarks(
-          question.id || `question-${questionNumber || 1}`,
+          questionId || `question-${questionNumber || 1}`,
           Number(newMarks),
         );
         showSuccess("Marks updated successfully");
