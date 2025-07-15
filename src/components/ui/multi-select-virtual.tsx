@@ -25,6 +25,7 @@ interface MultiSelectProps {
   className?: string;
   placeholder?: string;
   maxHeight?: number;
+  estimateSize?: number;
 }
 function MultiSelect({
   options,
@@ -33,6 +34,7 @@ function MultiSelect({
   className,
   placeholder = "Select...",
   maxHeight = 160,
+  estimateSize,
 }: MultiSelectProps) {
   const [inputValue, setInputValue] = React.useState("");
   const [open, setOpen] = React.useState(false);
@@ -47,13 +49,30 @@ function MultiSelect({
     );
   }, [options, inputValue]);
 
-  // Setup the virtualizer
-  const virtualizer = useVirtualizer({
-    count: filteredOptions.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 36, // Height of CommandItem
-    overscan: 10,
-  });
+  // Setup the virtualizer with conditional configuration
+  const virtualizerConfig = React.useMemo(() => {
+    const baseConfig = {
+      count: filteredOptions.length,
+      getScrollElement: () => parentRef.current,
+      overscan: 10,
+    };
+
+    if (estimateSize) {
+      return {
+        ...baseConfig,
+        estimateSize: (): number => estimateSize,
+      };
+    } else {
+      return {
+        ...baseConfig,
+        estimateSize: (): number => 36, // Fallback estimate
+        measureElement: (element: Element): number =>
+          element.getBoundingClientRect().height,
+      };
+    }
+  }, [filteredOptions.length, estimateSize]);
+
+  const virtualizer = useVirtualizer(virtualizerConfig);
 
   // Force recalculation when options or filtered options change
   React.useEffect(() => {
@@ -166,14 +185,17 @@ function MultiSelect({
                     return (
                       <div
                         key={option.value}
+                        ref={
+                          !estimateSize ? virtualizer.measureElement : undefined
+                        }
                         style={{
                           position: "absolute",
                           top: 0,
                           left: 0,
                           width: "100%",
-                          height: `${virtualItem.size}px`,
                           transform: `translateY(${virtualItem.start}px)`,
                         }}
+                        data-index={virtualItem.index}
                       >
                         <div
                           className="flex items-center gap-2 px-2 py-1.5 text-sm cursor-pointer aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-accent hover:text-accent-foreground"

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Bank, { BankSchema } from "@/repo/bank/bank";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, MoreVertical, Edit2, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, Edit2, Trash2, Copy, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { use, useState, useMemo, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,8 @@ import { QuestionRenderer } from "@/components/render-questions";
 import { Question } from "@/components/render-questions/types";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useDebounce } from "@/hooks/use-debounce";
+import { CopyMoveDialog } from "@/components/bank/copy-move-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Topic {
   id: string;
@@ -145,13 +148,31 @@ function TopicSidebar({
         {/* Topics Section */}
         <div className="px-4 pb-2 flex-shrink-0">
           <h4 className="text-sm font-semibold text-foreground">
-            Topics ({topics.length})
+            Topics ({topics.length + 1})
           </h4>
         </div>
 
         <CardContent className="p-0 flex-1 flex flex-col min-h-0">
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-2">
+              {/* No Topic Option */}
+              <div
+                className={`flex items-center gap-2 p-3 rounded-lg border hover:bg-accent/50 transition-colors group ${
+                  selectedTopics.includes("no-topic")
+                    ? "bg-accent border-primary"
+                    : ""
+                }`}
+              >
+                <div
+                  className="flex-1 cursor-pointer min-w-0"
+                  onClick={() => onTopicToggle("no-topic")}
+                >
+                  <span className="text-sm font-medium block italic text-muted-foreground">
+                    No Topic
+                  </span>
+                </div>
+              </div>
+
               {topics.map((topic) => (
                 <div
                   key={topic.id}
@@ -284,6 +305,11 @@ const VirtualizedQuestionsList = React.forwardRef<
     searchQuery: string;
     onSearchChange: (query: string) => void;
     onCreateQuestion: () => void;
+    selectedQuestions: string[];
+    onQuestionSelect: (questionId: string, selected: boolean) => void;
+    onSelectAll: (checked?: boolean | "indeterminate") => void;
+    onClearSelection: () => void;
+    onCopyMove: () => void;
   }
 >(function VirtualizedQuestionsList(
   {
@@ -294,22 +320,27 @@ const VirtualizedQuestionsList = React.forwardRef<
     searchQuery,
     onSearchChange,
     onCreateQuestion,
+    selectedQuestions,
+    onQuestionSelect,
+    onSelectAll,
+    onClearSelection,
+    onCopyMove,
   },
   ref,
 ) {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Use TanStack Virtual with proper dynamic height measurement
+  // Use TanStack Virtual with dynamic height measurement only
   const virtualizer = useVirtualizer({
     count: questions.length,
     getScrollElement: () => parentRef.current,
-    // Simple fallback estimate - actual heights will be measured
-    estimateSize: () => 300,
-    // Let TanStack Virtual measure the actual height of each question
+    // Minimal estimate - actual heights will be measured dynamically
+    estimateSize: () => 50,
+    // Let TanStack Virtual measure the actual height of each question dynamically
     measureElement: (element) => element.getBoundingClientRect().height,
     overscan: 3,
     getItemKey: (index) =>
-      `question-${(questions[index] as Record<string, unknown>)?.id || index}`,
+      `question-${(questions[index] as Record<string, unknown>)?.questionId || index}`,
   });
 
   React.useImperativeHandle(ref, () => virtualizer, [virtualizer]);
@@ -326,12 +357,52 @@ const VirtualizedQuestionsList = React.forwardRef<
               ` of ${allQuestionsCount}`}
             )
           </h3>
-          <Button onClick={onCreateQuestion} className="shrink-0">
-            Add Question
-          </Button>
+          <div className="flex items-center gap-2">
+            {selectedQuestions.length > 0 && (
+              <>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onCopyMove}
+                        className="gap-2"
+                      >
+                        <Copy className="h-4 w-4" />
+                        Copy/Move ({selectedQuestions.length})
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Copy or move selected questions to another bank</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onClearSelection}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Clear selection</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </>
+            )}
+            <Button onClick={onCreateQuestion} className="shrink-0">
+              Add Question
+            </Button>
+          </div>
         </div>
 
-        {/* Search Input */}
+        {/* Search Input and Selection Controls */}
         <div className="flex gap-2">
           <Input
             placeholder="Search questions, explanations, or topics..."
@@ -349,6 +420,34 @@ const VirtualizedQuestionsList = React.forwardRef<
             </Button>
           )}
         </div>
+
+        {/* Selection Controls */}
+        {questions.length > 0 && (
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="select-all"
+                checked={
+                  selectedQuestions.length === questions.length &&
+                  questions.length > 0
+                    ? true
+                    : selectedQuestions.length > 0
+                      ? "indeterminate"
+                      : false
+                }
+                onCheckedChange={onSelectAll}
+              />
+              <Label htmlFor="select-all" className="cursor-pointer">
+                Select all questions
+              </Label>
+            </div>
+            {selectedQuestions.length > 0 && (
+              <span className="text-muted-foreground">
+                {selectedQuestions.length} of {questions.length} selected
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {questions.length === 0 ? (
@@ -370,7 +469,20 @@ const VirtualizedQuestionsList = React.forwardRef<
             }}
           >
             {items.map((virtualItem) => {
-              const question = questions[virtualItem.index];
+              const question = questions[virtualItem.index] as Record<
+                string,
+                unknown
+              >;
+
+              const questionId = String(
+                question?.questionId || `fallback-${virtualItem.index}`,
+              );
+
+              // More robust selection check
+              const isQuestionSelected = selectedQuestions.some(
+                (selectedId) => String(selectedId) === questionId,
+              );
+
               return (
                 <div
                   key={virtualItem.key}
@@ -384,33 +496,50 @@ const VirtualizedQuestionsList = React.forwardRef<
                   }}
                   data-index={virtualItem.index}
                 >
-                  <div className="p-4 border-b border-border/20">
-                    <QuestionRenderer
-                      key={`question-${(question as Record<string, unknown>).id}`}
-                      question={question as Question}
-                      questionNumber={virtualItem.index + 1}
-                      config={{
-                        mode: "display",
-                        showActions: true,
-                        showMarks: true,
-                        showDifficulty: true,
-                        showBloomsTaxonomy: true,
-                        showTopics: true,
-                        showExplanation: true,
-                        showCorrectAnswers: true,
-                        readOnly: true,
-                      }}
-                      actions={{
-                        onEdit: (questionId) => {
-                          (router as { push: (path: string) => void }).push(
-                            `/question-bank/${bankId}/question/${questionId}`,
-                          );
-                        },
-                        onDelete: () => {
-                          // Add delete functionality here
-                        },
-                      }}
-                    />
+                  <div
+                    className={`p-4 border-b border-border/20 transition-colors ${
+                      isQuestionSelected ? "bg-accent/50" : ""
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex items-center pt-2">
+                        <Checkbox
+                          key={`checkbox-${questionId}`}
+                          checked={isQuestionSelected}
+                          onCheckedChange={(checked) => {
+                            onQuestionSelect(questionId, Boolean(checked));
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <QuestionRenderer
+                          key={`question-${questionId}`}
+                          question={question as unknown as Question}
+                          questionNumber={virtualItem.index + 1}
+                          config={{
+                            mode: "display",
+                            showActions: true,
+                            showMarks: true,
+                            showDifficulty: true,
+                            showBloomsTaxonomy: true,
+                            showTopics: true,
+                            showExplanation: true,
+                            showCorrectAnswers: true,
+                            readOnly: true,
+                          }}
+                          actions={{
+                            onEdit: (questionId) => {
+                              (router as { push: (path: string) => void }).push(
+                                `/question-bank/${bankId}/question/${questionId}`,
+                              );
+                            },
+                            onDelete: () => {
+                              // Add delete functionality here
+                            },
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
@@ -437,6 +566,8 @@ export default function BankPage({
 
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+  const [showCopyMoveDialog, setShowCopyMoveDialog] = useState(false);
   const debouncedSearchQuery = useDebounce(searchQuery, 300); // Debounce search by 300ms
   const virtualizerRef = useRef<unknown>(null);
 
@@ -453,8 +584,19 @@ export default function BankPage({
 
   const { data: questions, isLoading: isLoadingQuestions } = useQuery({
     queryKey: ["bankQuestions", bankId, selectedTopics],
-    queryFn: () => Bank.getBankQuestions(bankId, selectedTopics),
-    enabled: !!bank,
+    queryFn: () => {
+      // If "no-topic" is selected, send empty array to get questions with no topics
+      const topicsToSend = selectedTopics.includes("no-topic")
+        ? []
+        : selectedTopics.filter((id) => id !== "no-topic");
+      return Bank.getBankQuestions(bankId, topicsToSend);
+    },
+    enabled: !!bank && selectedTopics.length > 0,
+  });
+
+  const { data: allBanks } = useQuery({
+    queryKey: ["allBanks"],
+    queryFn: () => Bank.getAllBanks(),
   });
 
   const createTopicMutation = useMutation({
@@ -493,12 +635,51 @@ export default function BankPage({
     },
   });
 
+  const copyMoveMutation = useMutation({
+    mutationFn: ({
+      targetBankId,
+      move,
+      createNewTopic,
+    }: {
+      targetBankId: string;
+      move: boolean;
+      createNewTopic: boolean;
+    }) =>
+      Bank.copyQuestions(bankId, {
+        bankId: targetBankId,
+        questionIds: selectedQuestions,
+        move,
+        createNewTopic,
+      }),
+    onSuccess: (_, { move }) => {
+      queryClient.invalidateQueries({ queryKey: ["bankQuestions", bankId] });
+      queryClient.invalidateQueries({ queryKey: ["bank", bankId] });
+      setSelectedQuestions([]);
+      setShowCopyMoveDialog(false);
+      success(
+        move ? "Questions moved successfully" : "Questions copied successfully",
+      );
+    },
+    onError: () => {
+      error("Failed to copy/move questions");
+    },
+  });
+
   const handleTopicToggle = (topicId: string) => {
-    setSelectedTopics((prev) =>
-      prev.includes(topicId)
-        ? prev.filter((id) => id !== topicId)
-        : [...prev, topicId],
-    );
+    setSelectedTopics((prev) => {
+      // Handle "No Topic" selection
+      if (topicId === "no-topic") {
+        // If "No Topic" is selected, clear all other selections and only select "No Topic"
+        return prev.includes("no-topic") ? [] : ["no-topic"];
+      }
+
+      // If selecting a regular topic, remove "No Topic" if it's selected
+      const withoutNoTopic = prev.filter((id) => id !== "no-topic");
+
+      return withoutNoTopic.includes(topicId)
+        ? withoutNoTopic.filter((id) => id !== topicId)
+        : [...withoutNoTopic, topicId];
+    });
   };
 
   const handleCreateQuestion = () => {
@@ -518,6 +699,56 @@ export default function BankPage({
 
   const handleEditTopic = (topicId: string, name: string) => {
     editTopicMutation.mutate({ topicId, name });
+  };
+
+  const handleQuestionSelect = (questionId: string, selected: boolean) => {
+    // Ensure questionId is always a string for consistent comparison
+    const normalizedQuestionId = String(questionId);
+
+    setSelectedQuestions((prev) => {
+      // Normalize all existing IDs for comparison
+      const normalizedPrev = prev.map((id) => String(id));
+
+      if (selected) {
+        // Add question to selection if not already selected
+        if (normalizedPrev.includes(normalizedQuestionId)) {
+          return prev; // Already selected, no change
+        }
+        return [...prev, normalizedQuestionId];
+      } else {
+        // Remove question from selection
+        return prev.filter((id) => String(id) !== normalizedQuestionId);
+      }
+    });
+  };
+
+  const handleSelectAll = (checked?: boolean | "indeterminate") => {
+    if (checked === true) {
+      // Select all questions - normalize all IDs to strings
+      const allQuestionIds = filteredQuestions.map((q) =>
+        String((q as Record<string, unknown>).questionId || "unknown"),
+      );
+      setSelectedQuestions(allQuestionIds);
+    } else {
+      // Uncheck all - clear selection (handles false, indeterminate, or undefined)
+      setSelectedQuestions([]);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedQuestions([]);
+  };
+
+  const handleShowCopyMoveDialog = () => {
+    setShowCopyMoveDialog(true);
+  };
+
+  const handleCopyMove = (
+    targetBankId: string,
+    move: boolean,
+    createNewTopic: boolean,
+  ) => {
+    copyMoveMutation.mutate({ targetBankId, move, createNewTopic });
   };
 
   const filteredQuestions = useMemo(() => {
@@ -543,6 +774,11 @@ export default function BankPage({
     return questions;
   }, [questions, debouncedSearchQuery]);
 
+  // Clear selection when questions change
+  React.useEffect(() => {
+    setSelectedQuestions([]);
+  }, [selectedTopics, debouncedSearchQuery]);
+
   if (bankLoading || isLoadingTopics) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -560,13 +796,16 @@ export default function BankPage({
   }
 
   const selectedTopicNames = selectedTopics
-    .map((id) => topics.find((topic) => topic.id === id)?.name)
+    .map((id) => {
+      if (id === "no-topic") return "No Topic";
+      return topics.find((topic) => topic.id === id)?.name;
+    })
     .filter((name): name is string => Boolean(name));
 
   return (
-    <div className="flex bg-background h-[calc(100vh-4rem)]">
+    <div className="flex bg-background h-[95vh]">
       {/* Topic Sidebar - Fixed */}
-      <div className="border-r sticky top-0 h-[calc(100vh-4rem)]">
+      <div className="border-r sticky top-0 h-[95vh]">
         <TopicSidebar
           topics={topics}
           selectedTopics={selectedTopics}
@@ -584,7 +823,16 @@ export default function BankPage({
       <div className="flex-1 h-[calc(100vh-4rem)] overflow-hidden">
         <div className="p-4 h-full flex flex-col">
           {/* Questions Content */}
-          {isLoadingQuestions ? (
+          {selectedTopics.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
+              <div className="text-center">
+                <p className="text-lg mb-2">Select a topic to view questions</p>
+                <p className="text-sm">
+                  Choose one or more topics from the sidebar to get started
+                </p>
+              </div>
+            </div>
+          ) : isLoadingQuestions ? (
             <div className="flex-1 flex items-center justify-center text-muted-foreground">
               Loading questions...
             </div>
@@ -598,6 +846,11 @@ export default function BankPage({
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 onCreateQuestion={handleCreateQuestion}
+                selectedQuestions={selectedQuestions}
+                onQuestionSelect={handleQuestionSelect}
+                onSelectAll={handleSelectAll}
+                onClearSelection={handleClearSelection}
+                onCopyMove={handleShowCopyMoveDialog}
                 ref={virtualizerRef}
               />
             </div>
@@ -608,6 +861,17 @@ export default function BankPage({
           )}
         </div>
       </div>
+
+      {/* Copy/Move Dialog */}
+      <CopyMoveDialog
+        open={showCopyMoveDialog}
+        onOpenChange={setShowCopyMoveDialog}
+        selectedQuestions={selectedQuestions}
+        currentBankId={bankId}
+        availableBanks={allBanks?.content || []}
+        isLoading={copyMoveMutation.isPending}
+        onCopyMove={handleCopyMove}
+      />
     </div>
   );
 }

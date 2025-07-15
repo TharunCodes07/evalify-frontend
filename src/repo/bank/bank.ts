@@ -32,6 +32,13 @@ export type BankTopic = {
   name: string;
 };
 
+export type CopyBankQuestionDTO = {
+  bankId: string;
+  questionIds: string[];
+  move: boolean;
+  createNewTopic: boolean;
+};
+
 // Add paginated response type
 export type PaginatedResponse<T> = {
   content: T[];
@@ -186,6 +193,17 @@ class Bank {
     const response = await axiosInstance.delete(`/api/bank/${bankId}/share`, {
       data: { userID: userIds },
     });
+    return response.data;
+  }
+
+  static async copyQuestions(
+    sourceBankId: string,
+    dto: CopyBankQuestionDTO,
+  ): Promise<void> {
+    const response = await axiosInstance.post(
+      `/api/bank/${sourceBankId}/copy`,
+      dto,
+    );
     return response.data;
   }
 }
