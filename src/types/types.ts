@@ -306,6 +306,7 @@ export interface CourseEvaluationData {
     description: string;
     maxScore: number;
     courseSpecific: boolean;
+    isCommon: boolean;
   }[];
   existingScores?: {
     participantId: string;

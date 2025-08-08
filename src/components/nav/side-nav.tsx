@@ -232,7 +232,6 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
         </SidebarHeader>
-
         <SidebarContent className="bg-gradient-to-b from-sidebar via-sidebar/50 to-sidebar dark:from-sidebar dark:via-sidebar/80 dark:to-sidebar scrollbar-thin scrollbar-track-transparent scrollbar-thumb-sidebar-border/50 hover:scrollbar-thumb-sidebar-border overflow-x-hidden p-0">
           {accessibleNavGroups.map((group, index) => (
             <React.Fragment key={group.label}>

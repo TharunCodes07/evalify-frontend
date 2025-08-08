@@ -9,7 +9,6 @@ import reviewQueries from "@/repo/review-queries/review-queries";
 import teamQueries from "@/repo/team-queries/team-queries";
 import { CourseEvaluationForm } from "@/components/evaluations/CourseEvaluationForm";
 import { FileList } from "@/components/file-upload/file-list";
-import { ReviewResults } from "@/components/results/review-results";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ProjectWithTeam, CourseEvaluationSummary } from "@/types/types";
 import { Button } from "@/components/ui/button";
@@ -131,9 +130,6 @@ export default function EvaluationPage() {
     enabled: !!project?.teamId,
   });
 
-  // Function to create directory path: teamname-teamid/projectname-projectid/reviewname-reviewid
-  // This is now handled by the backend automatically based on the parameters sent
-
   const { data: summary, isLoading: isLoadingSummary } = useQuery({
     queryKey: ["evaluationSummary", reviewId, projectId],
     queryFn: () =>
@@ -248,9 +244,10 @@ export default function EvaluationPage() {
           />
         )}
 
-        {courseId && evaluationData && (
+        {courseId && evaluationData && review && (
           <CourseEvaluationForm
             evaluationData={evaluationData}
+            reviewData={review}
             projectId={projectId}
             reviewId={reviewId}
           />
