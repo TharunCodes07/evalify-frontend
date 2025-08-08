@@ -33,18 +33,15 @@ export default function ReviewDetailPage() {
   const canPublish = useMemo(() => {
     if (!session?.user || !review || !reviewStatus) return false;
 
-    // Only allow publishing after review is completed
     if (reviewStatus !== "COMPLETED") return false;
 
     const userGroups = session.user.groups || [];
     if (
       (userGroups as string[]).includes("admin") ||
-      (userGroups as string[]).includes("manager")
+      (userGroups as string[]).includes("manager") ||
+      (userGroups as string[]).includes("faculty")
     ) {
       return true;
-    }
-    if ((userGroups as string[]).includes("faculty")) {
-      return review.createdBy.id === session.user.id;
     }
     return false;
   }, [session?.user, review, reviewStatus]);
