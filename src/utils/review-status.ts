@@ -8,10 +8,6 @@ export interface ReviewPublicationStatus {
   canPublish?: boolean;
 }
 
-/**
- * Calculate the dynamic status of a review based ONLY on start time and end time in IST
- * This is independent of publication status
- */
 export function calculateReviewStatus(
   startDate: string | Date,
   endDate: string | Date
@@ -20,7 +16,6 @@ export function calculateReviewStatus(
   const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
   const istNow = new Date(now.getTime() + istOffset);
 
-  // Parse dates and set proper time boundaries
   const start = new Date(
     startDate + (typeof startDate === "string" ? "T00:00:00.000Z" : "")
   );
