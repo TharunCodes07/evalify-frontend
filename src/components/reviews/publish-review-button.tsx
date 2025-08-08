@@ -54,11 +54,8 @@ export function PublishReviewButton({
           : "Review unpublished successfully"
       );
 
-      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
       queryClient.invalidateQueries({ queryKey: ["review", reviewId] });
-
-      // Call the status change callback
       onStatusChange?.(data);
     },
     onError: (error: unknown) => {
