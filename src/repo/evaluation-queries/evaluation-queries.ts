@@ -1,10 +1,5 @@
 import axiosInstance from "@/lib/axios/axios-client";
-import {
-  EvaluationCriteria,
-  EvaluationSubmission,
-  SubmittedEvaluation,
-  ProjectReviewsResponse,
-} from "@/types/types";
+import { EvaluationCriteria, ProjectReviewsResponse } from "@/types/types";
 
 const fetchReviewsForProject = async (
   projectId: string

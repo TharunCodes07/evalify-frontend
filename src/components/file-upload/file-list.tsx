@@ -42,10 +42,6 @@ export function FileList({
 }: FileListProps) {
   const { success, error: showError } = useToast();
   const [deletingFiles, setDeletingFiles] = useState<Set<string>>(new Set());
-  const [fileToDelete, setFileToDelete] = useState<{
-    objectName: string;
-    fileName: string;
-  } | null>(null);
 
   const queryParams: FileListParams = {
     projectId,
@@ -156,7 +152,6 @@ export function FileList({
         newSet.delete(objectName);
         return newSet;
       });
-      setFileToDelete(null);
     }
   };
 
@@ -306,8 +301,8 @@ export function FileList({
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete File</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to delete "
-                          {getActualFileName(file.fileName)}"? This action
+                          Are you sure you want to delete &quot;
+                          {getActualFileName(file.fileName)}&quot;? This action
                           cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>

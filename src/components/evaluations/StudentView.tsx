@@ -61,7 +61,11 @@ export function StudentView({
   updateCommonCriteriaScore,
 }: StudentViewProps) {
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(
-    new Set([evaluationData.teamMembers[0]?.id])
+    new Set<string>(
+      evaluationData.teamMembers[0]?.id
+        ? [evaluationData.teamMembers[0].id]
+        : []
+    )
   );
 
   const toggleStudent = (studentId: string) => {
@@ -91,12 +95,11 @@ export function StudentView({
   const getStudentTotalScore = (studentId: string) => {
     return evaluationData.criteria.reduce((total, criterion) => {
       if (isCriterionCommon(criterion.id)) {
-        return total + (commonCriteriaData[criterion.id]?.score || 0);
+        return total + (commonCriteriaData[criterion.id]?.score ?? 0);
       }
-      return total + (formData[studentId][criterion.id].score || 0);
+      return total + (formData[studentId]?.[criterion.id]?.score ?? 0);
     }, 0);
   };
-
   const getTotalMaxScore = () => {
     return evaluationData.criteria.reduce(
       (total, criterion) => total + criterion.maxScore,
@@ -258,9 +261,9 @@ export function StudentView({
                 <CardContent className="space-y-4">
                   {individualCriteria.map((criterion) => {
                     const currentScore =
-                      formData[student.id][criterion.id].score;
+                      formData[student.id]?.[criterion.id]?.score ?? 0;
                     const currentComment =
-                      formData[student.id][criterion.id].comment;
+                      formData[student.id]?.[criterion.id]?.comment ?? "";
 
                     return (
                       <div

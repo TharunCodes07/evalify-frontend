@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CriteriaView } from "./CriteriaView";
 import { StudentView } from "./StudentView";
 import { ViewToggle, useViewMode } from "./ViewToggle";
+import cs from "zod/v4/locales/cs.cjs";
 
 type FormData = {
   [participantId: string]: {
@@ -31,7 +32,14 @@ type CommonCriteriaData = {
 
 interface CourseEvaluationFormProps {
   evaluationData: CourseEvaluationData;
-  reviewData?: any;
+  reviewData?: {
+    rubricsInfo?: {
+      criteria: Array<{
+        id: string;
+        isCommon: boolean;
+      }>;
+    };
+  };
   projectId: string;
   reviewId: string;
 }
@@ -50,29 +58,40 @@ export function CourseEvaluationForm({
   const isCriterionCommon = (criterionId: string): boolean => {
     if (!reviewData?.rubricsInfo?.criteria) return false;
     const rubricCriterion = reviewData.rubricsInfo.criteria.find(
-      (c: any) => c.id === criterionId
+      (c) => c.id === criterionId
     );
     return rubricCriterion?.isCommon === true;
   };
 
   const initializeFormData = (): FormData => {
     const data: FormData = {};
-
     evaluationData.teamMembers.forEach((member) => {
       data[member.id] = {};
       evaluationData.criteria.forEach((criterion) => {
         const existingScore = evaluationData.existingScores
           ?.find((score) => score.participantId === member.id)
           ?.criterionScores.find((cs) => cs.criterionId === criterion.id);
-
         data[member.id][criterion.id] = {
           score: existingScore?.score ?? 0,
           comment: existingScore?.comment ?? "",
         };
       });
     });
-
     return data;
+  };
+
+  const updateCommonCriteriaScore = (
+    criterionId: string,
+    field: "score" | "comment",
+    value: number | string
+  ) => {
+    setCommonCriteriaData((prev) => ({
+      ...prev,
+      [criterionId]: {
+        ...prev[criterionId],
+        [field]: value,
+      },
+    }));
   };
 
   const initializeCommonCriteriaData = (): CommonCriteriaData => {
@@ -80,10 +99,17 @@ export function CourseEvaluationForm({
 
     evaluationData.criteria.forEach((criterion) => {
       if (isCriterionCommon(criterion.id)) {
-        const existingScore =
-          evaluationData.existingScores?.[0]?.criterionScores.find(
-            (cs) => cs.criterionId === criterion.id
-          );
+        const firstParticipantId = evaluationData.teamMembers[0]?.id;
+        const sourceScores =
+          evaluationData.existingScores?.find(
+            (s) => s.participantId === firstParticipantId
+          )?.criterionScores ??
+          evaluationData.existingScores?.find((s) =>
+            s.criterionScores?.some((cs) => cs.criterionId === criterion.id)
+          )?.criterionScores;
+        const existingScore = sourceScores?.find(
+          (cs) => cs.criterionId === criterion.id
+        );
 
         data[criterion.id] = {
           score: existingScore?.score ?? 0,
@@ -116,7 +142,7 @@ export function CourseEvaluationForm({
         queryKey: ["evaluationSummary", reviewId, projectId],
       });
     },
-    onError: (error) => {
+    onError: () => {
       toast("Failed to submit evaluation. Please try again.");
     },
   });
@@ -135,20 +161,6 @@ export function CourseEvaluationForm({
           ...prev[participantId][criterionId],
           [field]: value,
         },
-      },
-    }));
-  };
-
-  const updateCommonCriteriaScore = (
-    criterionId: string,
-    field: "score" | "comment",
-    value: number | string
-  ) => {
-    setCommonCriteriaData((prev) => ({
-      ...prev,
-      [criterionId]: {
-        ...prev[criterionId],
-        [field]: value,
       },
     }));
   };

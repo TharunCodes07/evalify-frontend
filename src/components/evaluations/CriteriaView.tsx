@@ -63,7 +63,9 @@ export function CriteriaView({
   getCriterionProgress,
 }: CriteriaViewProps) {
   const [expandedCriteria, setExpandedCriteria] = useState<Set<string>>(
-    new Set([evaluationData.criteria[0]?.id])
+    new Set(
+      evaluationData.criteria.length > 0 ? [evaluationData.criteria[0].id] : []
+    )
   );
 
   const toggleCriterion = (criterionId: string) => {
@@ -205,10 +207,9 @@ export function CriteriaView({
                   ) : (
                     evaluationData.teamMembers.map((member) => {
                       const currentScore =
-                        formData[member.id][criterion.id].score;
+                        formData[member.id]?.[criterion.id]?.score ?? 0;
                       const currentComment =
-                        formData[member.id][criterion.id].comment;
-
+                        formData[member.id]?.[criterion.id]?.comment ?? "";
                       return (
                         <div
                           key={member.id}

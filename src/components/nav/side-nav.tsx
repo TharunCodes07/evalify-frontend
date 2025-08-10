@@ -355,7 +355,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                                   redirect: true,
                                   callbackUrl: "/login",
                                 });
-                              } catch (error) {
+                              } catch {
                                 window.location.href = "/login";
                               }
                             }}
@@ -384,7 +384,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                               redirect: true,
                               callbackUrl: "/login",
                             });
-                          } catch (error) {
+                          } catch {
                             window.location.href = "/login";
                           }
                         }}

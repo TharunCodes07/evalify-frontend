@@ -35,15 +35,9 @@ export default function ReviewDetailPage() {
 
     if (reviewStatus !== "COMPLETED") return false;
 
-    const userGroups = session.user.groups || [];
-    if (
-      (userGroups as string[]).includes("admin") ||
-      (userGroups as string[]).includes("manager") ||
-      (userGroups as string[]).includes("faculty")
-    ) {
-      return true;
-    }
-    return false;
+    const userGroups = (session.user.groups ?? []) as string[];
+    const ALLOWED_PUBLISH_GROUPS = ["admin", "manager", "faculty"] as const;
+    return ALLOWED_PUBLISH_GROUPS.some((g) => userGroups.includes(g));
   }, [session?.user, review, reviewStatus]);
 
   if (isLoading) {

@@ -18,8 +18,6 @@ export function ScoreSlider({
   disabled = false,
   className,
 }: ScoreSliderProps) {
-  const percentage = (score / maxScore) * 100;
-
   const handleValueChange = (values: number[]) => {
     if (onChange && !disabled) {
       onChange(values[0]);

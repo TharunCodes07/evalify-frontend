@@ -14,14 +14,7 @@ import reviewQueries from "@/repo/review-queries/review-queries";
 import teamQueries from "@/repo/team-queries/team-queries";
 import { projectQueries } from "@/repo/project-queries/project-queries";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import {
-  Upload,
-  ExternalLink,
-  Trash2,
-  Download,
-  File as FileIcon,
-  X,
-} from "lucide-react";
+import { Upload, File as FileIcon, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ProjectWithTeam } from "@/types/types";
 import { calculateReviewStatus } from "@/utils/review-status";
@@ -84,7 +77,6 @@ export function FileUploadSection({
           ...prev,
           [params.file.name]: progress,
         }));
-        // When progress reaches 100%, mark file as processing
         if (progress === 100) {
           setProcessingFiles((prev) => new Set([...prev, params.file.name]));
         }
@@ -140,33 +132,6 @@ export function FileUploadSection({
         newSet.delete(variables.file.name);
         return newSet;
       });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (objectName: string) =>
-      fileUploadQueries.deleteFile(objectName),
-    onSuccess: (data, objectName) => {
-      success("File deleted successfully.");
-      setFileListKey((prev) => prev + 1);
-    },
-    onError: (err: Error, objectName) => {
-      let errorMessage =
-        err.message || "Failed to delete file. Please try again.";
-
-      if (err.message?.includes("404")) {
-        errorMessage = "File not found. It may have already been deleted.";
-      } else if (err.message?.includes("401") || err.message?.includes("403")) {
-        errorMessage = "You don't have permission to delete this file.";
-      } else if (
-        err.message?.includes("network") ||
-        err.message?.includes("fetch")
-      ) {
-        errorMessage =
-          "Network error. Please check your connection and try again.";
-      }
-
-      error(errorMessage);
     },
   });
 
@@ -235,40 +200,7 @@ export function FileUploadSection({
     uploadMutation.mutate(uploadParams);
   };
 
-  const handleOpenFile = (url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
-
-  const handleDownloadFile = async (url: string, fileName: string) => {
-    try {
-      // Fetch the file as a blob to handle CORS and ensure download
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("Failed to fetch file");
-      }
-
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Clean up the blob URL
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (downloadError) {
-      console.error("Download error:", downloadError);
-      error("Failed to download the file. Please try again.");
-    }
-  };
-
-  const uploadResult = uploadMutation.data;
   const isUploading = uploadMutation.isPending;
-  const uploadError = uploadMutation.error?.message || null;
 
   return (
     <Card className="w-full">
@@ -283,7 +215,7 @@ export function FileUploadSection({
           <>
             <FileUpload
               onFileSelect={handleFileSelect}
-              onFileRemove={() => {}} // We'll handle this separately
+              onFileRemove={() => {}}
               maxSizeInMB={70}
               disabled={isUploading}
               uploadProgress={0}
@@ -295,7 +227,6 @@ export function FileUploadSection({
               className="cursor-pointer hover:cursor-pointer"
             />
 
-            {/* Selected Files List */}
             {selectedFiles.length > 0 && (
               <div className="space-y-3">
                 <h4 className="text-sm font-medium">
