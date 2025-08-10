@@ -61,7 +61,6 @@ export default function ProjectReviewPage() {
           </div>
         </div>
 
-        {/* File Upload Section Skeleton */}
         <div className="space-y-4">
           <Skeleton className="h-8 w-48" />
           <div className="border-2 border-dashed border-muted-foreground/20 rounded-lg p-8 bg-muted/5">
