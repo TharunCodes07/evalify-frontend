@@ -42,7 +42,7 @@ function processDecodedToken(decoded: string | JwtPayload | null): {
     const decodedJWT = decoded as DecodedJWT;
     roles = decodedJWT.realm_access?.roles || [];
     groups = (decodedJWT.groups || []).map((group: string) =>
-      group.replace(/^\//, "")
+      group.replace(/^\//, ""),
     );
     userId = decodedJWT.sub; // Extract user ID from token's 'sub' claim
   }
@@ -50,7 +50,7 @@ function processDecodedToken(decoded: string | JwtPayload | null): {
 }
 
 async function refreshKeycloakAccessToken(
-  token: KeycloakToken
+  token: KeycloakToken,
 ): Promise<KeycloakToken | null> {
   try {
     console.log("Attempting to refresh Keycloak access token...");
@@ -66,7 +66,7 @@ async function refreshKeycloakAccessToken(
           client_id: process.env.AUTH_KEYCLOAK_ID!,
           client_secret: process.env.AUTH_KEYCLOAK_SECRET!,
         }),
-      }
+      },
     );
 
     const refreshedTokens = await response.json();
@@ -90,7 +90,7 @@ async function refreshKeycloakAccessToken(
           refreshedTokens.error_description ||
           refreshedTokens.error ||
           "Unknown error"
-        }`
+        }`,
       );
     }
     const decoded = decode(refreshedTokens.access_token);
@@ -204,14 +204,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               error.message === "BACKEND_UNAVAILABLE"
             ) {
               console.warn(
-                "Backend unavailable during user verification. Creating session without registration check."
+                "Backend unavailable during user verification. Creating session without registration check.",
               );
               // Continue to create session without needsRegistration flag
             } else {
               // For other errors, prevent session creation
               console.error(
                 "Unexpected error during user verification:",
-                error
+                error,
               );
               return null;
             }
@@ -236,7 +236,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         Date.now() > token.session_expires_at * 1000
       ) {
         console.log(
-          "Session has expired based on Keycloak refresh token expiry"
+          "Session has expired based on Keycloak refresh token expiry",
         );
         return null;
       }
@@ -250,7 +250,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       } // Try to refresh
       if (token.refresh_token) {
         const refreshedToken = await refreshKeycloakAccessToken(
-          token as KeycloakToken
+          token as KeycloakToken,
         );
         // If refresh returns null (session expired), invalidate the session
         if (!refreshedToken) {
@@ -284,26 +284,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         try {
           const issuerUrl = process.env.AUTH_KEYCLOAK_ISSUER;
           const logoutUrl = new URL(
-            `${issuerUrl}/protocol/openid-connect/logout`
+            `${issuerUrl}/protocol/openid-connect/logout`,
           );
           logoutUrl.searchParams.set(
             "id_token_hint",
-            message.token.id_token as string
+            message.token.id_token as string,
           );
           logoutUrl.searchParams.set(
             "client_id",
-            process.env.AUTH_KEYCLOAK_ID!
+            process.env.AUTH_KEYCLOAK_ID!,
           );
-          const response = await fetch(logoutUrl, { method: "GET" });
-          if (response.ok) {
-            console.log("Keycloak session terminated successfully");
-          } else {
-            console.error(
-              "Keycloak logout failed:",
-              response.status,
-              response.statusText
-            );
-          }
+          await fetch(logoutUrl, { method: "GET" });
         } catch (error) {
           console.error("Error terminating Keycloak session:", error);
         }

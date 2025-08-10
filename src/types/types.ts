@@ -370,3 +370,71 @@ export interface ProjectResult {
     percentage: number;
   }[];
 }
+
+export interface RecentUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "STUDENT" | "ADMIN" | "FACULTY" | "MANAGER";
+  createdAt: string;
+}
+
+export interface AdminDashboardData {
+  userStats: {
+    total: number;
+    students: number;
+    faculty: number;
+    managers: number;
+  };
+  semesterStats: {
+    total: number;
+    active: number;
+  };
+  courseStats: {
+    total: number;
+    active: number;
+  };
+  batchStats: {
+    total: number;
+    active: number;
+  };
+  recentUsers: RecentUser[];
+}
+
+export interface UpcomingReview {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  courseName: string;
+}
+
+export interface RecentlyPublishedReview {
+  reviewId: string;
+  reviewName: string;
+  courseName: string;
+  publishedAt: string;
+  publishedBy: string;
+}
+
+export interface ManagerStaffDashboardData {
+  totalReviews: number;
+  activeReviews: number;
+  completedReviews: number;
+  totalProjects: number;
+  activeProjects: number;
+  upcomingReviews: UpcomingReview[];
+  recentlyPublishedReviews: RecentlyPublishedReview[];
+}
+
+export interface StudentDashboardData {
+  totalReviews: number;
+  activeReviews: number;
+  completedReviews: number;
+  totalProjects: number;
+  activeProjects: number;
+  completedProjects: number;
+  averageProjectScore: number;
+  upcomingReviews: UpcomingReview[];
+  recentlyPublishedReviews: RecentlyPublishedReview[];
+}
