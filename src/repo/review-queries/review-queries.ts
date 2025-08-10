@@ -12,6 +12,11 @@ const reviewQueries = {
     return response.data;
   },
 
+  getUserBasedReviews: async (reviewId: string) => {
+    const response = await axiosInstance.get(`/api/review/user/${reviewId}`);
+    return response.data;
+  },
+
   updateReview: async (reviewId: string, data: UpdateReviewRequest) => {
     const response = await axiosInstance.put(`/api/review/${reviewId}`, data);
     return response.data;

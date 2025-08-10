@@ -24,7 +24,7 @@ export default function ProjectReviewPage() {
     error,
   } = useQuery({
     queryKey: ["review", reviewId],
-    queryFn: () => reviewQueries.getReviewById(reviewId),
+    queryFn: () => reviewQueries.getUserBasedReviews(reviewId),
     enabled: !!reviewId,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -33,7 +33,6 @@ export default function ProjectReviewPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-        {/* Review Header Skeleton */}
         <div className="space-y-4">
           <Skeleton className="h-9 w-80" />
           <div className="flex items-center gap-4 flex-wrap">
@@ -42,7 +41,6 @@ export default function ProjectReviewPage() {
           </div>
         </div>
 
-        {/* Review Information Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <div className="mb-4">
@@ -108,7 +106,6 @@ export default function ProjectReviewPage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-      {/* Review Header */}
       <div className="space-y-4">
         <h1 className="text-3xl font-bold tracking-tight">{review.name}</h1>
         <div className="flex items-center gap-4 flex-wrap">
@@ -124,7 +121,6 @@ export default function ProjectReviewPage() {
         </div>
       </div>
 
-      {/* Review Information */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
           <div className="mb-4">
