@@ -12,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { CriteriaView } from "./CriteriaView";
 import { StudentView } from "./StudentView";
 import { ViewToggle, useViewMode } from "./ViewToggle";
-import cs from "zod/v4/locales/cs.cjs";
 
 type FormData = {
   [participantId: string]: {
@@ -58,7 +57,7 @@ export function CourseEvaluationForm({
   const isCriterionCommon = (criterionId: string): boolean => {
     if (!reviewData?.rubricsInfo?.criteria) return false;
     const rubricCriterion = reviewData.rubricsInfo.criteria.find(
-      (c) => c.id === criterionId
+      (c) => c.id === criterionId,
     );
     return rubricCriterion?.isCommon === true;
   };
@@ -83,7 +82,7 @@ export function CourseEvaluationForm({
   const updateCommonCriteriaScore = (
     criterionId: string,
     field: "score" | "comment",
-    value: number | string
+    value: number | string,
   ) => {
     setCommonCriteriaData((prev) => ({
       ...prev,
@@ -102,13 +101,13 @@ export function CourseEvaluationForm({
         const firstParticipantId = evaluationData.teamMembers[0]?.id;
         const sourceScores =
           evaluationData.existingScores?.find(
-            (s) => s.participantId === firstParticipantId
+            (s) => s.participantId === firstParticipantId,
           )?.criterionScores ??
           evaluationData.existingScores?.find((s) =>
-            s.criterionScores?.some((cs) => cs.criterionId === criterion.id)
+            s.criterionScores?.some((cs) => cs.criterionId === criterion.id),
           )?.criterionScores;
         const existingScore = sourceScores?.find(
-          (cs) => cs.criterionId === criterion.id
+          (cs) => cs.criterionId === criterion.id,
         );
 
         data[criterion.id] = {
@@ -151,7 +150,7 @@ export function CourseEvaluationForm({
     participantId: string,
     criterionId: string,
     field: "score" | "comment",
-    value: number | string
+    value: number | string,
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -199,7 +198,7 @@ export function CourseEvaluationForm({
     }
 
     const completedCount = evaluationData.teamMembers.filter(
-      (member) => formData[member.id][criterionId].score > 0
+      (member) => formData[member.id][criterionId].score > 0,
     ).length;
     return (completedCount / evaluationData.teamMembers.length) * 100;
   };
@@ -240,10 +239,10 @@ export function CourseEvaluationForm({
                               (isCriterionCommon(criterion.id)
                                 ? commonCriteriaData[criterion.id]?.score || 0
                                 : formData[member.id][criterion.id].score || 0),
-                            0
+                            0,
                           ),
-                        0
-                      ) / evaluationData.teamMembers.length
+                        0,
+                      ) / evaluationData.teamMembers.length,
                     )
                   : 0}
               </div>
@@ -259,7 +258,7 @@ export function CourseEvaluationForm({
               <div className="text-xl font-semibold text-foreground">
                 {evaluationData.criteria.reduce(
                   (sum, criterion) => sum + criterion.maxScore,
-                  0
+                  0,
                 )}
               </div>
               <div className="text-sm text-muted-foreground">Maximum Score</div>
