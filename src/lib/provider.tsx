@@ -13,7 +13,28 @@ export interface ProvidersProps {
 }
 
 export function Providers({ children }: ProvidersProps) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            refetchOnMount: false,
+            refetchOnReconnect: false,
+            retry: 1,
+            retryDelay: (attemptIndex) =>
+              Math.min(1000 * 2 ** attemptIndex, 30000),
+
+            staleTime: 5 * 60 * 1000,
+
+            gcTime: 10 * 60 * 1000,
+          },
+          mutations: {
+            retry: 2,
+          },
+        },
+      }),
+  );
 
   return (
     <NextThemesProvider
