@@ -169,8 +169,16 @@ function SelectedItemsDisplay() {
 }
 
 export function ParticipantsForm() {
+  const { formState } = useFormContext<CreateReviewSchema>();
+  const semesterError = formState.errors.semesters?.message;
+
   return (
     <div className="space-y-6">
+      {semesterError && (
+        <div className="text-sm text-destructive font-medium">
+          {semesterError}
+        </div>
+      )}
       {/* Grid Layout for all participant types */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Semesters */}

@@ -66,7 +66,7 @@ export default function StudentDashboard() {
         <h1 className="text-3xl font-bold">Student Dashboard</h1>
         <div className="flex gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link href="/reviews/active">
+            <Link href="/reviews">
               <Eye className="h-4 w-4 mr-2" />
               Active Reviews
             </Link>
@@ -192,7 +192,7 @@ export default function StudentDashboard() {
                 variant="outline"
                 className="justify-start h-auto p-4"
               >
-                <Link href="/reviews/active">
+                <Link href="/reviews">
                   <FileText className="h-4 w-4 mr-3" />
                   <div className="text-left">
                     <p className="font-medium">View Active Reviews</p>
@@ -207,12 +207,12 @@ export default function StudentDashboard() {
                 variant="outline"
                 className="justify-start h-auto p-4"
               >
-                <Link href="/projects/my">
+                <Link href="/reviews">
                   <FolderOpen className="h-4 w-4 mr-3" />
                   <div className="text-left">
-                    <p className="font-medium">My Projects</p>
+                    <p className="font-medium">My Reviews</p>
                     <p className="text-xs text-muted-foreground">
-                      Check project status and submissions
+                      Check review status and submissions
                     </p>
                   </div>
                 </Link>
@@ -222,7 +222,7 @@ export default function StudentDashboard() {
                 variant="outline"
                 className="justify-start h-auto p-4"
               >
-                <Link href="/results">
+                <Link href="/reviews">
                   <TrendingUp className="h-4 w-4 mr-3" />
                   <div className="text-left">
                     <p className="font-medium">View Results</p>
@@ -237,7 +237,7 @@ export default function StudentDashboard() {
                 variant="outline"
                 className="justify-start h-auto p-4"
               >
-                <Link href="/courses/my">
+                <Link href="/courses">
                   <BookOpen className="h-4 w-4 mr-3" />
                   <div className="text-left">
                     <p className="font-medium">My Courses</p>

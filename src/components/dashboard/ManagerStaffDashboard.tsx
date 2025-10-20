@@ -129,7 +129,7 @@ export default function ManagerStaffDashboard() {
           </Link>
         </Button>
         <Button asChild variant="outline" className="h-auto p-6 flex-col gap-3">
-          <Link href="/reviews/publish">
+          <Link href="/reviews">
             <Upload className="h-8 w-8" />
             <div className="text-center">
               <p className="font-medium">Publish Results</p>
@@ -140,12 +140,12 @@ export default function ManagerStaffDashboard() {
           </Link>
         </Button>
         <Button asChild variant="outline" className="h-auto p-6 flex-col gap-3">
-          <Link href="/projects">
+          <Link href="/reviews">
             <FolderOpen className="h-8 w-8" />
             <div className="text-center">
-              <p className="font-medium">View Projects</p>
+              <p className="font-medium">View Reviews</p>
               <p className="text-xs text-muted-foreground">
-                Manage and track project progress
+                Manage and track review progress
               </p>
             </div>
           </Link>

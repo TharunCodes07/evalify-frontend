@@ -57,25 +57,25 @@ export default function StudentDashboardPage() {
 
   const quickActions = [
     {
-      href: "/reviews/active",
+      href: "/reviews",
       icon: FileText,
       title: "View Active Reviews",
       description: "Participate in ongoing evaluations",
     },
     {
-      href: "/projects/my",
+      href: "/reviews",
       icon: FolderOpen,
-      title: "My Projects",
-      description: "Check project status and submissions",
+      title: "My Reviews",
+      description: "Check review status and submissions",
     },
     {
-      href: "/results",
+      href: "/reviews",
       icon: TrendingUp,
       title: "View Results",
       description: "Check published review results",
     },
     {
-      href: "/courses/my",
+      href: "/courses",
       icon: BookOpen,
       title: "My Courses",
       description: "View enrolled courses and progress",
@@ -89,7 +89,7 @@ export default function StudentDashboardPage() {
         actions={
           <>
             <Button asChild variant="outline" size="sm">
-              <Link href="/reviews/active">
+              <Link href="/reviews">
                 <Eye className="h-4 w-4 mr-2" />
                 Active Reviews
               </Link>
