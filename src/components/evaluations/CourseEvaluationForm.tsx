@@ -1,13 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { individualScoreQueries } from "@/repo/individual-score-queries/individual-score-queries";
 import { CourseEvaluationData, IndividualScoreSubmission } from "@/types/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useEvaluationDraft } from "@/hooks/useEvaluationDraft";
+import { ParticipantScoreData } from "@/repo/evaluation-draft-queries/evaluation-draft-queries";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { AlertCircle, Save, BarChart3, Target, TrendingUp } from "lucide-react";
+import {
+  AlertCircle,
+  Save,
+  BarChart3,
+  Target,
+  TrendingUp,
+  Cloud,
+  CloudOff,
+  Loader2,
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { CriteriaView } from "./CriteriaView";
@@ -55,13 +66,16 @@ export function CourseEvaluationForm({
   const { toast } = useToast();
   const [viewMode, setViewMode] = useViewMode();
 
-  const isCriterionCommon = (criterionId: string): boolean => {
-    if (!reviewData?.rubricsInfo?.criteria) return false;
-    const rubricCriterion = reviewData.rubricsInfo.criteria.find(
-      (c) => c.id === criterionId,
-    );
-    return rubricCriterion?.isCommon === true;
-  };
+  const isCriterionCommon = useCallback(
+    (criterionId: string): boolean => {
+      if (!reviewData?.rubricsInfo?.criteria) return false;
+      const rubricCriterion = reviewData.rubricsInfo.criteria.find(
+        (c) => c.id === criterionId,
+      );
+      return rubricCriterion?.isCommon === true;
+    },
+    [reviewData?.rubricsInfo?.criteria],
+  );
 
   const initializeFormData = (): FormData => {
     const data: FormData = {};
@@ -124,6 +138,107 @@ export function CourseEvaluationForm({
   const [formData, setFormData] = useState<FormData>(initializeFormData);
   const [commonCriteriaData, setCommonCriteriaData] =
     useState<CommonCriteriaData>(initializeCommonCriteriaData);
+  const [isDraftLoaded, setIsDraftLoaded] = useState(false);
+  const isLoadingDraftRef = useRef(false);
+
+  const handleDraftLoaded = useCallback(
+    (draftScores: ParticipantScoreData[]) => {
+      if (isDraftLoaded) return;
+
+      isLoadingDraftRef.current = true;
+
+      const newFormData: FormData = {};
+      const newCommonData: CommonCriteriaData = {};
+
+      evaluationData.teamMembers.forEach((member) => {
+        newFormData[member.id] = {};
+        evaluationData.criteria.forEach((criterion) => {
+          newFormData[member.id][criterion.id] = {
+            score: 0,
+            comment: "",
+          };
+        });
+      });
+
+      draftScores.forEach((participantScore) => {
+        if (newFormData[participantScore.participantId]) {
+          participantScore.criterionScores.forEach((criterionScore) => {
+            if (
+              newFormData[participantScore.participantId][
+                criterionScore.criterionId
+              ]
+            ) {
+              newFormData[participantScore.participantId][
+                criterionScore.criterionId
+              ] = {
+                score: criterionScore.score,
+                comment: criterionScore.comment || "",
+              };
+
+              if (isCriterionCommon(criterionScore.criterionId)) {
+                newCommonData[criterionScore.criterionId] = {
+                  score: criterionScore.score,
+                  comment: criterionScore.comment || "",
+                };
+              }
+            }
+          });
+        }
+      });
+
+      setFormData(newFormData);
+      setCommonCriteriaData(newCommonData);
+      setIsDraftLoaded(true);
+
+      setTimeout(() => {
+        isLoadingDraftRef.current = false;
+      }, 100);
+    },
+    [evaluationData, isCriterionCommon, isDraftLoaded],
+  );
+
+  const { isDraftLoading, isSaving, lastSaveTime, saveDraft } =
+    useEvaluationDraft({
+      reviewId,
+      projectId,
+      courseId: evaluationData.courseId,
+      enabled: !evaluationData.isPublished,
+      onDraftLoaded: handleDraftLoaded,
+    });
+
+  useEffect(() => {
+    if (!isDraftLoading && !isDraftLoaded) {
+      setIsDraftLoaded(true);
+    }
+  }, [isDraftLoading, isDraftLoaded]);
+
+  const convertFormDataToDraftScores =
+    useCallback((): ParticipantScoreData[] => {
+      return evaluationData.teamMembers.map((member) => ({
+        participantId: member.id,
+        criterionScores: evaluationData.criteria.map((criterion) => ({
+          criterionId: criterion.id,
+          score: isCriterionCommon(criterion.id)
+            ? commonCriteriaData[criterion.id]?.score || 0
+            : formData[member.id][criterion.id].score,
+          comment: isCriterionCommon(criterion.id)
+            ? commonCriteriaData[criterion.id]?.comment || null
+            : formData[member.id][criterion.id].comment || null,
+        })),
+      }));
+    }, [evaluationData, formData, commonCriteriaData, isCriterionCommon]);
+
+  useEffect(() => {
+    if (
+      !isDraftLoading &&
+      !evaluationData.isPublished &&
+      isDraftLoaded &&
+      !isLoadingDraftRef.current
+    ) {
+      const draftScores = convertFormDataToDraftScores();
+      saveDraft(draftScores);
+    }
+  }, [formData, commonCriteriaData]);
 
   const submitMutation = useMutation({
     mutationFn: (submission: IndividualScoreSubmission) =>
@@ -140,6 +255,14 @@ export function CourseEvaluationForm({
       });
       queryClient.invalidateQueries({
         queryKey: ["evaluationSummary", reviewId, projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [
+          "evaluationDraft",
+          reviewId,
+          projectId,
+          evaluationData.courseId,
+        ],
       });
     },
     onError: () => {
@@ -206,14 +329,39 @@ export function CourseEvaluationForm({
 
   return (
     <div className="space-y-6">
-      {/* Header with View Toggle */}
       <Card className="border-2">
         <CardHeader>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="space-y-1">
-              <h2 className="text-2xl font-bold">
-                {evaluationData.courseName}
-              </h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold">
+                  {evaluationData.courseName}
+                </h2>
+                {!evaluationData.isPublished && (
+                  <div className="flex items-center gap-2 text-sm">
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        <span className="text-muted-foreground">Saving...</span>
+                      </>
+                    ) : lastSaveTime ? (
+                      <>
+                        <Cloud className="h-4 w-4 text-emerald-600" />
+                        <span className="text-muted-foreground">
+                          Saved {lastSaveTime.toLocaleTimeString()}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <CloudOff className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          Auto-save enabled
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
               <p className="text-muted-foreground">
                 Evaluate {evaluationData.teamMembers.length} team member
                 {evaluationData.teamMembers.length !== 1 ? "s" : ""} across{" "}
@@ -236,9 +384,7 @@ export function CourseEvaluationForm({
         </Alert>
       )}
 
-      {/* Performance Metrics Grid */}
       <div className="grid gap-4 md:grid-cols-3">
-        {/* Team Average Card */}
         <Card className="border-2 bg-gradient-to-br from-blue-50 to-background dark:from-blue-950/20 dark:to-background">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-3">
@@ -277,8 +423,6 @@ export function CourseEvaluationForm({
             </div>
           </CardHeader>
         </Card>
-
-        {/* Maximum Score Card */}
         <Card className="border-2 bg-gradient-to-br from-violet-50 to-background dark:from-violet-950/20 dark:to-background">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-3">
@@ -303,7 +447,6 @@ export function CourseEvaluationForm({
           </CardHeader>
         </Card>
 
-        {/* Completion Progress Card */}
         <Card className="border-2 bg-gradient-to-br from-emerald-50 to-background dark:from-emerald-950/20 dark:to-background">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-3">
@@ -377,7 +520,6 @@ export function CourseEvaluationForm({
         />
       )}
 
-      {/* Save Button */}
       <Card className="border-2 bg-gradient-to-r from-background to-muted/20 sticky bottom-4 shadow-lg">
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
