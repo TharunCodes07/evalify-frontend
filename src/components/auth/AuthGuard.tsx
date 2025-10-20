@@ -34,6 +34,8 @@ export default function AuthGuard({
     enabled: !!session?.user?.email && !!session?.needsRegistration,
     retry: 3,
     retryDelay: 1000,
+    staleTime: 10 * 60 * 1000, // 10 minutes - user existence doesn't change frequently
+    gcTime: 15 * 60 * 1000, // 15 minutes
   });
 
   useEffect(() => {
@@ -118,6 +120,8 @@ export function RegistrationGuard({
     enabled: !!session?.user?.email,
     retry: 3,
     retryDelay: 1000,
+    staleTime: 10 * 60 * 1000, // 10 minutes - user existence doesn't change frequently
+    gcTime: 15 * 60 * 1000, // 15 minutes
   });
 
   useEffect(() => {

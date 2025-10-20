@@ -27,7 +27,8 @@ export function ReviewResults({ reviewId, projectId }: ReviewResultsProps) {
     queryFn: () =>
       resultQueries.getResults(reviewId, projectId, currentUser?.id || ""),
     enabled: !!(reviewId && projectId && currentUser?.id),
-    refetchOnMount: true,
+    staleTime: 2 * 60 * 1000, // 2 minutes - results may update during evaluation
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Calculate team average and max score from results

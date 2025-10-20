@@ -4,8 +4,6 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Command,
   CommandEmpty,
@@ -59,6 +57,8 @@ function ParticipantSelector<T>({
   const { data, isLoading } = useQuery<T[]>({
     queryKey,
     queryFn,
+    staleTime: 10 * 60 * 1000, // 10 minutes - form data doesn't change frequently
+    gcTime: 15 * 60 * 1000, // 15 minutes
   });
 
   const handleSelect = (item: Participant) => {
@@ -130,65 +130,50 @@ function SelectedItemsDisplay() {
     );
   };
 
-  const renderSection = (
-    title: string,
-    items: Participant[] | undefined,
-    itemKey: ParticipantType
-  ) => {
-    if (!items || items.length === 0) return null;
-    return (
-      <div>
-        <h4 className="text-sm font-medium text-muted-foreground">{title}</h4>
-        <div className="flex flex-wrap gap-2 pt-2">
-          {items.map((item) => (
-            <Badge
-              variant="secondary"
-              key={item.id}
-              className="flex items-center gap-1"
-            >
-              {item.name}
-              <button
-                type="button"
-                onClick={() => handleRemove(itemKey, item.id)}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   if (!hasSelectedItems) return null;
 
+  const allItems = [
+    ...(semesters || []).map((item) => ({ ...item, type: "semesters" as const })),
+    ...(batches || []).map((item) => ({ ...item, type: "batches" as const })),
+    ...(courses || []).map((item) => ({ ...item, type: "courses" as const })),
+    ...(projects || []).map((item) => ({ ...item, type: "projects" as const })),
+  ];
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Selected Participants</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {renderSection("Semesters", semesters, "semesters")}
-        {renderSection("Batches", batches, "batches")}
-        {renderSection("Courses", courses, "courses")}
-        {renderSection("Projects", projects, "projects")}
-      </CardContent>
-    </Card>
+    <div className="space-y-2">
+      <p className="text-sm font-medium">Selected ({allItems.length})</p>
+      <div className="flex flex-wrap gap-2">
+        {allItems.map((item) => (
+          <Badge
+            key={`${item.type}-${item.id}`}
+            variant="secondary"
+            className="pl-2 pr-1 py-1"
+          >
+            <span className="text-sm">{item.name}</span>
+            <button
+              type="button"
+              onClick={() => handleRemove(item.type, item.id)}
+              className="ml-1 hover:bg-muted rounded p-0.5"
+              aria-label={`Remove ${item.name}`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        ))}
+      </div>
+    </div>
   );
 }
 
 export function ParticipantsForm() {
   return (
-    <div className="grid md:grid-cols-2 gap-8">
-      <div className="space-y-4 flex-1 min-w-0">
-        <Tabs defaultValue="semesters" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-            <TabsTrigger value="semesters">Semesters</TabsTrigger>
-            <TabsTrigger value="batches">Batches</TabsTrigger>
-            <TabsTrigger value="courses">Courses</TabsTrigger>
-            <TabsTrigger value="projects">Projects</TabsTrigger>
-          </TabsList>
-          <TabsContent value="semesters">
+    <div className="space-y-6">
+      {/* Grid Layout for all participant types */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Semesters */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Semesters</h3>
+          <div className="border rounded-lg overflow-hidden">
             <ParticipantSelector<SemesterResponse>
               queryKey={["activeSemesters"]}
               queryFn={semesterQueries.getActiveSemesters}
@@ -198,8 +183,13 @@ export function ParticipantsForm() {
               }
               placeholder="Search semesters..."
             />
-          </TabsContent>
-          <TabsContent value="batches">
+          </div>
+        </div>
+
+        {/* Batches */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Batches</h3>
+          <div className="border rounded-lg overflow-hidden">
             <ParticipantSelector<BatchResponse>
               queryKey={["activeBatches"]}
               queryFn={batchQueries.getActiveBatches}
@@ -212,8 +202,13 @@ export function ParticipantsForm() {
               }
               placeholder="Search batches..."
             />
-          </TabsContent>
-          <TabsContent value="courses">
+          </div>
+        </div>
+
+        {/* Courses */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Courses</h3>
+          <div className="border rounded-lg overflow-hidden">
             <ParticipantSelector<Course>
               queryKey={["activeCourses"]}
               queryFn={courseQueries.getActiveCourses}
@@ -223,8 +218,13 @@ export function ParticipantsForm() {
               }
               placeholder="Search courses..."
             />
-          </TabsContent>
-          <TabsContent value="projects">
+          </div>
+        </div>
+
+        {/* Projects */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Projects</h3>
+          <div className="border rounded-lg overflow-hidden">
             <ParticipantSelector<ProjectResponse>
               queryKey={["activeProjects"]}
               queryFn={projectQueries.getActiveProjects}
@@ -234,12 +234,12 @@ export function ParticipantsForm() {
               }
               placeholder="Search projects..."
             />
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
-      <div className="min-w-0">
-        <SelectedItemsDisplay />
-      </div>
+
+      {/* Selected Items Display */}
+      <SelectedItemsDisplay />
     </div>
   );
 }

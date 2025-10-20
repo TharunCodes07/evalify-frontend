@@ -43,18 +43,24 @@ export function FileUploadSection({
     queryKey: ["review", reviewId],
     queryFn: () => reviewQueries.getReviewById(reviewId),
     enabled: !!reviewId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const { data: project } = useQuery<ProjectWithTeam>({
     queryKey: ["project", projectId],
     queryFn: () => projectQueries.fetchProjectByProjectId(projectId),
     enabled: !!projectId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const { data: team } = useQuery({
     queryKey: ["team", project?.teamId],
     queryFn: () => teamQueries.getTeamById(project!.teamId),
     enabled: !!project?.teamId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const reviewStatus = review

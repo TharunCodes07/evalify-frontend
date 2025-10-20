@@ -91,6 +91,8 @@ export function TeamForm({
         return userQueries.searchStudents(debouncedSearchQuery);
       },
       enabled: !!debouncedSearchQuery,
+      staleTime: 2 * 60 * 1000, // 2 minutes - search results don't change frequently
+      gcTime: 5 * 60 * 1000, // 5 minutes
     });
 
   const memberIds = form.watch("memberIds");

@@ -8,5 +8,7 @@ export const useReview = (reviewId: string) => {
       return reviewQueries.getReviewById(reviewId);
     },
     enabled: !!reviewId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - review data doesn't change frequently
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 };
