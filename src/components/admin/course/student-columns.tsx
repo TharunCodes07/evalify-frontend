@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const getStudentColumns = (
-  onDelete: (user: User) => void
+  onDelete: (user: User) => void,
 ): ColumnDef<User>[] => [
   {
     id: "select",
@@ -69,7 +69,10 @@ export const getStudentColumns = (
               onClick={(e) => e.stopPropagation()}
             >
               <DropdownMenuItem
-                onClick={() => onDelete(user)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(user);
+                }}
                 className="text-red-600"
               >
                 <Trash className="mr-2 h-4 w-4" />

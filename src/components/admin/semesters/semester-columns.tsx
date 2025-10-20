@@ -119,14 +119,20 @@ export const getColumns = (onAction: SemesterAction): ColumnDef<Semester>[] => {
             >
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => onAction(semester, "edit")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAction(semester, "edit");
+                }}
                 className="cursor-pointer"
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => onAction(semester, "delete")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAction(semester, "delete");
+                }}
                 className="cursor-pointer text-destructive"
               >
                 <Trash className="mr-2 h-4 w-4" />

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Trash } from "lucide-react";
 
 export const getStudentColumns = (
-  onDelete: (student: User) => void
+  onDelete: (student: User) => void,
 ): ColumnDef<User>[] => {
   return [
     {
@@ -54,7 +54,10 @@ export const getStudentColumns = (
                 onClick={(e) => e.stopPropagation()}
               >
                 <DropdownMenuItem
-                  onClick={() => onDelete(student)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(student);
+                  }}
                   className="text-red-600"
                 >
                   <Trash className="mr-2 h-4 w-4" />

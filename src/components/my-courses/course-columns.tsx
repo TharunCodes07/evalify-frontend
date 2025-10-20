@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const getColumns = (
-  onView?: (course: Course) => void
+  onView?: (course: Course) => void,
 ): ColumnDef<Course>[] => {
   return [
     {
@@ -106,7 +106,12 @@ export const getColumns = (
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onView?.(course)}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onView?.(course);
+                }}
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 View Course
               </DropdownMenuItem>

@@ -13,7 +13,7 @@ import { Department } from "@/types/types";
 
 export const getColumns = (
   onEdit?: (department: Department) => void,
-  onDelete?: (departmentId: string) => void
+  onDelete?: (departmentId: string) => void,
 ): ColumnDef<Department>[] => {
   return [
     {
@@ -101,13 +101,21 @@ export const getColumns = (
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit?.(department)}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit?.(department);
+                }}
+              >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Department
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-red-600"
-                onClick={() => onDelete?.(department.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete?.(department.id);
+                }}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Department

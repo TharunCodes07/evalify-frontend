@@ -53,12 +53,20 @@ const UserActionsCell = ({ row }: { row: Row<User> }) => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditDialogOpen(true);
+            }}
+          >
             <Pencil className="mr-2 h-4 w-4" />
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => setIsDeleteDialogOpen(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDeleteDialogOpen(true);
+            }}
             className="text-red-600"
           >
             <Trash className="mr-2 h-4 w-4" />
@@ -182,8 +190,8 @@ export const getColumns = (): ColumnDef<User>[] => {
           role === "ADMIN"
             ? "destructive"
             : role === "MANAGER" || role === "FACULTY"
-            ? "secondary"
-            : "outline";
+              ? "secondary"
+              : "outline";
 
         return (
           <div className="flex justify-center">

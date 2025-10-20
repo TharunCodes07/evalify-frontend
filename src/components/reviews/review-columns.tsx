@@ -19,7 +19,7 @@ import {
 export const getColumns = (
   onView: (review: Review) => void,
   onEdit: (review: Review) => void,
-  onDelete: (review: Review) => void
+  onDelete: (review: Review) => void,
 ): ColumnDef<Review>[] => [
   {
     accessorKey: "name",
@@ -40,7 +40,7 @@ export const getColumns = (
       const review = row.original;
       const dynamicStatus = calculateReviewStatus(
         review.startDate,
-        review.endDate
+        review.endDate,
       );
 
       return (
@@ -108,16 +108,29 @@ export const getColumns = (
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onView(review)}>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onView(review);
+              }}
+            >
               <Eye className="mr-2 h-4 w-4" />
               View
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit(review)}>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(review);
+              }}
+            >
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => onDelete(review)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(review);
+              }}
               className="text-destructive"
             >
               <Trash className="mr-2 h-4 w-4" />

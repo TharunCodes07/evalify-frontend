@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const getBatchColumns = (
-  onDelete: (batch: Batch) => void
+  onDelete: (batch: Batch) => void,
 ): ColumnDef<Batch>[] => [
   {
     id: "select",
@@ -68,7 +68,10 @@ export const getBatchColumns = (
               onClick={(e) => e.stopPropagation()}
             >
               <DropdownMenuItem
-                onClick={() => onDelete(batch)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(batch);
+                }}
                 className="text-red-600"
               >
                 <Trash className="mr-2 h-4 w-4" />

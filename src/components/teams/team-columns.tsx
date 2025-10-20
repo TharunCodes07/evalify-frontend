@@ -14,7 +14,7 @@ import {
 export const getColumns = (
   onView?: (team: Team) => void,
   onEdit?: (team: Team) => void,
-  onDelete?: (team: Team) => void
+  onDelete?: (team: Team) => void,
 ): ColumnDef<Team>[] => {
   return [
     {
@@ -171,17 +171,30 @@ export const getColumns = (
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onView?.(team)}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onView?.(team);
+                }}
+              >
                 <Users className="mr-2 h-4 w-4" />
                 View Team
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onEdit?.(team)}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit?.(team);
+                }}
+              >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Team
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-red-600"
-                onClick={() => onDelete?.(team)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete?.(team);
+                }}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Team
