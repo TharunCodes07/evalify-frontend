@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,14 +43,17 @@ export function FileList({
   const { success, error: showError } = useToast();
   const [deletingFiles, setDeletingFiles] = useState<Set<string>>(new Set());
 
-  const queryParams: FileListParams = {
-    projectId,
-    projectName,
-    reviewId,
-    reviewName,
-    teamId,
-    teamName,
-  };
+  const queryParams: FileListParams = useMemo(
+    () => ({
+      projectId,
+      projectName,
+      reviewId,
+      reviewName,
+      teamId,
+      teamName,
+    }),
+    [projectId, projectName, reviewId, reviewName, teamId, teamName],
+  );
 
   const {
     data: fileList,
