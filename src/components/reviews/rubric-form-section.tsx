@@ -67,6 +67,8 @@ export function RubricFormSection({
       return rubricQueries.getUserRubrics(user.id);
     },
     enabled: !!user?.id,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
   });
 
   const handleCreateNew = () => {
@@ -145,107 +147,100 @@ export function RubricFormSection({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Marking Scheme</CardTitle>
-        <CardDescription>
-          Select an existing rubric or create a new one for this review.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <Popover
-            open={isSearchPopoverOpen}
-            onOpenChange={setIsSearchPopoverOpen}
-          >
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={isSearchPopoverOpen}
-                className="w-full sm:w-auto flex-1 min-w-[200px] justify-between"
-              >
-                <span className="truncate">
-                  {selectedRubric ? selectedRubric.name : "Select a rubric..."}
-                </span>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-              <Command>
-                <CommandInput placeholder="Search rubrics..." />
-                <CommandList>
-                  <CommandEmpty>No rubric found.</CommandEmpty>
-                  <CommandGroup>
-                    {rubrics?.map((rubric) => (
-                      <CommandItem
-                        key={rubric.id}
-                        value={rubric.name}
-                        onSelect={() => handleSelectRubric(rubric.id)}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedRubricId === rubric.id
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                        <span className="flex-1 truncate">{rubric.name}</span>
-                        {rubric.isShared && (
-                          <Badge variant="secondary" className="ml-2">
-                            Shared
-                          </Badge>
-                        )}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-sm font-medium mb-2">Marking Rubric</h3>
+        <p className="text-sm text-muted-foreground">
+          Select an existing rubric or create a new one
+        </p>
+      </div>
 
-          <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <Popover
+          open={isSearchPopoverOpen}
+          onOpenChange={setIsSearchPopoverOpen}
+        >
+          <PopoverTrigger asChild>
             <Button
               variant="outline"
-              size="icon"
-              onClick={handleEdit}
-              disabled={!selectedRubricId}
-              title="Edit or Duplicate Rubric"
+              role="combobox"
+              aria-expanded={isSearchPopoverOpen}
+              className="w-full sm:w-auto flex-1 min-w-[250px] justify-between"
             >
-              <Pencil className="h-4 w-4" />
-              <span className="sr-only">Edit or Duplicate</span>
+              <span className="truncate">
+                {selectedRubric ? selectedRubric.name : "Select a rubric..."}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
-            <Button variant="outline" onClick={handleCreateNew}>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Create
-            </Button>
-          </div>
-        </div>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+            <Command>
+              <CommandInput placeholder="Search rubrics..." />
+              <CommandList>
+                <CommandEmpty>No rubric found.</CommandEmpty>
+                <CommandGroup>
+                  {rubrics?.map((rubric) => (
+                    <CommandItem
+                      key={rubric.id}
+                      value={rubric.name}
+                      onSelect={() => handleSelectRubric(rubric.id)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedRubricId === rubric.id
+                            ? "opacity-100"
+                            : "opacity-0",
+                        )}
+                      />
+                      <span className="flex-1 truncate">{rubric.name}</span>
+                      {rubric.isShared && (
+                        <Badge variant="secondary" className="ml-2 text-xs">
+                          Shared
+                        </Badge>
+                      )}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
 
-        <div className="mt-4">
-          {selectedRubric ? (
-            <RubricCriteriaTable
-              criteria={selectedRubric.criteria}
-              onCriteriaChange={() => {}} // Not editable here
-              isReadOnly
-            />
-          ) : (
-            rubrics &&
-            rubrics.length > 0 && (
-              <div className="text-center text-muted-foreground p-4 border-dashed border-2 rounded-lg mt-4">
-                <p>Select a rubric to see its criteria.</p>
-              </div>
-            )
-          )}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleEdit}
+            disabled={!selectedRubricId}
+            title="Edit or Duplicate Rubric"
+          >
+            <Pencil className="h-4 w-4" />
+            <span className="sr-only">Edit or Duplicate</span>
+          </Button>
+          <Button variant="outline" onClick={handleCreateNew}>
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Create
+          </Button>
         </div>
-      </CardContent>
+      </div>
+
+      {selectedRubric && (
+        <div className="border rounded-lg overflow-hidden">
+          <RubricCriteriaTable
+            criteria={selectedRubric.criteria}
+            onCriteriaChange={() => {}}
+            isReadOnly
+          />
+        </div>
+      )}
+
       <CreateEditRubricModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
         existingRubric={editingRubric}
       />
-    </Card>
+    </div>
   );
 }

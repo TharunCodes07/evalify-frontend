@@ -7,20 +7,9 @@ import {
 } from "@/components/reviews/create-review-schema";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
 import { BasicInfoForm } from "@/components/reviews/basic-info-form";
 import { ParticipantsForm } from "@/components/reviews/participants-form";
-import { ReviewSummary } from "@/components/reviews/review-summary";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import reviewQueries from "@/repo/review-queries/review-queries";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -29,14 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 
-const formSteps = [
-  { value: "basic-info", label: "Basic Info" },
-  { value: "participants", label: "Participants" },
-  { value: "summary", label: "Summary" },
-];
-
 export default function Page() {
-  const [currentTab, setCurrentTab] = useState(formSteps[0].value);
   const user = useCurrentUser();
   const { success, error } = useToast();
   const queryClient = useQueryClient();
@@ -56,6 +38,7 @@ export default function Page() {
       projects: [],
     },
   });
+
   const { mutate: createReview, isPending } = useMutation({
     mutationFn: (data: CreateReviewRequest) => reviewQueries.createReview(data),
     onSuccess: () => {
@@ -88,117 +71,72 @@ export default function Page() {
     createReview(requestData);
   }
 
-  const handleNext = async () => {
-    let fieldsToValidate: (keyof CreateReviewSchema)[] = [];
-    if (currentTab === "basic-info") {
-      fieldsToValidate = ["name", "startDate", "endDate", "rubricId"];
-    } else if (currentTab === "participants") {
-      fieldsToValidate = ["semesters"]; // Only validate required fields
-    }
-
-    const isValid = await form.trigger(fieldsToValidate);
-    if (!isValid) return;
-
-    const currentIndex = formSteps.findIndex(
-      (step) => step.value === currentTab
-    );
-    if (currentIndex < formSteps.length - 1) {
-      setCurrentTab(formSteps[currentIndex + 1].value);
-    }
-  };
-
-  const handlePrevious = () => {
-    const currentIndex = formSteps.findIndex(
-      (step) => step.value === currentTab
-    );
-    if (currentIndex > 0) {
-      setCurrentTab(formSteps[currentIndex - 1].value);
-    }
-  };
-
-  const renderContent = () => {
-    switch (currentTab) {
-      case "basic-info":
-        return <BasicInfoForm />;
-      case "participants":
-        return <ParticipantsForm />;
-      case "summary":
-        return <ReviewSummary />;
-      default:
-        return null;
-    }
-  };
+  const isBasicInfoComplete =
+    form.watch("name") &&
+    form.watch("startDate") &&
+    form.watch("endDate") &&
+    form.watch("rubricId");
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {" "}
-          <Tabs value={currentTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-4">
-              {formSteps.map((step) => (
-                <TabsTrigger
-                  key={step.value}
-                  value={step.value}
-                  onClick={() => setCurrentTab(step.value)}
-                  type="button"
-                >
-                  {step.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="flex items-center gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Create Review</h1>
+            <p className="text-muted-foreground mt-1">
+              Set up a new review session for your projects
+            </p>
+          </div>
+        </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {formSteps.find((s) => s.value === currentTab)?.label}
-                </CardTitle>
-                <CardDescription>
-                  {currentTab === "basic-info" &&
-                    "Fill in the basic details of the review."}
-                  {currentTab === "participants" &&
-                    "Select the participants for this review."}
-                  {currentTab === "summary" &&
-                    "Review all the details before creating the review."}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>{renderContent()}</CardContent>
-              <CardFooter className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePrevious}
-                  disabled={currentTab === formSteps[0].value || isPending}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-                </Button>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
+            {/* Basic Info & Rubric */}
+            <BasicInfoForm />
 
-                {currentTab !== "summary" ? (
-                  <Button
-                    type="button"
-                    onClick={handleNext}
-                    disabled={isPending}
-                    className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white"
-                  >
-                    Next <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-background px-4 text-muted-foreground font-medium">
+                  Participants
+                </span>
+              </div>
+            </div>
+
+            {/* Participants */}
+            <ParticipantsForm />
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between pt-6 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/reviews")}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isPending || !isBasicInfoComplete}
+                size="lg"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
                 ) : (
-                  <Button
-                    type="submit"
-                    disabled={isPending}
-                    className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white"
-                  >
-                    {isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Create Review
-                  </Button>
+                  "Create Review"
                 )}
-              </CardFooter>
-            </Card>
-          </Tabs>
-        </form>
-      </Form>
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 }

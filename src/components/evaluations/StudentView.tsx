@@ -43,12 +43,12 @@ interface StudentViewProps {
     participantId: string,
     criterionId: string,
     field: "score" | "comment",
-    value: number | string
+    value: number | string,
   ) => void;
   updateCommonCriteriaScore: (
     criterionId: string,
     field: "score" | "comment",
-    value: number | string
+    value: number | string,
   ) => void;
 }
 
@@ -64,8 +64,8 @@ export function StudentView({
     new Set<string>(
       evaluationData.teamMembers[0]?.id
         ? [evaluationData.teamMembers[0].id]
-        : []
-    )
+        : [],
+    ),
   );
 
   const toggleStudent = (studentId: string) => {
@@ -103,16 +103,16 @@ export function StudentView({
   const getTotalMaxScore = () => {
     return evaluationData.criteria.reduce(
       (total, criterion) => total + criterion.maxScore,
-      0
+      0,
     );
   };
 
   // Check if there are any common criteria to show them separately
   const commonCriteria = evaluationData.criteria.filter((c) =>
-    isCriterionCommon(c.id)
+    isCriterionCommon(c.id),
   );
   const individualCriteria = evaluationData.criteria.filter(
-    (c) => !isCriterionCommon(c.id)
+    (c) => !isCriterionCommon(c.id),
   );
 
   return (
@@ -125,7 +125,7 @@ export function StudentView({
             size="sm"
             onClick={() =>
               setExpandedStudents(
-                new Set(evaluationData.teamMembers.map((m) => m.id))
+                new Set(evaluationData.teamMembers.map((m) => m.id)),
               )
             }
           >
@@ -146,9 +146,7 @@ export function StudentView({
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center">
-                <User className="w-4 h-4 text-primary" />
-              </div>
+              <User className="h-5 w-5 text-muted-foreground" />
               <div>
                 <CardTitle className="text-lg">Common Criteria</CardTitle>
                 <CardDescription>
@@ -195,7 +193,7 @@ export function StudentView({
                       updateCommonCriteriaScore(
                         criterion.id,
                         "comment",
-                        e.target.value
+                        e.target.value,
                       )
                     }
                     placeholder="Add your comments here..."
@@ -228,9 +226,7 @@ export function StudentView({
                   ) : (
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   )}
-                  <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center">
-                    <User className="w-4 h-4 text-primary" />
-                  </div>
+                  <User className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <CardTitle className="text-lg">{student.name}</CardTitle>
                     <CardDescription>{student.email}</CardDescription>
@@ -299,7 +295,7 @@ export function StudentView({
                               student.id,
                               criterion.id,
                               "score",
-                              value
+                              value,
                             )
                           }
                         />
@@ -313,7 +309,7 @@ export function StudentView({
                                 student.id,
                                 criterion.id,
                                 "comment",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             placeholder="Add your comments here..."

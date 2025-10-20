@@ -111,7 +111,7 @@ export function TeamForm({
             profileId: m.id, // Use member id as profileId
             phoneNumber: "",
             isActive: true,
-          } as User)
+          }) as User,
       );
       setSelectedMembers(members);
     } else {
@@ -263,7 +263,7 @@ export function TeamForm({
                                       className={cn(
                                         "cursor-pointer",
                                         memberIds.includes(student.id) &&
-                                          "bg-accent"
+                                          "bg-accent",
                                       )}
                                     >
                                       {student.name}

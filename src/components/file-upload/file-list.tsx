@@ -89,9 +89,8 @@ export function FileList({
 
   const handleDownload = async (objectName: string, fileName: string) => {
     try {
-      const { downloadUrl } = await fileUploadQueries.getDownloadUrl(
-        objectName
-      );
+      const { downloadUrl } =
+        await fileUploadQueries.getDownloadUrl(objectName);
 
       // Fetch the file as a blob to handle CORS and ensure download
       const response = await fetch(downloadUrl);
@@ -120,9 +119,8 @@ export function FileList({
 
   const handleOpen = async (objectName: string) => {
     try {
-      const { downloadUrl } = await fileUploadQueries.getDownloadUrl(
-        objectName
-      );
+      const { downloadUrl } =
+        await fileUploadQueries.getDownloadUrl(objectName);
       window.open(downloadUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       console.error("Open error:", error);
@@ -280,7 +278,7 @@ export function FileList({
                     onClick={() =>
                       handleDownload(
                         file.objectName,
-                        getActualFileName(file.fileName)
+                        getActualFileName(file.fileName),
                       )
                     }
                     className="h-8 cursor-pointer hover:cursor-pointer"
@@ -316,7 +314,7 @@ export function FileList({
                           onClick={() =>
                             handleDelete(
                               file.objectName,
-                              getActualFileName(file.fileName)
+                              getActualFileName(file.fileName),
                             )
                           }
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer hover:cursor-pointer"

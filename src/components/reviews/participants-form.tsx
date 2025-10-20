@@ -118,7 +118,7 @@ function SelectedItemsDisplay() {
   const [semesters, batches, courses, projects] = watchedFields;
 
   const hasSelectedItems = [semesters, batches, courses, projects].some(
-    (arr) => arr && arr.length > 0
+    (arr) => arr && arr.length > 0,
   );
 
   const handleRemove = (itemKey: ParticipantType, id: string) => {
@@ -126,14 +126,17 @@ function SelectedItemsDisplay() {
     setValue(
       itemKey,
       currentItems.filter((item) => item.id !== id),
-      { shouldDirty: true, shouldValidate: true }
+      { shouldDirty: true, shouldValidate: true },
     );
   };
 
   if (!hasSelectedItems) return null;
 
   const allItems = [
-    ...(semesters || []).map((item) => ({ ...item, type: "semesters" as const })),
+    ...(semesters || []).map((item) => ({
+      ...item,
+      type: "semesters" as const,
+    })),
     ...(batches || []).map((item) => ({ ...item, type: "batches" as const })),
     ...(courses || []).map((item) => ({ ...item, type: "courses" as const })),
     ...(projects || []).map((item) => ({ ...item, type: "projects" as const })),

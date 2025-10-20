@@ -221,13 +221,11 @@ export function CourseEvaluationForm({
           </Alert>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-6">
+        <div className="flex flex-col sm:flex-row gap-6 p-4 border rounded-lg bg-muted/20">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
-              <BarChart3 className="w-4 h-4 text-primary" />
-            </div>
+            <BarChart3 className="h-5 w-5 text-muted-foreground flex-shrink-0" />
             <div>
-              <div className="text-xl font-semibold text-foreground">
+              <div className="text-xl font-semibold">
                 {evaluationData.teamMembers.length > 0
                   ? Math.round(
                       evaluationData.teamMembers.reduce(
@@ -251,11 +249,9 @@ export function CourseEvaluationForm({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
-              <Target className="w-4 h-4 text-primary" />
-            </div>
+            <Target className="h-5 w-5 text-muted-foreground flex-shrink-0" />
             <div>
-              <div className="text-xl font-semibold text-foreground">
+              <div className="text-xl font-semibold">
                 {evaluationData.criteria.reduce(
                   (sum, criterion) => sum + criterion.maxScore,
                   0,
