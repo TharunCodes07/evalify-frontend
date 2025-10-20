@@ -3,17 +3,10 @@
 import { useState } from "react";
 import { CourseEvaluationData } from "@/types/types";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ScoreSlider } from "./ScoreSlider";
@@ -43,12 +36,12 @@ interface CriteriaViewProps {
     participantId: string,
     criterionId: string,
     field: "score" | "comment",
-    value: number | string
+    value: number | string,
   ) => void;
   updateCommonCriteriaScore: (
     criterionId: string,
     field: "score" | "comment",
-    value: number | string
+    value: number | string,
   ) => void;
   getCriterionProgress: (criterionId: string) => number;
 }
@@ -64,8 +57,8 @@ export function CriteriaView({
 }: CriteriaViewProps) {
   const [expandedCriteria, setExpandedCriteria] = useState<Set<string>>(
     new Set(
-      evaluationData.criteria.length > 0 ? [evaluationData.criteria[0].id] : []
-    )
+      evaluationData.criteria.length > 0 ? [evaluationData.criteria[0].id] : [],
+    ),
   );
 
   const toggleCriterion = (criterionId: string) => {
@@ -81,190 +74,261 @@ export function CriteriaView({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Evaluation Criteria</h2>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold">Evaluation Criteria</h2>
+          <p className="text-sm text-muted-foreground">
+            {evaluationData.criteria.length} criteria • Click to expand and
+            evaluate
+          </p>
+        </div>
         <div className="flex gap-2">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() =>
               setExpandedCriteria(
-                new Set(evaluationData.criteria.map((c) => c.id))
+                new Set(evaluationData.criteria.map((c) => c.id)),
               )
             }
+            className="text-xs"
           >
             Expand All
           </Button>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setExpandedCriteria(new Set())}
+            className="text-xs"
           >
             Collapse All
           </Button>
         </div>
       </div>
 
-      {evaluationData.criteria.map((criterion) => {
-        const isExpanded = expandedCriteria.has(criterion.id);
-        const progress = getCriterionProgress(criterion.id);
+      <div className="space-y-3">
+        {evaluationData.criteria.map((criterion, index) => {
+          const isExpanded = expandedCriteria.has(criterion.id);
+          const progress = getCriterionProgress(criterion.id);
+          const isComplete = progress === 100;
 
-        return (
-          <Card key={criterion.id}>
-            <CardHeader className="pb-3">
+          return (
+            <Card
+              key={criterion.id}
+              className={`overflow-hidden transition-all ${
+                isExpanded ? "border-primary/50" : ""
+              }`}
+            >
               <div
-                className="flex items-center justify-between cursor-pointer"
+                className="flex items-center gap-4 p-4 cursor-pointer hover:bg-muted/30 transition-colors"
                 onClick={() => toggleCriterion(criterion.id)}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex-shrink-0">
                   {isExpanded ? (
                     <ChevronDown className="h-5 w-5 text-muted-foreground" />
                   ) : (
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   )}
-                  <div>
-                    <CardTitle className="text-lg">{criterion.name}</CardTitle>
-                    {criterion.description && (
-                      <CardDescription className="mt-1">
-                        {criterion.description}
-                      </CardDescription>
+                </div>
+
+                <div
+                  className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${
+                    isComplete
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {index + 1}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-base">
+                      {criterion.name}
+                    </h3>
+                    {isCriterionCommon(criterion.id) && (
+                      <Badge variant="secondary" className="text-xs">
+                        Common
+                      </Badge>
+                    )}
+                    {criterion.courseSpecific && (
+                      <Badge variant="outline" className="text-xs">
+                        Course Specific
+                      </Badge>
                     )}
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {criterion.courseSpecific && (
-                    <Badge variant="outline" className="text-xs">
-                      Course Specific
-                    </Badge>
+                  {criterion.description && !isExpanded && (
+                    <p className="text-sm text-muted-foreground truncate mt-0.5">
+                      {criterion.description}
+                    </p>
                   )}
-                  {isCriterionCommon(criterion.id) && (
-                    <Badge variant="secondary" className="text-xs">
-                      Common Score
-                    </Badge>
-                  )}
-                  <Badge variant="secondary">Max: {criterion.maxScore}</Badge>
                 </div>
-              </div>
-              <div className="mt-3 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Progress</span>
-                  <span>{Math.round(progress)}% complete</span>
-                </div>
-                <Progress value={progress} className="h-2" />
-              </div>
-            </CardHeader>
 
-            <Collapsible open={isExpanded}>
-              <CollapsibleContent>
-                <CardContent className="space-y-6">
-                  {isCriterionCommon(criterion.id) ? (
-                    <div className="border rounded-lg p-4 space-y-4 bg-card">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                          <h4 className="font-medium flex items-center gap-2">
-                            Team Score (Common)
-                            <Badge variant="secondary" className="text-xs">
-                              Common
-                            </Badge>
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            This score will be applied to all team members
-                          </p>
-                        </div>
-                      </div>
-
-                      <ScoreSlider
-                        score={commonCriteriaData[criterion.id]?.score || 0}
-                        maxScore={criterion.maxScore}
-                        onChange={(value) =>
-                          updateCommonCriteriaScore(
-                            criterion.id,
-                            "score",
-                            value
-                          )
-                        }
-                      />
-
-                      <div className="space-y-2">
-                        <Label className="text-sm">Comments (optional)</Label>
-                        <Textarea
-                          value={
-                            commonCriteriaData[criterion.id]?.comment || ""
-                          }
-                          onChange={(e) =>
-                            updateCommonCriteriaScore(
-                              criterion.id,
-                              "comment",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Add your comments here..."
-                          className="min-h-[80px] resize-none"
-                        />
-                      </div>
+                <div className="flex items-center gap-4 flex-shrink-0">
+                  <div className="text-right">
+                    <div className="text-sm font-medium">
+                      Max: {criterion.maxScore}
                     </div>
-                  ) : (
-                    evaluationData.teamMembers.map((member) => {
-                      const currentScore =
-                        formData[member.id]?.[criterion.id]?.score ?? 0;
-                      const currentComment =
-                        formData[member.id]?.[criterion.id]?.comment ?? "";
-                      return (
-                        <div
-                          key={member.id}
-                          className="border rounded-lg p-4 space-y-4 bg-card"
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div>
-                              <h4 className="font-medium">{member.name}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                {member.email}
-                              </p>
-                            </div>
+                    <div className="text-xs text-muted-foreground">
+                      {Math.round(progress)}% done
+                    </div>
+                  </div>
+                  <div className="w-12 h-12">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="24"
+                        cy="24"
+                        r="20"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                        className="text-muted"
+                      />
+                      <circle
+                        cx="24"
+                        cy="24"
+                        r="20"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                        strokeDasharray={`${2 * Math.PI * 20}`}
+                        strokeDashoffset={`${2 * Math.PI * 20 * (1 - progress / 100)}`}
+                        className={`${isComplete ? "text-primary" : "text-primary/60"} transition-all duration-500`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <Collapsible open={isExpanded}>
+                <CollapsibleContent>
+                  <div className="border-t bg-muted/10">
+                    {criterion.description && (
+                      <div className="px-4 py-3 bg-muted/20 border-b">
+                        <p className="text-sm text-muted-foreground">
+                          {criterion.description}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="p-4 space-y-4">
+                      {isCriterionCommon(criterion.id) ? (
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2 pb-2 border-b">
+                            <Badge variant="secondary" className="text-xs">
+                              Team Score
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              Applied to all members
+                            </span>
                           </div>
 
                           <ScoreSlider
-                            score={currentScore}
+                            score={commonCriteriaData[criterion.id]?.score || 0}
                             maxScore={criterion.maxScore}
                             onChange={(value) =>
-                              updateScore(
-                                member.id,
+                              updateCommonCriteriaScore(
                                 criterion.id,
                                 "score",
-                                value
+                                value,
                               )
                             }
                           />
 
                           <div className="space-y-2">
-                            <Label className="text-sm">
-                              Comments (optional)
+                            <Label className="text-sm font-medium">
+                              Comments (Optional)
                             </Label>
                             <Textarea
-                              value={currentComment}
+                              value={
+                                commonCriteriaData[criterion.id]?.comment || ""
+                              }
                               onChange={(e) =>
-                                updateScore(
-                                  member.id,
+                                updateCommonCriteriaScore(
                                   criterion.id,
                                   "comment",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
-                              placeholder="Add your comments here..."
-                              className="min-h-[80px] resize-none"
+                              placeholder="Add evaluation comments..."
+                              className="min-h-[100px] resize-none"
                             />
                           </div>
                         </div>
-                      );
-                    })
-                  )}
-                </CardContent>
-              </CollapsibleContent>
-            </Collapsible>
-          </Card>
-        );
-      })}
+                      ) : (
+                        <div className="space-y-4">
+                          {evaluationData.teamMembers.map((member, idx) => {
+                            const currentScore =
+                              formData[member.id]?.[criterion.id]?.score ?? 0;
+                            const currentComment =
+                              formData[member.id]?.[criterion.id]?.comment ??
+                              "";
+
+                            return (
+                              <div
+                                key={member.id}
+                                className="space-y-4 pb-4 border-b last:border-b-0 last:pb-0"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
+                                    {idx + 1}
+                                  </div>
+                                  <div>
+                                    <h4 className="font-medium text-sm">
+                                      {member.name}
+                                    </h4>
+                                    <p className="text-xs text-muted-foreground">
+                                      {member.email}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <ScoreSlider
+                                  score={currentScore}
+                                  maxScore={criterion.maxScore}
+                                  onChange={(value) =>
+                                    updateScore(
+                                      member.id,
+                                      criterion.id,
+                                      "score",
+                                      value,
+                                    )
+                                  }
+                                />
+
+                                <div className="space-y-2">
+                                  <Label className="text-xs font-medium text-muted-foreground">
+                                    Comments (Optional)
+                                  </Label>
+                                  <Textarea
+                                    value={currentComment}
+                                    onChange={(e) =>
+                                      updateScore(
+                                        member.id,
+                                        criterion.id,
+                                        "comment",
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="Add comments for this member..."
+                                    className="min-h-[80px] resize-none text-sm"
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }

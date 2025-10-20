@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { projectQueries } from "@/repo/project-queries/project-queries";
@@ -21,7 +21,16 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft } from "lucide-react";
+import {
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  FileText,
+  GraduationCap,
+  Users,
+  BarChart3,
+} from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 function CourseSelector({
   summary,
@@ -48,62 +57,140 @@ function CourseSelector({
     return false;
   };
 
+  const completedCount = summary.courseEvaluations.filter(
+    (c) => c.hasEvaluation,
+  ).length;
+  const totalCount = summary.courseEvaluations.length;
+  const completionPercentage =
+    totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-xl">Select Course</CardTitle>
-        <CardDescription>
-          {project.title} • {summary.reviewName}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <div className="space-y-6">
+      {/* Progress Overview Card */}
+      <Card className="border-2">
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                <GraduationCap className="h-6 w-6 text-primary" />
+                Evaluation Progress
+              </CardTitle>
+              <CardDescription className="text-base">
+                {project.title} • {summary.reviewName}
+              </CardDescription>
+            </div>
+            <Badge
+              variant={completionPercentage === 100 ? "default" : "secondary"}
+              className="text-sm px-3 py-1"
+            >
+              {completedCount} of {totalCount} Completed
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm font-medium">
+              <span>Overall Progress</span>
+              <span className="text-primary">
+                {Math.round(completionPercentage)}%
+              </span>
+            </div>
+            <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
+              <div
+                className="bg-primary h-full transition-all duration-500 rounded-full"
+                style={{ width: `${completionPercentage}%` }}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Courses Grid */}
+      <div className="grid gap-4 md:grid-cols-2">
         {summary.courseEvaluations.map((course) => {
           const canEvaluate = canEvaluateCourse(course);
           return (
-            <div
+            <Card
               key={course.courseId}
-              className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+              className="group hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/50"
             >
-              <div className="space-y-1 mb-3 sm:mb-0">
-                <h3 className="font-medium">{course.courseName}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {course.instructors.map((i) => i.name).join(", ")}
-                </p>
-                <Badge
-                  variant={course.hasEvaluation ? "default" : "outline"}
-                  className="w-fit"
-                >
-                  {course.hasEvaluation ? "Completed" : "Pending"}
-                </Badge>
-              </div>
-              <Button
-                asChild={canEvaluate}
-                disabled={!canEvaluate}
-                size="sm"
-                className="w-full sm:w-auto"
-              >
-                {canEvaluate ? (
-                  <Link
-                    href={`/evaluate/${project.id}/${reviewId}?courseId=${course.courseId}`}
+              <CardHeader className="pb-3">
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`rounded-lg p-2.5 ${
+                      course.hasEvaluation
+                        ? "bg-primary/10 text-primary"
+                        : "bg-secondary text-muted-foreground"
+                    }`}
                   >
-                    {course.hasEvaluation ? "Edit" : "Start"}
-                  </Link>
-                ) : (
-                  <span>{course.hasEvaluation ? "Edit" : "Start"}</span>
-                )}
-              </Button>
-            </div>
+                    <BookOpen className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <CardTitle className="text-lg leading-tight">
+                      {course.courseName}
+                    </CardTitle>
+                    <CardDescription className="flex items-center gap-1.5 text-sm">
+                      <Users className="h-3.5 w-3.5" />
+                      {course.instructors.map((i) => i.name).join(", ")}
+                    </CardDescription>
+                  </div>
+                  {course.hasEvaluation && (
+                    <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {course.hasEvaluation ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium text-primary">
+                          Evaluation Complete
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium text-muted-foreground">
+                          Pending Evaluation
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <Button
+                    asChild={canEvaluate}
+                    disabled={!canEvaluate}
+                    size="sm"
+                    variant={course.hasEvaluation ? "outline" : "default"}
+                    className="font-medium"
+                  >
+                    {canEvaluate ? (
+                      <Link
+                        href={`/evaluate/${project.id}/${reviewId}?courseId=${course.courseId}`}
+                      >
+                        {course.hasEvaluation ? "Edit" : "Start Evaluation"}
+                      </Link>
+                    ) : (
+                      <span>
+                        {course.hasEvaluation ? "View" : "Not Available"}
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
 export default function EvaluationPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const projectId = params.projectId as string;
   const reviewId = params.reviewId as string;
@@ -142,7 +229,7 @@ export default function EvaluationPage() {
       individualScoreQueries.fetchEvaluationSummary(
         reviewId,
         projectId,
-        user!.id
+        user!.id,
       ),
     enabled: !courseId && !!reviewId && !!projectId && !!user,
     staleTime: 2 * 60 * 1000, // 2 minutes - may change as evaluations complete
@@ -157,37 +244,48 @@ export default function EvaluationPage() {
           reviewId,
           projectId,
           courseId!,
-          user!.id
+          user!.id,
         ),
       enabled: !!courseId && !!reviewId && !!projectId && !!user,
       staleTime: 1 * 60 * 1000, // 1 minute - active evaluation data
       gcTime: 5 * 60 * 1000, // 5 minutes
-    }
+    },
   );
 
   if (isLoadingProject || isLoadingSummary || isLoadingEvaluationData) {
     return (
-      <div className="container mx-auto p-4 max-w-4xl">
+      <div className="container mx-auto p-6 max-w-7xl">
         <div className="space-y-6">
-          <Skeleton className="h-8 w-48" />
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-64" />
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-10 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
               <Skeleton className="h-4 w-96" />
+            </div>
+          </div>
+          <Separator />
+          <Card className="border-2">
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-64" />
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex justify-between items-center p-4 border rounded-lg"
-                  >
-                    <div className="space-y-2">
-                      <Skeleton className="h-5 w-40" />
-                      <Skeleton className="h-4 w-32" />
-                    </div>
-                    <Skeleton className="h-9 w-20" />
-                  </div>
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <Card key={i} className="border">
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-10 w-10 rounded-lg" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-5 w-40" />
+                          <Skeleton className="h-4 w-32" />
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className="h-9 w-full" />
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             </CardContent>
@@ -198,70 +296,72 @@ export default function EvaluationPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="space-y-6">
-        {courseId && (
-          <div className="w-fit border rounded-sm bg-background shadow-sm">
-            <Button
-              variant="ghost"
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-sm font-medium hover:bg-muted/50"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Course Selection
-            </Button>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <div className="container mx-auto p-6 max-w-7xl">
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              <div
+                className="rounded-xl p-3 bg-gradient-to-br from-primary/20 to-primary/10 
+                           border-2 border-primary/20"
+              >
+                <FileText className="h-7 w-7 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold tracking-tight">
+                  Project Evaluation
+                </h1>
+                <p className="text-muted-foreground text-base mt-1">
+                  Evaluate team members based on defined criteria and
+                  performance metrics
+                </p>
+              </div>
+            </div>
           </div>
-        )}
 
-        {!courseId && project && summary && (
-          <div className="w-fit border rounded-sm bg-background shadow-sm">
-            <Button
-              variant="ghost"
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-sm font-medium hover:bg-muted/50"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Project Selection
-            </Button>
-          </div>
-        )}
+          <Separator className="my-6" />
 
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold">Project Evaluation</h1>
-          <p className="text-muted-foreground">
-            Evaluate team members based on defined criteria
-          </p>
-        </div>
+          {project && (
+            <Card className="border-2 overflow-hidden">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Project Resources</CardTitle>
+                </div>
+                <CardDescription>
+                  Review submitted files and documentation
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <FileList
+                  projectId={projectId}
+                  projectName={project.title}
+                  reviewId={reviewId}
+                  reviewName={review?.name}
+                  teamId={project.teamId}
+                  teamName={team?.name}
+                />
+              </CardContent>
+            </Card>
+          )}
 
-        {project && (
-          <div className="space-y-6">
-            <FileList
-              projectId={projectId}
-              projectName={project.title}
+          {!courseId && project && summary ? (
+            <CourseSelector
+              summary={summary}
+              project={project}
               reviewId={reviewId}
-              reviewName={review?.name}
-              teamId={project.teamId}
-              teamName={team?.name}
             />
-          </div>
-        )}
-
-        {!courseId && project && summary && (
-          <CourseSelector
-            summary={summary}
-            project={project}
-            reviewId={reviewId}
-          />
-        )}
-
-        {courseId && evaluationData && review && (
-          <CourseEvaluationForm
-            evaluationData={evaluationData}
-            reviewData={review}
-            projectId={projectId}
-            reviewId={reviewId}
-          />
-        )}
+          ) : courseId && evaluationData && review ? (
+            <div className="space-y-6">
+              <CourseEvaluationForm
+                evaluationData={evaluationData}
+                reviewData={review}
+                projectId={projectId}
+                reviewId={reviewId}
+              />
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

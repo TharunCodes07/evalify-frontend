@@ -6,7 +6,8 @@ import { individualScoreQueries } from "@/repo/individual-score-queries/individu
 import { CourseEvaluationData, IndividualScoreSubmission } from "@/types/types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Save, BarChart3, Target } from "lucide-react";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { AlertCircle, Save, BarChart3, Target, TrendingUp } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { CriteriaView } from "./CriteriaView";
@@ -205,62 +206,154 @@ export function CourseEvaluationForm({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold">{evaluationData.courseName}</h1>
-          <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
-        </div>
+      {/* Header with View Toggle */}
+      <Card className="border-2">
+        <CardHeader>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold">
+                {evaluationData.courseName}
+              </h2>
+              <p className="text-muted-foreground">
+                Evaluate {evaluationData.teamMembers.length} team member
+                {evaluationData.teamMembers.length !== 1 ? "s" : ""} across{" "}
+                {evaluationData.criteria.length} criteria
+              </p>
+            </div>
+            <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
+          </div>
+        </CardHeader>
+      </Card>
 
-        {evaluationData.isPublished && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              This evaluation has been published. Changes may not be reflected
-              in final results.
-            </AlertDescription>
-          </Alert>
-        )}
+      {/* Published Alert */}
+      {evaluationData.isPublished && (
+        <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900">
+          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+          <AlertDescription className="text-amber-800 dark:text-amber-200">
+            This evaluation has been published. Changes may not be reflected in
+            final results.
+          </AlertDescription>
+        </Alert>
+      )}
 
-        <div className="flex flex-col sm:flex-row gap-6 p-4 border rounded-lg bg-muted/20">
-          <div className="flex items-center gap-3">
-            <BarChart3 className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-            <div>
-              <div className="text-xl font-semibold">
-                {evaluationData.teamMembers.length > 0
-                  ? Math.round(
-                      evaluationData.teamMembers.reduce(
-                        (totalSum, member) =>
-                          totalSum +
-                          evaluationData.criteria.reduce(
-                            (criteriaSum, criterion) =>
-                              criteriaSum +
-                              (isCriterionCommon(criterion.id)
-                                ? commonCriteriaData[criterion.id]?.score || 0
-                                : formData[member.id][criterion.id].score || 0),
+      {/* Performance Metrics Grid */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Team Average Card */}
+        <Card className="border-2 bg-gradient-to-br from-blue-50 to-background dark:from-blue-950/20 dark:to-background">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg p-2.5 bg-blue-100 dark:bg-blue-900/30">
+                <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Team Average
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                    {evaluationData.teamMembers.length > 0
+                      ? Math.round(
+                          evaluationData.teamMembers.reduce(
+                            (totalSum, member) =>
+                              totalSum +
+                              evaluationData.criteria.reduce(
+                                (criteriaSum, criterion) =>
+                                  criteriaSum +
+                                  (isCriterionCommon(criterion.id)
+                                    ? commonCriteriaData[criterion.id]?.score ||
+                                      0
+                                    : formData[member.id][criterion.id].score ||
+                                      0),
+                                0,
+                              ),
                             0,
-                          ),
-                        0,
-                      ) / evaluationData.teamMembers.length,
-                    )
-                  : 0}
+                          ) / evaluationData.teamMembers.length,
+                        )
+                      : 0}
+                  </p>
+                  <p className="text-sm text-muted-foreground">points</p>
+                </div>
               </div>
-              <div className="text-sm text-muted-foreground">Team Average</div>
             </div>
-          </div>
+          </CardHeader>
+        </Card>
 
-          <div className="flex items-center gap-3">
-            <Target className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-            <div>
-              <div className="text-xl font-semibold">
-                {evaluationData.criteria.reduce(
-                  (sum, criterion) => sum + criterion.maxScore,
-                  0,
-                )}
+        {/* Maximum Score Card */}
+        <Card className="border-2 bg-gradient-to-br from-violet-50 to-background dark:from-violet-950/20 dark:to-background">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg p-2.5 bg-violet-100 dark:bg-violet-900/30">
+                <Target className="h-5 w-5 text-violet-600 dark:text-violet-400" />
               </div>
-              <div className="text-sm text-muted-foreground">Maximum Score</div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Maximum Score
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-3xl font-bold text-violet-600 dark:text-violet-400">
+                    {evaluationData.criteria.reduce(
+                      (sum, criterion) => sum + criterion.maxScore,
+                      0,
+                    )}
+                  </p>
+                  <p className="text-sm text-muted-foreground">points</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </CardHeader>
+        </Card>
+
+        {/* Completion Progress Card */}
+        <Card className="border-2 bg-gradient-to-br from-emerald-50 to-background dark:from-emerald-950/20 dark:to-background">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg p-2.5 bg-emerald-100 dark:bg-emerald-900/30">
+                <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Completion Rate
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                    {(() => {
+                      const totalFields =
+                        evaluationData.teamMembers.length *
+                          evaluationData.criteria.filter(
+                            (c) => !isCriterionCommon(c.id),
+                          ).length +
+                        evaluationData.criteria.filter((c) =>
+                          isCriterionCommon(c.id),
+                        ).length;
+
+                      const filledFields =
+                        evaluationData.teamMembers.reduce(
+                          (count, member) =>
+                            count +
+                            evaluationData.criteria.filter(
+                              (c) =>
+                                !isCriterionCommon(c.id) &&
+                                formData[member.id]?.[c.id]?.score > 0,
+                            ).length,
+                          0,
+                        ) +
+                        evaluationData.criteria.filter(
+                          (c) =>
+                            isCriterionCommon(c.id) &&
+                            (commonCriteriaData[c.id]?.score || 0) > 0,
+                        ).length;
+
+                      return totalFields > 0
+                        ? Math.round((filledFields / totalFields) * 100)
+                        : 0;
+                    })()}
+                  </p>
+                  <p className="text-sm text-muted-foreground">%</p>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
       </div>
 
       {viewMode === "criteria" ? (
@@ -284,25 +377,37 @@ export function CourseEvaluationForm({
         />
       )}
 
-      <div className="flex justify-end">
-        <Button
-          onClick={handleSubmit}
-          disabled={submitMutation.isPending}
-          size="lg"
-        >
-          {submitMutation.isPending ? (
-            <>
-              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-4 w-4" />
-              Save Evaluation
-            </>
-          )}
-        </Button>
-      </div>
+      {/* Save Button */}
+      <Card className="border-2 bg-gradient-to-r from-background to-muted/20 sticky bottom-4 shadow-lg">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Ready to submit?</p>
+              <p className="text-xs text-muted-foreground">
+                Your evaluation will be saved and can be edited later
+              </p>
+            </div>
+            <Button
+              onClick={handleSubmit}
+              disabled={submitMutation.isPending}
+              size="lg"
+              className="gap-2 px-8 shadow-md"
+            >
+              {submitMutation.isPending ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Evaluation
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
