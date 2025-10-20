@@ -22,7 +22,7 @@ export default function CourseProjects() {
     search: string,
     _dateRange: { from_date: string; to_date: string },
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
   ) {
     const courseId = params.courseid as string;
     return useProjectsByCourse(
@@ -31,7 +31,7 @@ export default function CourseProjects() {
       page - 1,
       pageSize,
       sortBy,
-      sortOrder as "asc" | "desc"
+      sortOrder as "asc" | "desc",
     );
   }
 
@@ -61,7 +61,7 @@ export default function CourseProjects() {
     project: Project,
     index: number,
     isSelected: boolean,
-    onToggleSelect: () => void
+    onToggleSelect: () => void,
   ) => {
     return (
       <GridItem<Project>
@@ -72,17 +72,17 @@ export default function CourseProjects() {
         onCardClick={handleView}
         fieldConfig={{
           id: "id",
-          title: "name",
+          title: "title",
           description: "description",
           createdAt: "createdAt",
           badge: {
-            field: "projectCount",
-            label: "Projects:",
+            field: "status",
+            label: "",
             variant: "secondary",
           },
           stats: [
             {
-              field: "members",
+              field: "teamMembers",
               label: "member(s)",
               icon: Users,
               format: (value: unknown) =>
@@ -117,9 +117,30 @@ export default function CourseProjects() {
             }}
             exportConfig={{
               entityName: "projects",
-              columnMapping: {},
-              columnWidths: [],
-              headers: [],
+              columnMapping: {
+                title: "Project Title",
+                description: "Description",
+                status: "Status",
+                teamMemberCount: "Team Members",
+                createdAt: "Created Date",
+                updatedAt: "Last Updated",
+              },
+              columnWidths: [
+                { wch: 30 }, // title
+                { wch: 50 }, // description
+                { wch: 15 }, // status
+                { wch: 15 }, // teamMemberCount
+                { wch: 15 }, // createdAt
+                { wch: 15 }, // updatedAt
+              ],
+              headers: [
+                "title",
+                "description",
+                "status",
+                "teamMemberCount",
+                "createdAt",
+                "updatedAt",
+              ],
             }}
             getColumns={columnsWrapper}
             fetchDataFn={useProjectsForDataTable}
@@ -133,9 +154,30 @@ export default function CourseProjects() {
             }}
             exportConfig={{
               entityName: "projects",
-              columnMapping: {},
-              columnWidths: [],
-              headers: [],
+              columnMapping: {
+                title: "Project Title",
+                description: "Description",
+                status: "Status",
+                teamMemberCount: "Team Members",
+                createdAt: "Created Date",
+                updatedAt: "Last Updated",
+              },
+              columnWidths: [
+                { wch: 30 }, // title
+                { wch: 50 }, // description
+                { wch: 15 }, // status
+                { wch: 15 }, // teamMemberCount
+                { wch: 15 }, // createdAt
+                { wch: 15 }, // updatedAt
+              ],
+              headers: [
+                "title",
+                "description",
+                "status",
+                "teamMemberCount",
+                "createdAt",
+                "updatedAt",
+              ],
             }}
             getColumns={columnsWrapper}
             renderGridItem={renderTeamGrid}

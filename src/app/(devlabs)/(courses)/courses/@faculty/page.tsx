@@ -15,14 +15,14 @@ function useMyCoursesForDataTable(
   search: string,
   dateRange: { from_date: string; to_date: string },
   sortBy: string,
-  sortOrder: string
+  sortOrder: string,
 ) {
   return useMyCourses(
     search,
     page - 1,
     pageSize,
     sortBy,
-    sortOrder as "asc" | "desc"
+    sortOrder as "asc" | "desc",
   );
 }
 
@@ -56,7 +56,7 @@ export default function MyCoursesPage() {
     course: Course,
     index: number,
     isSelected: boolean,
-    onToggleSelect: () => void
+    onToggleSelect: () => void,
   ) => {
     return (
       <GridItem<Course>
@@ -100,9 +100,17 @@ export default function MyCoursesPage() {
             }}
             exportConfig={{
               entityName: "courses",
-              columnMapping: {},
-              columnWidths: [],
-              headers: [],
+              columnMapping: {
+                name: "Course Name",
+                code: "Course Code",
+                description: "Description",
+              },
+              columnWidths: [
+                { wch: 30 }, // name
+                { wch: 15 }, // code
+                { wch: 50 }, // description
+              ],
+              headers: ["name", "code", "description"],
             }}
             getColumns={columnsWrapper}
             renderGridItem={renderCourseGrid}
@@ -123,9 +131,17 @@ export default function MyCoursesPage() {
             }}
             exportConfig={{
               entityName: "courses",
-              columnMapping: {},
-              columnWidths: [],
-              headers: [],
+              columnMapping: {
+                name: "Course Name",
+                code: "Course Code",
+                description: "Description",
+              },
+              columnWidths: [
+                { wch: 30 }, // name
+                { wch: 15 }, // code
+                { wch: 50 }, // description
+              ],
+              headers: ["name", "code", "description"],
             }}
             getColumns={columnsWrapper}
             fetchDataFn={useMyCoursesForDataTable}

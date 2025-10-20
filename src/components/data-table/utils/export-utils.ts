@@ -8,12 +8,88 @@ export type ExportableData = Record<
 >;
 
 /**
+ * Helper function to get nested value from object using dot notation
+ */
+function getNestedValue(obj: unknown, path: string): unknown {
+  if (!obj || typeof obj !== "object") return obj;
+
+  const keys = path.split(".");
+  let value: unknown = obj;
+
+  for (const key of keys) {
+    if (value && typeof value === "object" && key in value) {
+      value = (value as Record<string, unknown>)[key];
+    } else {
+      return undefined;
+    }
+  }
+
+  return value;
+}
+
+/**
+ * Helper function to compute derived fields for export
+ */
+function computeDerivedField<T extends ExportableData>(
+  item: T,
+  field: string,
+): unknown {
+  // Handle special computed fields
+  if (field === "memberCount" && "members" in item) {
+    const members = item.members;
+    return Array.isArray(members) ? members.length : 0;
+  }
+  if (field === "teamMemberCount" && "teamMembers" in item) {
+    const teamMembers = item.teamMembers;
+    return Array.isArray(teamMembers) ? teamMembers.length : 0;
+  }
+  if (field === "courseCount" && "courses" in item) {
+    const courses = item.courses;
+    return Array.isArray(courses) ? courses.length : 0;
+  }
+  if (field === "batchCount" && "batches" in item) {
+    const batches = item.batches;
+    return Array.isArray(batches) ? batches.length : 0;
+  }
+  if (field === "studentCount" && "students" in item) {
+    const students = item.students;
+    return Array.isArray(students) ? students.length : 0;
+  }
+
+  return undefined;
+}
+
+/**
+ * Helper function to convert value to string, handling objects
+ */
+function valueToString(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "object") {
+    // If it's a date object
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    // If it's an array
+    if (Array.isArray(value)) {
+      return value.map((v) => valueToString(v)).join(", ");
+    }
+    // For other objects, try to stringify or return empty
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return "[Object]";
+    }
+  }
+  return String(value);
+}
+
+/**
  * Convert array of objects to CSV string
  */
 function convertToCSV<T extends ExportableData>(
   data: T[],
   headers: string[],
-  columnMapping?: Record<string, string>
+  columnMapping?: Record<string, string>,
 ): string {
   if (data.length === 0) {
     throw new Error("No data to export");
@@ -40,12 +116,21 @@ function convertToCSV<T extends ExportableData>(
   // Add data rows
   for (const item of data) {
     const row = headers.map((header) => {
-      // Get the value for this header
-      const value = item[header as keyof T];
+      // Get the value for this header, supporting nested properties
+      let value: unknown;
+
+      // First, try to get computed field
+      const computed = computeDerivedField(item, header);
+      if (computed !== undefined) {
+        value = computed;
+      } else if (header.includes(".")) {
+        value = getNestedValue(item, header);
+      } else {
+        value = item[header as keyof T];
+      }
 
       // Convert all values to string and properly escape for CSV
-      const cellValue =
-        value === null || value === undefined ? "" : String(value);
+      const cellValue = valueToString(value);
       // Escape quotes and wrap in quotes if contains comma
       const escapedValue =
         cellValue.includes(",") || cellValue.includes('"')
@@ -87,7 +172,7 @@ export function exportToCSV<T extends ExportableData>(
   data: T[],
   filename: string,
   headers: string[] = Object.keys(data[0] || {}),
-  columnMapping?: Record<string, string> // Add columnMapping parameter
+  columnMapping?: Record<string, string>, // Add columnMapping parameter
 ): boolean {
   if (data.length === 0) {
     console.error("No data to export");
@@ -127,7 +212,7 @@ export function exportToExcel<T extends ExportableData>(
   filename: string,
   columnMapping?: Record<string, string>, // Optional mapping of data keys to display names
   columnWidths?: Array<{ wch: number }>,
-  headers?: string[] // Add headers parameter to specify which columns to export
+  headers?: string[], // Add headers parameter to specify which columns to export
 ): boolean {
   if (data.length === 0) {
     console.error("No data to export");
@@ -138,11 +223,14 @@ export function exportToExcel<T extends ExportableData>(
     // If no column mapping is provided, create one from the data keys
     const mapping =
       columnMapping ||
-      Object.keys(data[0] || {}).reduce((acc, key) => {
-        acc[key] =
-          key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ");
-        return acc;
-      }, {} as Record<string, string>);
+      Object.keys(data[0] || {}).reduce(
+        (acc, key) => {
+          acc[key] =
+            key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ");
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
 
     // Map data to worksheet format, only including mapped columns
     const worksheetData = data.map((item) => {
@@ -151,8 +239,25 @@ export function exportToExcel<T extends ExportableData>(
       // If headers are provided, only include those columns
       const columnsToExport = headers || Object.keys(mapping);
       for (const key of columnsToExport) {
-        if (key in item) {
-          row[mapping[key]] = item[key];
+        // Get value, supporting nested properties and computed fields
+        let value: unknown;
+
+        // First, try to get computed field
+        const computed = computeDerivedField(item, key);
+        if (computed !== undefined) {
+          value = computed;
+        } else if (key.includes(".")) {
+          value = getNestedValue(item, key);
+        } else if (key in item) {
+          value = item[key];
+        } else {
+          value = undefined;
+        }
+
+        // Convert to exportable format
+        if (value !== undefined) {
+          const stringValue = valueToString(value);
+          row[mapping[key]] = stringValue;
         }
       }
       return row;
@@ -202,7 +307,7 @@ export async function exportData<T extends ExportableData>(
     columnMapping?: Record<string, string>;
     columnWidths?: Array<{ wch: number }>;
     entityName?: string;
-  }
+  },
 ): Promise<boolean> {
   // Use a consistent toast ID to ensure only one toast is shown at a time
   const TOAST_ID = "export-data-toast";
@@ -248,7 +353,7 @@ export async function exportData<T extends ExportableData>(
         exportData,
         filename,
         options?.headers,
-        options?.columnMapping
+        options?.columnMapping,
       );
       if (success) {
         toast.success("Export successful", {
@@ -262,7 +367,7 @@ export async function exportData<T extends ExportableData>(
         filename,
         options?.columnMapping,
         options?.columnWidths,
-        options?.headers
+        options?.headers,
       );
       if (success) {
         toast.success("Export successful", {

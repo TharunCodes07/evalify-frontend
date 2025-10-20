@@ -26,7 +26,7 @@ function useReviewsForDataTable(
   sortBy: string,
   sortOrder: string,
   courseId?: string,
-  status?: string
+  status?: string,
 ) {
   return useReviews(
     search,
@@ -35,7 +35,7 @@ function useReviewsForDataTable(
     sortBy,
     sortOrder as "asc" | "desc",
     courseId,
-    status
+    status,
   );
 }
 
@@ -102,7 +102,7 @@ export default function ReviewsPage() {
     search: string,
     dateRange: { from_date: string; to_date: string },
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
   ) => {
     return useReviewsForDataTable(
       page,
@@ -112,7 +112,7 @@ export default function ReviewsPage() {
       sortBy,
       sortOrder,
       undefined, // courseId - could be added later
-      undefined // statusFilter removed
+      undefined, // statusFilter removed
     );
   };
 
@@ -122,7 +122,7 @@ export default function ReviewsPage() {
     review: Review,
     index: number,
     isSelected: boolean,
-    onToggleSelect: () => void
+    onToggleSelect: () => void,
   ) => {
     const reviewItem = review as Review & Record<string, unknown>;
     const status = calculateReviewStatus(review.startDate, review.endDate);
@@ -202,9 +202,30 @@ export default function ReviewsPage() {
             }}
             exportConfig={{
               entityName: "reviews",
-              columnMapping: {},
-              columnWidths: [],
-              headers: [],
+              columnMapping: {
+                name: "Review Name",
+                status: "Status",
+                startDate: "Start Date",
+                endDate: "End Date",
+                isPublished: "Publication Status",
+                "createdBy.name": "Created By Name",
+              },
+              columnWidths: [
+                { wch: 30 }, // name
+                { wch: 15 }, // status
+                { wch: 15 }, // startDate
+                { wch: 15 }, // endDate
+                { wch: 20 }, // isPublished
+                { wch: 20 }, // createdBy.name
+              ],
+              headers: [
+                "name",
+                "status",
+                "startDate",
+                "endDate",
+                "isPublished",
+                "createdBy.name",
+              ],
             }}
             getColumns={columnsWrapper}
             fetchDataFn={useFilteredReviews}
@@ -222,9 +243,30 @@ export default function ReviewsPage() {
             }}
             exportConfig={{
               entityName: "reviews",
-              columnMapping: {},
-              columnWidths: [],
-              headers: [],
+              columnMapping: {
+                name: "Review Name",
+                status: "Status",
+                startDate: "Start Date",
+                endDate: "End Date",
+                isPublished: "Publication Status",
+                "createdBy.name": "Created By Name",
+              },
+              columnWidths: [
+                { wch: 30 }, // name
+                { wch: 15 }, // status
+                { wch: 15 }, // startDate
+                { wch: 15 }, // endDate
+                { wch: 20 }, // isPublished
+                { wch: 20 }, // createdBy.name
+              ],
+              headers: [
+                "name",
+                "status",
+                "startDate",
+                "endDate",
+                "isPublished",
+                "createdBy.name",
+              ],
             }}
             getColumns={columnsWrapper}
             renderGridItem={renderReviewGrid}

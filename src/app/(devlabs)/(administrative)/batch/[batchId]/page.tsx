@@ -49,7 +49,7 @@ export default function BatchDetailsPage() {
     _dateRange: { from_date: string; to_date: string },
     sortBy: string,
     sortOrder: string,
-    _columnFilters?: Record<string, string[]>
+    _columnFilters?: Record<string, string[]>,
   ) {
     return useBatchStudents(
       batchId,
@@ -57,7 +57,7 @@ export default function BatchDetailsPage() {
       page - 1,
       pageSize,
       sortBy,
-      sortOrder
+      sortOrder,
     );
   }
   useBatchStudentsForDataTable.isQueryHook = true;
@@ -109,8 +109,12 @@ export default function BatchDetailsPage() {
               email: "Email",
               phoneNumber: "Phone Number",
             },
-            columnWidths: [{ wch: 30 }, { wch: 30 }, { wch: 20 }],
-            headers: ["Name", "Email", "Phone Number"],
+            columnWidths: [
+              { wch: 30 }, // name
+              { wch: 35 }, // email
+              { wch: 20 }, // phoneNumber
+            ],
+            headers: ["name", "email", "phoneNumber"],
           }}
           getColumns={columnsWrapper}
           fetchDataFn={useBatchStudentsForDataTable}

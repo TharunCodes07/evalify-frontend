@@ -17,7 +17,7 @@ function useUsersForDataTable(
   dateRange: { from_date: string; to_date: string },
   sortBy: string,
   sortOrder: string,
-  columnFilters?: Record<string, string[]>
+  columnFilters?: Record<string, string[]>,
 ) {
   return useUsers(search, page - 1, pageSize, columnFilters, sortBy, sortOrder);
 }
@@ -29,7 +29,7 @@ export default function UsersPage() {
   const { success, error } = useToast();
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>(
-    []
+    [],
   );
 
   const columsWrapper = () => {
@@ -123,9 +123,21 @@ export default function UsersPage() {
           }}
           exportConfig={{
             entityName: "users",
-            columnMapping: {},
-            columnWidths: [],
-            headers: [],
+            columnMapping: {
+              name: "Name",
+              email: "Email",
+              phoneNumber: "Phone Number",
+              role: "Role",
+              isActive: "Status",
+            },
+            columnWidths: [
+              { wch: 25 }, // name
+              { wch: 30 }, // email
+              { wch: 15 }, // phoneNumber
+              { wch: 15 }, // role
+              { wch: 15 }, // isActive
+            ],
+            headers: ["name", "email", "phoneNumber", "role", "isActive"],
           }}
           getColumns={columsWrapper}
           fetchDataFn={useUsersForDataTable}

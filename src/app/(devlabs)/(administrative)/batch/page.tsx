@@ -18,7 +18,7 @@ function useBatchesForDataTable(
   dateRange: { from_date: string; to_date: string },
   sortBy: string,
   sortOrder: string,
-  columnFilters?: Record<string, string[]>
+  columnFilters?: Record<string, string[]>,
 ) {
   return useBatches(
     search,
@@ -26,7 +26,7 @@ function useBatchesForDataTable(
     pageSize,
     columnFilters,
     sortBy,
-    sortOrder
+    sortOrder,
   );
 }
 
@@ -108,17 +108,23 @@ export default function BatchesPage() {
             columnMapping: {
               name: "Batch Name",
               graduationYear: "Graduation Year",
-              department: "Department",
+              "department.name": "Department",
               section: "Section",
               isActive: "Status",
             },
-            columnWidths: [{ wch: 30 }, { wch: 15 }, { wch: 15 }],
+            columnWidths: [
+              { wch: 30 }, // name
+              { wch: 20 }, // graduationYear
+              { wch: 25 }, // department
+              { wch: 15 }, // section
+              { wch: 15 }, // isActive
+            ],
             headers: [
-              "Batch Name",
-              "Graduation Year",
-              "Department",
-              "Section",
-              "Status",
+              "name",
+              "graduationYear",
+              "department.name",
+              "section",
+              "isActive",
             ],
           }}
           getColumns={columnsWrapper}

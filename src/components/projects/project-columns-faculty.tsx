@@ -53,7 +53,7 @@ export const getColumnsFaculty = (): ColumnDef<Project>[] => {
       size: 50,
     },
     {
-      accessorKey: "name",
+      accessorKey: "title",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -97,7 +97,7 @@ export const getColumnsFaculty = (): ColumnDef<Project>[] => {
           <div className="flex justify-center">
             <span
               className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                status
+                status,
               )}`}
             >
               {getDisplayStatus(status)}

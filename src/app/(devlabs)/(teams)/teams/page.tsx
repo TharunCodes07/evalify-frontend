@@ -26,14 +26,14 @@ function useTeamsForDataTable(
   search: string,
   dateRange: { from_date: string; to_date: string },
   sortBy: string,
-  sortOrder: string
+  sortOrder: string,
 ) {
   return useTeams(
     search,
     page - 1,
     pageSize,
     sortBy,
-    sortOrder as "asc" | "desc"
+    sortOrder as "asc" | "desc",
   );
 }
 
@@ -137,7 +137,7 @@ export default function TeamsPage() {
     team: Team,
     index: number,
     isSelected: boolean,
-    onToggleSelect: () => void
+    onToggleSelect: () => void,
   ) => {
     return (
       <GridItem<Team>
@@ -207,9 +207,30 @@ export default function TeamsPage() {
             }}
             exportConfig={{
               entityName: "teams",
-              columnMapping: {},
-              columnWidths: [],
-              headers: [],
+              columnMapping: {
+                name: "Team Name",
+                description: "Description",
+                memberCount: "Member Count",
+                projectCount: "Project Count",
+                createdAt: "Created Date",
+                updatedAt: "Last Updated",
+              },
+              columnWidths: [
+                { wch: 25 }, // name
+                { wch: 40 }, // description
+                { wch: 15 }, // memberCount
+                { wch: 15 }, // projectCount
+                { wch: 15 }, // createdAt
+                { wch: 15 }, // updatedAt
+              ],
+              headers: [
+                "name",
+                "description",
+                "memberCount",
+                "projectCount",
+                "createdAt",
+                "updatedAt",
+              ],
             }}
             getColumns={columnsWrapper}
             fetchDataFn={useTeamsForDataTable}
@@ -223,9 +244,30 @@ export default function TeamsPage() {
             }}
             exportConfig={{
               entityName: "teams",
-              columnMapping: {},
-              columnWidths: [],
-              headers: [],
+              columnMapping: {
+                name: "Team Name",
+                description: "Description",
+                memberCount: "Member Count",
+                projectCount: "Project Count",
+                createdAt: "Created Date",
+                updatedAt: "Last Updated",
+              },
+              columnWidths: [
+                { wch: 25 }, // name
+                { wch: 40 }, // description
+                { wch: 15 }, // memberCount
+                { wch: 15 }, // projectCount
+                { wch: 15 }, // createdAt
+                { wch: 15 }, // updatedAt
+              ],
+              headers: [
+                "name",
+                "description",
+                "memberCount",
+                "projectCount",
+                "createdAt",
+                "updatedAt",
+              ],
             }}
             getColumns={columnsWrapper}
             renderGridItem={renderTeamGrid}

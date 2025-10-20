@@ -16,14 +16,14 @@ function useArchivesForDataTable(
   search: string,
   dateRange: { from_date: string; to_date: string },
   sortBy: string,
-  sortOrder: string
+  sortOrder: string,
 ) {
   return useArchives(
     search,
     page - 1,
     pageSize,
     sortBy,
-    sortOrder as "asc" | "desc"
+    sortOrder as "asc" | "desc",
   );
 }
 
@@ -57,7 +57,7 @@ export default function ArchivesPage() {
     project: Project,
     index: number,
     isSelected: boolean,
-    onToggleSelect: () => void
+    onToggleSelect: () => void,
   ) => {
     return (
       <GridItem<Project>
@@ -133,10 +133,31 @@ export default function ArchivesPage() {
               enableDateFilter: false,
             }}
             exportConfig={{
-              entityName: "archived",
-              columnMapping: {},
-              columnWidths: [],
-              headers: [],
+              entityName: "archived-projects",
+              columnMapping: {
+                title: "Project Title",
+                description: "Description",
+                status: "Status",
+                teamMemberCount: "Team Members",
+                courseCount: "Course Count",
+                updatedAt: "Completed Date",
+              },
+              columnWidths: [
+                { wch: 30 }, // title
+                { wch: 50 }, // description
+                { wch: 15 }, // status
+                { wch: 15 }, // teamMemberCount
+                { wch: 15 }, // courseCount
+                { wch: 15 }, // updatedAt
+              ],
+              headers: [
+                "title",
+                "description",
+                "status",
+                "teamMemberCount",
+                "courseCount",
+                "updatedAt",
+              ],
             }}
             getColumns={columnsWrapper}
             fetchDataFn={useArchivesForDataTable}
@@ -149,10 +170,31 @@ export default function ArchivesPage() {
               enableUrlState: false,
             }}
             exportConfig={{
-              entityName: "archived",
-              columnMapping: {},
-              columnWidths: [],
-              headers: [],
+              entityName: "archived-projects",
+              columnMapping: {
+                title: "Project Title",
+                description: "Description",
+                status: "Status",
+                teamMemberCount: "Team Members",
+                courseCount: "Course Count",
+                updatedAt: "Completed Date",
+              },
+              columnWidths: [
+                { wch: 30 }, // title
+                { wch: 50 }, // description
+                { wch: 15 }, // status
+                { wch: 15 }, // teamMemberCount
+                { wch: 15 }, // courseCount
+                { wch: 15 }, // updatedAt
+              ],
+              headers: [
+                "title",
+                "description",
+                "status",
+                "teamMemberCount",
+                "courseCount",
+                "updatedAt",
+              ],
             }}
             getColumns={columnsWrapper}
             renderGridItem={renderArchiveGrid}

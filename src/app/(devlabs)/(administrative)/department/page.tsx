@@ -14,7 +14,7 @@ function useDepartmentsForDataTable(
   dateRange: { from_date: string; to_date: string },
   sortBy: string,
   sortOrder: string,
-  columnFilters?: Record<string, string[]>
+  columnFilters?: Record<string, string[]>,
 ) {
   return useDepartments(
     search,
@@ -22,7 +22,7 @@ function useDepartmentsForDataTable(
     pageSize,
     columnFilters,
     sortBy,
-    sortOrder as "asc" | "desc"
+    sortOrder as "asc" | "desc",
   );
 }
 
@@ -35,7 +35,7 @@ export default function DepartmentsPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [departmentToDelete, setDepartmentToDelete] = useState<string | null>(
-    null
+    null,
   );
 
   const handleEdit = (department: Department) => {
@@ -70,10 +70,13 @@ export default function DepartmentsPage() {
             entityName: "departments",
             columnMapping: {
               name: "Department Name",
-              batches: "Number of Batches",
+              batchCount: "Number of Batches",
             },
-            columnWidths: [{ wch: 30 }, { wch: 15 }],
-            headers: ["Department Name", "Number of Batches"],
+            columnWidths: [
+              { wch: 35 }, // name
+              { wch: 20 }, // batchCount
+            ],
+            headers: ["name", "batchCount"],
           }}
           getColumns={columnsWrapper}
           fetchDataFn={useDepartmentsForDataTable}
