@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axios/axios-client";
 import { Project } from "@/types/types";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 
 interface DataTableResponse {
   data: Project[];
@@ -19,10 +19,9 @@ export const useProjectsByCourse = (
   page: number = 0,
   size: number = 10,
   sortBy?: string,
-  sortOrder?: "asc" | "desc"
+  sortOrder?: "asc" | "desc",
 ) => {
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { user } = useSessionContext();
 
   const query = useQuery({
     queryKey: [

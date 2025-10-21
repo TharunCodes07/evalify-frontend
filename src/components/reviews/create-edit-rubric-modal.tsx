@@ -22,7 +22,7 @@ import { RubricCriteriaTable } from "./rubric-criteria-table";
 import { useMutation } from "@tanstack/react-query";
 import rubricQueries from "@/repo/rubrics-queries/rubrics-queries";
 import { toast } from "sonner";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { cn } from "@/lib/utils";
 import { Check, X } from "lucide-react";
 
@@ -39,16 +39,15 @@ export function CreateEditRubricModal({
   onSave,
   existingRubric,
 }: CreateEditRubricModalProps) {
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { user, session } = useSessionContext();
   const [name, setName] = useState("");
   const [isShared, setIsShared] = useState(false);
   const [criteria, setCriteria] = useState<RubricCriterionData[]>([]);
 
+  const userGroups = session?.user?.groups as string[] | undefined;
   const userCanShare =
-    user?.groups &&
-    ((user?.groups as string[]).includes("admin") ||
-      (user?.groups as string[]).includes("manager"));
+    userGroups &&
+    (userGroups.includes("admin") || userGroups.includes("manager"));
 
   useEffect(() => {
     if (isOpen) {
@@ -56,7 +55,7 @@ export function CreateEditRubricModal({
         setName(existingRubric.name);
         setIsShared(existingRubric.isShared);
         setCriteria(
-          existingRubric.criteria.map(({ id: _id, ...rest }) => rest)
+          existingRubric.criteria.map(({ id: _id, ...rest }) => rest),
         );
       } else {
         setName("");
@@ -163,7 +162,7 @@ export function CreateEditRubricModal({
                   className={cn(
                     "w-[150px] justify-start",
                     isShared &&
-                      "border-green-600 text-green-600 hover:text-green-700"
+                      "border-green-600 text-green-600 hover:text-green-700",
                   )}
                 >
                   {isShared ? (

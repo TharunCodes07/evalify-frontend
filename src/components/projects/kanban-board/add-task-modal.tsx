@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import "react-quill/dist/quill.snow.css";
 import { kanbanAPI } from "@/repo/project-queries/kanban-queries";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 
 interface AddTaskModalProps {
   columnId: string;
@@ -29,7 +29,7 @@ export function AddTaskModal({ columnId, projectId }: AddTaskModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
 
   const createTaskMutation = useMutation({
     mutationFn: (taskData: {

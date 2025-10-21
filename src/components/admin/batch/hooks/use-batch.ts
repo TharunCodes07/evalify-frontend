@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Batch, User } from "@/types/types";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import batchQueries from "@/repo/batch-queries/batch-queries";
 import axiosInstance from "@/lib/axios/axios-client";
 
@@ -49,10 +49,9 @@ export const useBatches = (
   size: number = 10,
   columnFilters?: Record<string, string[]>,
   sortBy?: string,
-  sortOrder?: string
+  sortOrder?: string,
 ) => {
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { user } = useSessionContext();
   const isActiveFilter = columnFilters?.isActive?.[0];
 
   const query = useQuery({
@@ -108,7 +107,7 @@ export const useBatches = (
       if (isActiveFilter !== undefined) {
         const isActiveValue = isActiveFilter === "true";
         filteredData = filteredData.filter(
-          (batch: Batch) => batch.isActive === isActiveValue
+          (batch: Batch) => batch.isActive === isActiveValue,
         );
       }
 
@@ -144,7 +143,7 @@ export const useBatchStudents = (
   page: number = 0,
   size: number = 10,
   sortBy?: string,
-  sortOrder?: string
+  sortOrder?: string,
 ) => {
   const query = useQuery({
     queryKey: [
@@ -163,7 +162,7 @@ export const useBatchStudents = (
         size,
         searchQuery,
         sortBy,
-        sortOrder
+        sortOrder,
       );
       return response;
     },

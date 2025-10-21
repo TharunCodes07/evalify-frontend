@@ -45,7 +45,7 @@ import userQueries from "@/repo/user-queries/user-queries";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@/lib/utils";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -72,7 +72,7 @@ export function TeamForm({
 }: TeamFormProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
 
   const form = useForm<TeamFormValues>({
     resolver: zodResolver(formSchema),

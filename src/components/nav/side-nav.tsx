@@ -3,9 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useSessionContext } from "@/lib/session-context";
 import { useEffect, useState } from "react";
 import {
   Book,
@@ -189,7 +190,7 @@ function ThemeToggle({ mounted }: { mounted: boolean }) {
 }
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
@@ -205,8 +206,8 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
         ...group,
         items: group.items.filter((item) =>
           item.roles.some((role) =>
-            (session.user.groups as string[]).includes(role)
-          )
+            (session.user.groups as string[]).includes(role),
+          ),
         ),
       }))
       .filter((group) => group.items.length > 0);

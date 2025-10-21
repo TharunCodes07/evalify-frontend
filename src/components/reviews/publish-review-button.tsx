@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import axiosInstance from "@/lib/axios/axios-client";
@@ -28,7 +28,7 @@ export function PublishReviewButton({
   className,
   onStatusChange,
 }: PublishReviewButtonProps) {
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -51,7 +51,7 @@ export function PublishReviewButton({
       toast.success(
         action === "publish"
           ? "Review published successfully"
-          : "Review unpublished successfully"
+          : "Review unpublished successfully",
       );
 
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
@@ -71,7 +71,7 @@ export function PublishReviewButton({
       toast.error(
         `Failed to ${
           isPublished ? "unpublish" : "publish"
-        } review: ${errorMessage}`
+        } review: ${errorMessage}`,
       );
     },
     onSettled: () => {

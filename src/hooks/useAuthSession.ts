@@ -1,8 +1,9 @@
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { useCallback } from "react";
 
 export function useAuthSession() {
-  const { data: session, status, update } = useSession();
+  const { session, status, update, isAuthenticated, isLoading } =
+    useSessionContext();
 
   const clearRegistrationFlag = useCallback(async () => {
     try {
@@ -14,9 +15,7 @@ export function useAuthSession() {
     }
   }, [update]);
 
-  const isAuthenticated = status === "authenticated" && !!session?.user;
   const needsRegistration = session?.needsRegistration === true;
-  const isLoading = status === "loading";
 
   return {
     session,

@@ -18,7 +18,7 @@ import { DeleteTaskDialog } from "./delete-task-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { Edit, Trash2 } from "lucide-react";
 
 interface KanbanBoardPageProps {
@@ -81,7 +81,7 @@ function KanbanBoardSkeleton() {
                       </div>
                       <Skeleton className="h-3 w-16 mt-2" />
                     </div>
-                  )
+                  ),
                 )}
               </div>
             </div>
@@ -95,11 +95,11 @@ function KanbanBoardSkeleton() {
 export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
   const [kanbanTasks, setKanbanTasks] = useState<EnhancedKanbanItem[]>([]);
   const [selectedTask, setSelectedTask] = useState<EnhancedKanbanItem | null>(
-    null
+    null,
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
   const {
     data: kanbanData,
     isLoading,
@@ -195,7 +195,7 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
 
     movedTask = newData.find((newTask) => {
       const oldTask = previousTasks.find(
-        (oldTask) => oldTask.id === newTask.id
+        (oldTask) => oldTask.id === newTask.id,
       );
       return oldTask && oldTask.column !== newTask.column;
     });
@@ -203,21 +203,21 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
     if (!movedTask) {
       for (const newTask of newData) {
         const oldTask = previousTasks.find(
-          (oldTask) => oldTask.id === newTask.id
+          (oldTask) => oldTask.id === newTask.id,
         );
         if (oldTask && oldTask.column === newTask.column) {
           const oldTasksInColumn = previousTasks.filter(
-            (task) => task.column === oldTask.column
+            (task) => task.column === oldTask.column,
           );
           const newTasksInColumn = newData.filter(
-            (task) => task.column === newTask.column
+            (task) => task.column === newTask.column,
           );
 
           const oldPosition = oldTasksInColumn.findIndex(
-            (task) => task.id === newTask.id
+            (task) => task.id === newTask.id,
           );
           const newPosition = newTasksInColumn.findIndex(
-            (task) => task.id === newTask.id
+            (task) => task.id === newTask.id,
           );
 
           if (oldPosition !== newPosition) {
@@ -231,7 +231,7 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
 
     if (movedTask) {
       const tasksInColumn = newData.filter(
-        (task) => task.column === movedTask.column
+        (task) => task.column === movedTask.column,
       );
       const position =
         targetPosition >= 0
@@ -368,12 +368,12 @@ export default function KanbanBoardPage({ id }: KanbanBoardPageProps) {
                       task.updatedAt &&
                       task.createdAt !== task.updatedAt
                         ? `${shortDateFormatter.format(
-                            new Date(task.createdAt)
+                            new Date(task.createdAt),
                           )} - ${shortDateFormatter.format(
-                            new Date(task.updatedAt)
+                            new Date(task.updatedAt),
                           )}`
                         : shortDateFormatter.format(
-                            new Date(task.createdAt || task.updatedAt)
+                            new Date(task.createdAt || task.updatedAt),
                           )}
                     </p>
                   )}

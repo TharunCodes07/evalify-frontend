@@ -1,13 +1,12 @@
 "use client";
 
 import LoadingScreen from "@/components/ui/LoadingScreen";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { UserType, hasAccess } from "@/lib/utils/auth-utils";
 import AccessDenied from "./access-denied";
-import { useQuery } from "@tanstack/react-query";
-import userQueries from "@/repo/user-queries/user-queries";
+import { useUserExistence } from "@/hooks/useUserExistence";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -24,22 +23,14 @@ export default function AuthGuard({
   fallbackComponent = <AccessDenied />,
   allowPublicAccess = false,
 }: AuthGuardProps) {
-  const { data: session, status, update } = useSession();
+  const { session, status, update } = useSessionContext();
   const router = useRouter();
-
-  // Check if user exists when needsRegistration is true (prevents infinite loop)
-  const { data: userExistsData, isLoading: checkingUserExists } = useQuery({
-    queryKey: ["checkUserExists", session?.user?.email],
-    queryFn: () => userQueries.checkUserExists(session?.user?.email || ""),
-    enabled: !!session?.user?.email && !!session?.needsRegistration,
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 10 * 60 * 1000, // 10 minutes - user existence doesn't change frequently
-    gcTime: 15 * 60 * 1000, // 15 minutes
-  });
+  const { data: userExistsData, isLoading: checkingUserExists } =
+    useUserExistence();
 
   useEffect(() => {
-    if (status === "loading" || checkingUserExists) return;
+    if ((status === "loading" || checkingUserExists) && !allowPublicAccess)
+      return;
 
     // Allow public access if specified
     if (allowPublicAccess) return;
@@ -69,12 +60,8 @@ export default function AuthGuard({
     update,
   ]);
 
+  // Only show loading for initial auth check, not for user existence check
   if (status === "loading" && !allowPublicAccess) {
-    return <LoadingScreen />;
-  }
-
-  // Show loading while checking user existence to prevent flicker
-  if (session?.needsRegistration && checkingUserExists) {
     return <LoadingScreen />;
   }
 
@@ -83,8 +70,23 @@ export default function AuthGuard({
     return <>{children}</>;
   }
 
+  // Don't render anything if not authenticated
   if (!session?.user) {
     return null;
+  }
+
+  // Show loading only during initial user existence check to prevent flicker
+  // But timeout after 500ms to show content regardless
+  if (session?.needsRegistration && checkingUserExists) {
+    // Use a simpler inline loader instead of full screen
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent"></div>
+          <p className="mt-2 text-sm text-gray-400">Verifying...</p>
+        </div>
+      </div>
+    );
   }
 
   if (session?.needsRegistration && !userExistsData?.exists) {
@@ -110,19 +112,10 @@ export function RegistrationGuard({
   children: React.ReactNode;
   fallbackComponent?: React.ReactNode;
 }) {
-  const { data: session, status, update } = useSession();
+  const { session, status, update } = useSessionContext();
   const router = useRouter();
-
-  // Check if user exists to prevent infinite loops
-  const { data: userExistsData, isLoading: checkingUserExists } = useQuery({
-    queryKey: ["checkUserExists", session?.user?.email],
-    queryFn: () => userQueries.checkUserExists(session?.user?.email || ""),
-    enabled: !!session?.user?.email,
-    retry: 3,
-    retryDelay: 1000,
-    staleTime: 10 * 60 * 1000, // 10 minutes - user existence doesn't change frequently
-    gcTime: 15 * 60 * 1000, // 15 minutes
-  });
+  const { data: userExistsData, isLoading: checkingUserExists } =
+    useUserExistence();
 
   useEffect(() => {
     if (status === "loading" || checkingUserExists) return;

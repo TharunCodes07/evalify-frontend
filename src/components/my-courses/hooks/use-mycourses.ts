@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { Course } from "@/types/types";
 import axiosInstance from "@/lib/axios/axios-client";
 
@@ -18,10 +18,9 @@ export const useMyCourses = (
   page: number = 0,
   size: number = 10,
   sortBy: string = "name",
-  sortOrder: "asc" | "desc" = "asc"
+  sortOrder: "asc" | "desc" = "asc",
 ) => {
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { user } = useSessionContext();
 
   const query = useQuery({
     queryKey: [

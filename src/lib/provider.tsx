@@ -3,9 +3,9 @@
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { type ThemeProviderProps } from "next-themes";
-// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { SessionContextProvider } from "./session-context";
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -43,11 +43,17 @@ export function Providers({ children }: ProvidersProps) {
       enableSystem
       disableTransitionOnChange
     >
-      <SessionProvider>
-        <QueryClientProvider client={queryClient}>
-          {children}
-          {/* <ReactQueryDevtools initialIsOpen={false} /> */}
-        </QueryClientProvider>
+      <SessionProvider
+        refetchInterval={0}
+        refetchOnWindowFocus={false}
+        refetchWhenOffline={false}
+      >
+        <SessionContextProvider>
+          <QueryClientProvider client={queryClient}>
+            {children}
+            {/* <ReactQueryDevtools initialIsOpen={false} /> */}
+          </QueryClientProvider>
+        </SessionContextProvider>
       </SessionProvider>
     </NextThemesProvider>
   );

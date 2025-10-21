@@ -3,6 +3,37 @@ import { getSession, signOut } from "next-auth/react";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://localhost:8090";
+
+let sessionCache: {
+  data: { access_token?: string; error?: string | null } | null;
+  expiresAt: number;
+} | null = null;
+
+const SESSION_CACHE_DURATION = 4 * 60 * 1000;
+
+async function getCachedSession() {
+  if (typeof window === "undefined") return null;
+
+  const now = Date.now();
+
+  if (sessionCache && sessionCache.expiresAt > now) {
+    return sessionCache.data;
+  }
+
+  const session = await getSession();
+
+  sessionCache = {
+    data: session as { access_token?: string; error?: string | null } | null,
+    expiresAt: now + SESSION_CACHE_DURATION,
+  };
+
+  return session;
+}
+
+export function clearSessionCache() {
+  sessionCache = null;
+}
+
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -14,7 +45,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   async (config) => {
     if (typeof window !== "undefined") {
-      const session = await getSession();
+      const session = await getCachedSession();
 
       if (session?.access_token) {
         config.headers.Authorization = `Bearer ${session.access_token}`;
@@ -25,7 +56,7 @@ axiosInstance.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 axiosInstance.interceptors.response.use(
@@ -37,6 +68,8 @@ axiosInstance.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+
+      clearSessionCache();
 
       const session = await getSession();
       if (
@@ -62,7 +95,7 @@ axiosInstance.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;

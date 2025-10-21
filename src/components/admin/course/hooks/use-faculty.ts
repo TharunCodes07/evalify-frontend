@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { courseQueries } from "@/repo/course-queries/course-queries";
 
 export const useFaculty = () => {
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
 
   return useQuery({
     queryKey: ["faculty"],

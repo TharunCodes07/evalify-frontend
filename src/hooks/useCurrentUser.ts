@@ -1,11 +1,8 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { User } from "@/types/types";
+import { useSessionContext } from "@/lib/session-context";
 
 export function useCurrentUser() {
-  const { data: session } = useSession();
-  const user = session?.user as User | undefined;
-
+  const { user } = useSessionContext();
   return user;
 }

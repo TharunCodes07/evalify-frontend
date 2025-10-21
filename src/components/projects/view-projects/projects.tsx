@@ -25,7 +25,7 @@ import { Project, ProjectStatus } from "@/types/types";
 import { projectQueries } from "@/repo/project-queries/project-queries";
 import { CreateProjectRequest } from "@/components/projects/types/types";
 import { ProjectForm } from "@/components/projects/view-projects/project-form";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 
 export const ProjectsSkeleton = () => (
   <Card>
@@ -76,7 +76,7 @@ const getStatusColor = (status: ProjectStatus) => {
 };
 
 export function Projects({ teamId }: ProjectsProps) {
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab") || "live";
@@ -165,7 +165,7 @@ export function Projects({ teamId }: ProjectsProps) {
                     </h4>
                     <Badge
                       className={`ml-2 flex items-center gap-1 text-xs ${getStatusColor(
-                        project.status
+                        project.status,
                       )}`}
                     >
                       {getStatusIcon(project.status)}

@@ -25,7 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { kanbanAPI } from "@/repo/project-queries/kanban-queries";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { useToast } from "@/hooks/use-toast";
 import { UpdateTaskRequest, User } from "@/types/types";
 
@@ -56,7 +56,7 @@ export function EditTaskModal({
   isOpen,
   onClose,
 }: EditTaskModalProps) {
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
   const { success, error: toastError } = useToast();
   const queryClient = useQueryClient();
 
