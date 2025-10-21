@@ -3,7 +3,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle } from "lucide-react";
 import { notFound, useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { TeamHeader } from "@/components/projects/view-projects/team-header";
 import { Projects } from "@/components/projects/view-projects/projects";
 
@@ -30,13 +30,13 @@ const TeamDetailsSkeleton = () => (
 
 export default function TeamDetailsPage() {
   const { teamId } = useParams();
-  const { status: sessionStatus } = useSession();
+  const { status, isLoading } = useSessionContext();
 
-  if (sessionStatus === "loading") {
+  if (isLoading) {
     return <TeamDetailsSkeleton />;
   }
 
-  if (sessionStatus === "unauthenticated") {
+  if (status === "unauthenticated") {
     return (
       <div className="container mx-auto px-4 py-8">
         <Alert variant="destructive">

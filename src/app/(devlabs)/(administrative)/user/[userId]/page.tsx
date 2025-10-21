@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { useParams } from "next/navigation";
 import userQueries from "@/repo/user-queries/user-queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function UserProfilePage() {
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
   const params = useParams();
   const userId = params.userId as string;
 

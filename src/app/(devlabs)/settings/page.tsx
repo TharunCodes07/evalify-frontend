@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { useTheme } from "next-themes";
 import AuthGuard from "@/components/auth/AuthGuard";
 import {
@@ -34,7 +34,7 @@ function capitalizeWord(word: string) {
 }
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
   const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("account");
   const [fontSize, setFontSize] = useState([16]);
@@ -47,7 +47,7 @@ export default function SettingsPage() {
     setFontSize(size);
     document.documentElement.style.setProperty(
       "--base-font-size",
-      `${size[0]}px`
+      `${size[0]}px`,
     );
   };
 
@@ -143,7 +143,7 @@ export default function SettingsPage() {
                           disabled={true}
                           placeholder="Enter your full name"
                           defaultValue={capitalizeWord(
-                            session?.user?.name || ""
+                            session?.user?.name || "",
                           )}
                         />
                       </div>

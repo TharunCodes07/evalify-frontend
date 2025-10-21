@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { useParams, useRouter } from "next/navigation";
 import { courseQueries } from "@/repo/course-queries/course-queries";
 import { projectQueries } from "@/repo/project-queries/project-queries";
@@ -47,7 +47,7 @@ const CoursePerformancePage = () => {
   const params = useParams();
   const router = useRouter();
   const courseId = params.courseid as string;
-  const { data: session, status } = useSession();
+  const { session, status } = useSessionContext();
   const studentId = session?.user?.id;
 
   const {
@@ -172,11 +172,11 @@ const CoursePerformancePage = () => {
 
   const totalScore = completedReviews.reduce(
     (acc, curr) => acc + (curr.score || 0),
-    0
+    0,
   );
   const maxScore = completedReviews.reduce(
     (acc, curr) => acc + (curr.totalScore || 0),
-    0
+    0,
   );
   const normalizedAverageScore =
     maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
@@ -188,7 +188,7 @@ const CoursePerformancePage = () => {
       acc[category] = (acc[category] || 0) + 1;
       return acc;
     },
-    {}
+    {},
   );
 
   const pieChartData = Object.entries(scoreDistribution).map(
@@ -196,7 +196,7 @@ const CoursePerformancePage = () => {
       category,
       count,
       fill: categoryColors[category],
-    })
+    }),
   );
 
   const barChartData = completedReviews.map((review) => ({
@@ -250,7 +250,7 @@ const CoursePerformancePage = () => {
             link.setAttribute("href", url);
             link.setAttribute(
               "download",
-              `${courseData?.code}_performance.csv`
+              `${courseData?.code}_performance.csv`,
             );
             document.body.appendChild(link);
             link.click();

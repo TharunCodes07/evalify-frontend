@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, ReactNode, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { Session } from "next-auth";
 import { User } from "@/types/types";
@@ -19,18 +19,28 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 export function SessionContextProvider({ children }: { children: ReactNode }) {
   const { data: session, status, update } = useSession();
 
-  const user = session?.user as User | undefined;
-  const isAuthenticated = status === "authenticated" && !!session?.user;
+  // Memoize derived values to prevent unnecessary recalculations
+  const user = useMemo(
+    () => session?.user as User | undefined,
+    [session?.user],
+  );
+  const isAuthenticated = useMemo(
+    () => status === "authenticated" && !!session?.user,
+    [status, session?.user],
+  );
   const isLoading = status === "loading";
 
-  const value: SessionContextType = {
-    session,
-    status,
-    update,
-    user,
-    isAuthenticated,
-    isLoading,
-  };
+  const value: SessionContextType = useMemo(
+    () => ({
+      session,
+      status,
+      update,
+      user,
+      isAuthenticated,
+      isLoading,
+    }),
+    [session, status, update, user, isAuthenticated, isLoading],
+  );
 
   return (
     <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

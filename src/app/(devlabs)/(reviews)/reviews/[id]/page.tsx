@@ -11,7 +11,7 @@ import { ArrowLeft, Calendar, Users } from "lucide-react";
 import { format } from "date-fns";
 import { RubricDisplay } from "@/components/reviews/rubric-display";
 import { PublishReviewButton } from "@/components/reviews/publish-review-button";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import {
   calculateReviewStatus,
   getStatusColor,
@@ -22,7 +22,7 @@ export default function ReviewDetailPage() {
   const params = useParams();
   const router = useRouter();
   const reviewId = params.id as string;
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
   const { data: review, isLoading, error } = useReview(reviewId);
 
   const reviewStatus = useMemo(() => {

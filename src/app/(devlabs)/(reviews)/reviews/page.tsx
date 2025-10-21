@@ -14,7 +14,7 @@ import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import reviewQueries from "@/repo/review-queries/review-queries";
 import { useToast } from "@/hooks/use-toast";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { format } from "date-fns";
 import { calculateReviewStatus } from "@/utils/review-status";
 
@@ -46,7 +46,7 @@ export default function ReviewsPage() {
   const [reviewToDelete, setReviewToDelete] = useState<Review | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
   const { success, error: showError } = useToast();
 
   const deleteMutation = useMutation({

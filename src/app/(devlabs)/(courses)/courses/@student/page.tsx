@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { courseQueries } from "@/repo/course-queries/course-queries";
 import { StudentCourseCard } from "@/components/student-courses/student-course-card";
@@ -32,7 +32,7 @@ import { useRouter } from "next/navigation";
 type StudentCourseWithColor = StudentCourse & { color: string };
 
 export default function MyCoursesPage() {
-  const { data: session, status } = useSession();
+  const { session, status, isAuthenticated } = useSessionContext();
   const studentId = session?.user?.id;
   const router = useRouter();
   const handleCardClick = (course: StudentCourse) => {
@@ -45,11 +45,11 @@ export default function MyCoursesPage() {
   } = useQuery({
     queryKey: ["studentCourses", studentId],
     queryFn: () => courseQueries.getCourseByStudentId(),
-    enabled: status === "authenticated" && !!studentId,
+    enabled: isAuthenticated && !!studentId,
   });
 
   const assignColorsToCourses = (
-    coursesArr: StudentCourse[]
+    coursesArr: StudentCourse[],
   ): StudentCourseWithColor[] => {
     return coursesArr.map((course, index) => ({
       ...course,
@@ -59,7 +59,7 @@ export default function MyCoursesPage() {
 
   const coursesWithColor = useMemo(
     () => (courses ? assignColorsToCourses(courses) : []),
-    [courses]
+    [courses],
   );
 
   const performanceQueries = useQueries({
@@ -101,7 +101,7 @@ export default function MyCoursesPage() {
       filtered = filtered.filter(
         (c) =>
           c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.code.toLowerCase().includes(searchTerm.toLowerCase())
+          c.code.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
     filtered.sort((a, b) => {

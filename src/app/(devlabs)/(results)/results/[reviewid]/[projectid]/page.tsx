@@ -2,7 +2,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { resultQueries } from "@/repo/result-queries/result-queries";
 import { useQuery } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { useSessionContext } from "@/lib/session-context";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -86,7 +86,7 @@ const ResultsSkeleton = () => (
 
 export default function ResultsPage() {
   const { reviewid, projectid } = useParams();
-  const { data: session, status: sessionStatus } = useSession();
+  const { session, status } = useSessionContext();
   const router = useRouter();
   const {
     data: results,
@@ -105,11 +105,11 @@ export default function ResultsPage() {
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  if (sessionStatus === "loading" || isLoading) {
+  if (status === "loading" || isLoading) {
     return <ResultsSkeleton />;
   }
 
-  if (sessionStatus === "unauthenticated") {
+  if (status === "unauthenticated") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="w-full max-w-md border rounded-lg p-6">
