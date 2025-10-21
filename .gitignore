@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# unlighthouse testing
+/unlighthouse-testing/.unlighthouse/
+/unlighthouse-testing/reports/
+/unlighthouse-testing/.puppeteer_data/
+/unlighthouse-testing/discovered-dynamic-routes.json
+/unlighthouse-testing/discovered-dynamic-routes.txt
+/unlighthouse-testing/*.backup
+/unlighthouse-testing/*.png
+auth-failed-before-submit.png
+auth-stuck-after-submit.png
