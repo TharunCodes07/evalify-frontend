@@ -24,6 +24,7 @@ import {
   Settings,
   Moon,
   Sun,
+  Monitor,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -139,6 +140,13 @@ const navGroups: NavGroup[] = [
         url: "/department",
         roles: ["admin"],
         color: "text-teal-500",
+      },
+      {
+        title: "Lab",
+        icon: Monitor,
+        url: "/lab",
+        roles: ["admin"],
+        color: "text-sky-500",
       },
     ],
   },
