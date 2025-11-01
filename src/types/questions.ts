@@ -2,6 +2,7 @@
 export enum QuestionType {
   MCQ = "MCQ",
   MMCQ = "MMCQ",
+  TRUE_FALSE = "TRUE_FALSE",
   FILL_IN_BLANKS = "FILL_IN_BLANKS",
   MATCH_THE_FOLLOWING = "MATCH_THE_FOLLOWING",
   DESCRIPTIVE = "DESCRIPTIVE",
@@ -52,6 +53,7 @@ export interface BaseQuestion {
   negativeMarks: number;
   topics?: string[];
   bloomLevel?: BloomLevel;
+  attachedFiles?: string[];
 }
 
 // MCQ Question - extends BaseQuestion
@@ -64,6 +66,12 @@ export interface MCQQuestion extends BaseQuestion {
 export interface MMCQQuestion extends BaseQuestion {
   questionType: QuestionType.MMCQ;
   options: QuestionOption[];
+}
+
+// True/False Question - extends BaseQuestion
+export interface TrueFalseQuestion extends BaseQuestion {
+  questionType: QuestionType.TRUE_FALSE;
+  answer: boolean;
 }
 
 // Fill in the Blanks Question - extends BaseQuestion
@@ -103,13 +111,12 @@ export interface FileUploadQuestion extends BaseQuestion {
 export type Question =
   | MCQQuestion
   | MMCQQuestion
+  | TrueFalseQuestion
   | FillInBlanksQuestion
   | MatchTheFollowingQuestion
   | DescriptiveQuestion
   | CodingQuestion
   | FileUploadQuestion;
-
-// Supporting Interfaces
 
 // Question Option (for MCQ, MMCQ, and Match the Following)
 export interface QuestionOption {
@@ -119,6 +126,18 @@ export interface QuestionOption {
   isCorrect: boolean;
   marksWeightage?: number;
   matchPairId?: string; // Used for MATCH_THE_FOLLOWING
+}
+
+export type MCQOption = QuestionOption;
+
+export interface QuestionSettings {
+  marks: number;
+  difficulty: string;
+  bloomsTaxonomy: string;
+  co: number;
+  negativeMarks: number;
+  topicIds: string[];
+  isQuiz?: boolean;
 }
 
 // Fill in the Blanks Configuration
