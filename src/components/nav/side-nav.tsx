@@ -25,6 +25,7 @@ import {
   Moon,
   Sun,
   Monitor,
+  Database,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -86,6 +87,13 @@ const navGroups: NavGroup[] = [
         url: "/reviews",
         roles: ["faculty", "manager"],
         color: "text-emerald-500",
+      },
+      {
+        title: "Banks",
+        icon: Database,
+        url: "/bank",
+        roles: ["faculty", "manager"],
+        color: "text-violet-500",
       },
       {
         title: "Teams",
