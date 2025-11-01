@@ -31,6 +31,13 @@ const defaultNavigationConfig: NavigationConfig = {
       "[courseid]/results": "Results",
     },
   },
+  "/bank": {
+    label: "Banks",
+    dynamicSegments: {
+      uuid: "Questions",
+      "[id]/create": "Create",
+    },
+  },
   "/projects": {
     label: "Projects",
     dynamicSegments: {
@@ -84,6 +91,7 @@ const defaultNavigationConfig: NavigationConfig = {
     },
   },
   "/department": { label: "Departments" },
+  "/lab": { label: "Labs" },
   "/archives": { label: "Archives" },
   "/settings": { label: "Settings" },
   "/login": { label: "Login" },
