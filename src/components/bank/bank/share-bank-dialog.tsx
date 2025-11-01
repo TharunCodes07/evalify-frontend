@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,6 +25,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import bankQueries from "@/repo/bank-queries/bank-queries";
 import { Loader2, Search, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 interface ShareBankDialogProps {
   bank: QuestionBank;
@@ -42,6 +43,7 @@ export function ShareBankDialog({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [permission, setPermission] = useState("EDIT");
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const { data: searchResults = [], isLoading: isSearching } = useQuery({
     queryKey: ["userSearch", searchQuery],
@@ -120,9 +122,28 @@ export function ShareBankDialog({
   const alreadySharedIds = shares.map(
     (share: QuestionBankShare) => share.userId,
   );
-  const filteredResults = searchResults.filter(
-    (user: { id: string }) => !alreadySharedIds.includes(user.id),
+
+  const filteredResults = useMemo(
+    () =>
+      searchResults.filter(
+        (user: { id: string }) =>
+          !alreadySharedIds.includes(user.id) && user.id !== bank.owner.id,
+      ),
+    [searchResults, alreadySharedIds, bank.owner.id],
   );
+
+  const virtualizer = useVirtualizer({
+    count: filteredResults.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 60,
+    measureElement: (element: Element) =>
+      element.getBoundingClientRect().height,
+    overscan: 5,
+  });
+
+  useEffect(() => {
+    virtualizer.measure();
+  }, [filteredResults, virtualizer]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -150,42 +171,67 @@ export function ShareBankDialog({
           </div>
 
           {searchQuery.length >= 2 && (
-            <div className="border rounded-md max-h-48 overflow-y-auto">
+            <div className="border rounded-md overflow-hidden">
               {isSearching ? (
                 <div className="flex items-center justify-center p-4">
                   <Loader2 className="h-4 w-4 animate-spin" />
                 </div>
               ) : filteredResults.length > 0 ? (
-                <div className="p-2">
-                  {filteredResults.map(
-                    (user: {
-                      id: string;
-                      name: string;
-                      email: string;
-                      role: string;
-                    }) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center justify-between p-2 hover:bg-accent rounded-md cursor-pointer"
-                        onClick={() => toggleUser(user.id)}
-                      >
-                        <div className="flex-1">
-                          <div className="font-medium">{user.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {user.email}
+                <div
+                  ref={parentRef}
+                  className="overflow-y-auto"
+                  style={{ height: "192px", maxHeight: "192px" }}
+                >
+                  <div
+                    style={{
+                      height: `${virtualizer.getTotalSize()}px`,
+                      width: "100%",
+                      position: "relative",
+                    }}
+                  >
+                    {virtualizer.getVirtualItems().map((virtualItem) => {
+                      const user = filteredResults[virtualItem.index] as {
+                        id: string;
+                        name: string;
+                        email: string;
+                        role: string;
+                      };
+                      return (
+                        <div
+                          key={user.id}
+                          ref={virtualizer.measureElement}
+                          data-index={virtualItem.index}
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            transform: `translateY(${virtualItem.start}px)`,
+                          }}
+                        >
+                          <div
+                            className="flex items-center justify-between p-2 hover:bg-accent rounded-md cursor-pointer mx-2"
+                            onClick={() => toggleUser(user.id)}
+                          >
+                            <div className="flex-1">
+                              <div className="font-medium">{user.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {user.email}
+                              </div>
+                            </div>
+                            <Badge variant="outline">{user.role}</Badge>
+                            <input
+                              type="checkbox"
+                              checked={selectedUsers.includes(user.id)}
+                              onChange={() => toggleUser(user.id)}
+                              className="ml-2 rounded border-gray-300 cursor-pointer"
+                              onClick={(e) => e.stopPropagation()}
+                            />
                           </div>
                         </div>
-                        <Badge variant="outline">{user.role}</Badge>
-                        <input
-                          type="checkbox"
-                          checked={selectedUsers.includes(user.id)}
-                          onChange={() => toggleUser(user.id)}
-                          className="ml-2 rounded border-gray-300 cursor-pointer"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </div>
-                    ),
-                  )}
+                      );
+                    })}
+                  </div>
                 </div>
               ) : (
                 <div className="p-4 text-center text-muted-foreground">

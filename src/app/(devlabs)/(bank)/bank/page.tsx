@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/data-table/data-table";
 import { useBanks } from "@/components/bank/bank/hooks/use-bank";
 import { getColumns } from "@/components/bank/bank/bank-column";
@@ -7,6 +8,7 @@ import { BankDialog } from "@/components/bank/bank/bank-dialog";
 import { DeleteBankDialog } from "@/components/bank/bank/delete-bank-dialog";
 import { ShareBankDialog } from "@/components/bank/bank/share-bank-dialog";
 import { QuestionBank } from "@/types/bank";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 function useBanksForDataTable(
   page: number,
@@ -36,6 +38,12 @@ export default function BanksPage() {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [bankToDelete, setBankToDelete] = useState<string | null>(null);
   const [bankToShare, setBankToShare] = useState<QuestionBank | null>(null);
+  const router = useRouter();
+  const currentUser = useCurrentUser();
+
+  const handleView = (bank: QuestionBank) => {
+    router.push(`/bank/${bank.id}`);
+  };
 
   const handleEdit = (bank: QuestionBank) => {
     setSelectedBank(bank);
@@ -53,7 +61,7 @@ export default function BanksPage() {
   };
 
   const columnsWrapper = () => {
-    return getColumns(handleEdit, handleDelete, handleShare);
+    return getColumns(handleEdit, handleDelete, handleShare, currentUser?.id);
   };
 
   return (
@@ -84,6 +92,7 @@ export default function BanksPage() {
           getColumns={columnsWrapper}
           fetchDataFn={useBanksForDataTable}
           idField="id"
+          onRowClick={handleView}
         />
       </div>
 

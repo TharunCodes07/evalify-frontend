@@ -58,7 +58,7 @@ export function BankDialog({
     name: "",
     description: "",
     topics: [],
-    isPublic: false,
+    isPublic: true,
   });
   const [topicInput, setTopicInput] = useState("");
 
@@ -119,7 +119,7 @@ export function BankDialog({
       name: "",
       description: "",
       topics: [],
-      isPublic: false,
+      isPublic: true,
     });
     setTopicInput("");
   };

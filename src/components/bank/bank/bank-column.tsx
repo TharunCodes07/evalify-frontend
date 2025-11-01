@@ -16,6 +16,7 @@ export const getColumns = (
   onEdit?: (bank: QuestionBank) => void,
   onDelete?: (bankId: string) => void,
   onShare?: (bank: QuestionBank) => void,
+  currentUserId?: string,
 ): ColumnDef<QuestionBank>[] => {
   return [
     {
@@ -57,12 +58,19 @@ export const getColumns = (
       ),
       cell: ({ row }) => {
         const bank = row.original;
+        const maxLength = 100;
+        const description = bank.description || "";
+        const truncated =
+          description.length > maxLength
+            ? description.substring(0, maxLength) + "..."
+            : description;
+
         return (
           <div>
             <div className="font-medium">{bank.name}</div>
             {bank.description && (
-              <div className="text-xs text-muted-foreground truncate max-w-xs">
-                {bank.description}
+              <div className="text-xs text-muted-foreground max-w-xs">
+                {truncated}
               </div>
             )}
           </div>
@@ -131,18 +139,9 @@ export const getColumns = (
         return (
           <div className="text-center">
             {topics.length > 0 ? (
-              <div className="flex gap-1 justify-center flex-wrap">
-                {topics.slice(0, 2).map((topic, idx) => (
-                  <Badge key={idx} variant="outline" className="text-xs">
-                    {topic}
-                  </Badge>
-                ))}
-                {topics.length > 2 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{topics.length - 2}
-                  </Badge>
-                )}
-              </div>
+              <Badge variant="outline" className="text-xs">
+                {topics.length} {topics.length === 1 ? "topic" : "topics"}
+              </Badge>
             ) : (
               <span className="text-muted-foreground">-</span>
             )}
@@ -150,7 +149,7 @@ export const getColumns = (
         );
       },
       meta: { label: "Topics" },
-      size: 150,
+      size: 100,
       enableSorting: false,
     },
     {
@@ -158,23 +157,31 @@ export const getColumns = (
       header: () => <div className="text-center">Actions</div>,
       cell: ({ row }) => {
         const bank = row.original;
+        const isOwner = currentUserId === bank.owner.id;
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0 mx-auto">
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 mx-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShare?.(bank);
-                }}
-              >
-                <Share2 className="mr-2 h-4 w-4" />
-                Share Bank
-              </DropdownMenuItem>
+              {isOwner && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShare?.(bank);
+                  }}
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share Bank
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation();
@@ -184,16 +191,18 @@ export const getColumns = (
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Bank
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-red-600"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete?.(bank.id);
-                }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Bank
-              </DropdownMenuItem>
+              {isOwner && (
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete?.(bank.id);
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Bank
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
