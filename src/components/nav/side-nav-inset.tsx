@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { DynamicBreadcrumb } from "@/components/navigation/breadcrumb/dynamic-breadcrumb";
+import { DynamicBreadcrumb } from "@/components/nav/breadcrumb/dynamic-breadcrumb";
 
 export function AppSidebarInset({ children }: { children: React.ReactNode }) {
   return (
