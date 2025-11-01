@@ -261,6 +261,13 @@ export interface Department {
   batches?: Batch[];
 }
 
+export interface Lab {
+  id: string;
+  name: string;
+  block: string;
+  ipSubnet: string;
+}
+
 export interface DataTableResponse<T> {
   data: T[];
   pagination: {
