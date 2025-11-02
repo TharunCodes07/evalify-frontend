@@ -28,7 +28,11 @@ const CodeToolbar = React.forwardRef<HTMLButtonElement, ButtonProps>(
               editor?.isActive("code") && "bg-accent",
               className,
             )}
+            onMouseDown={(e) => {
+              e.preventDefault(); // Prevent losing focus
+            }}
             onClick={(e) => {
+              e.preventDefault();
               editor?.chain().focus().toggleCode().run();
               onClick?.(e);
             }}

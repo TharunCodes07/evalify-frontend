@@ -28,8 +28,12 @@ const BoldToolbar = React.forwardRef<HTMLButtonElement, ButtonProps>(
               editor?.isActive("bold") && "bg-accent",
               className,
             )}
+            onMouseDown={(e) => {
+              e.preventDefault(); // Prevent losing focus
+            }}
             onClick={(e) => {
-              editor?.chain().focus().toggleMark("bold").run();
+              e.preventDefault();
+              editor?.chain().focus().toggleBold().run();
               onClick?.(e);
             }}
             disabled={!editor?.can().chain().focus().toggleMark("bold").run()}

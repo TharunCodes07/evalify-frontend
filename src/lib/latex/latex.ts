@@ -49,13 +49,11 @@ export function renderLatexContent(element: HTMLElement): void {
       const wrapper = document.createElement("span");
       wrapper.className = inline ? "latex-inline" : "latex-block";
 
-      // Use KaTeX to render the formula
       katex.render(decodedFormula, wrapper, {
         throwOnError: false,
         displayMode: !inline,
       });
 
-      // Replace the original content with the rendered formula
       latexElement.innerHTML = "";
       latexElement.appendChild(wrapper);
     } catch (error: unknown) {

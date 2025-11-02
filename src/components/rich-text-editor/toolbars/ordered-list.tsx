@@ -29,6 +29,7 @@ const OrderedListToolbar = React.forwardRef<HTMLButtonElement, ButtonProps>(
               className,
             )}
             onClick={(e) => {
+              e.preventDefault();
               editor?.chain().focus().toggleOrderedList().run();
               onClick?.(e);
             }}

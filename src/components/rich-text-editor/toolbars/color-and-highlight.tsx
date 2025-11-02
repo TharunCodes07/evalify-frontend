@@ -60,6 +60,7 @@ const ColorHighlightButton = ({
 }: ColorHighlightButtonProps) => (
   <button
     onClick={onClick}
+    onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
     className="flex w-full items-center justify-between rounded-sm px-2 py-1 text-sm hover:bg-gray-3"
     type="button"
   >

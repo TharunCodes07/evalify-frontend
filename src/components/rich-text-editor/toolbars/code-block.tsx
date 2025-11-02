@@ -47,6 +47,7 @@ const CodeBlockToolbar = React.forwardRef<HTMLButtonElement, ButtonProps>(
               className,
             )}
             onClick={(e) => {
+              e.preventDefault();
               editor
                 ?.chain()
                 .focus()

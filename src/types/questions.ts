@@ -21,6 +21,7 @@ export enum ProgrammingLanguage {
   PYTHON = "PYTHON",
   CPP = "CPP",
   JAVASCRIPT = "JAVASCRIPT",
+  TYPESCRIPT = "TYPESCRIPT",
   KOTLIN = "KOTLIN",
   GO = "GO",
   RUST = "RUST",
@@ -43,9 +44,15 @@ export enum OutputChecker {
   FLOAT_TOLERANCE = "FLOAT_TOLERANCE",
 }
 
+export enum FillInBlanksEvaluationType {
+  STRICT = "STRICT",
+  NORMAL = "NORMAL",
+  HYBRID = "HYBRID",
+}
+
 // Base Question Interface
 export interface BaseQuestion {
-  id: string;
+  id?: string;
   questionType: QuestionType;
   text: string;
   explanation?: string;
@@ -53,6 +60,7 @@ export interface BaseQuestion {
   negativeMarks: number;
   topics?: string[];
   bloomLevel?: BloomLevel;
+  courseOutcome?: number;
   attachedFiles?: string[];
 }
 
@@ -83,8 +91,7 @@ export interface FillInBlanksQuestion extends BaseQuestion {
 // Match the Following Question - extends BaseQuestion
 export interface MatchTheFollowingQuestion extends BaseQuestion {
   questionType: QuestionType.MATCH_THE_FOLLOWING;
-  leftOptions: QuestionOption[];
-  rightOptions: QuestionOption[];
+  options: QuestionOption[];
 }
 
 // Descriptive Question - extends BaseQuestion
@@ -104,7 +111,7 @@ export interface CodingQuestion extends BaseQuestion {
 export interface FileUploadQuestion extends BaseQuestion {
   questionType: QuestionType.FILE_UPLOAD;
   allowedFileTypes?: string[];
-  maxFileSize?: number; // in MB
+  maxFileSize?: number;
 }
 
 // Union type for all question types
@@ -125,7 +132,7 @@ export interface QuestionOption {
   orderIndex: number;
   isCorrect: boolean;
   marksWeightage?: number;
-  matchPairId?: string; // Used for MATCH_THE_FOLLOWING
+  matchPairIds?: string[];
 }
 
 export type MCQOption = QuestionOption;
@@ -143,10 +150,9 @@ export interface QuestionSettings {
 // Fill in the Blanks Configuration
 export interface FillInBlanksConfig {
   blankCount: number;
-  acceptableAnswers: Record<number, string[]>; // Map of blank index to acceptable answers
-  blankWeights: Record<number, number>; // Map of blank index to weightage
-  caseSensitive: boolean;
-  trimWhitespace: boolean;
+  acceptableAnswers: Record<number, string[]>;
+  blankWeights: Record<number, number>;
+  evaluationType: FillInBlanksEvaluationType;
 }
 
 // Descriptive Answer Configuration

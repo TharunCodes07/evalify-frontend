@@ -1,31 +1,23 @@
 import { Question } from "./questions";
 
-export interface QuestionBank {
+// Quiz related types
+export interface Quiz {
   id: string;
   name: string;
   description?: string;
-  owner: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  topics: string[];
-  isPublic: boolean;
-  permission?: string;
+  duration?: number;
+  totalMarks?: number;
+  passingMarks?: number;
+  shuffleQuestions?: boolean;
+  shuffleOptions?: boolean;
+  showResults?: boolean;
+  allowReview?: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface QuestionBankShare {
-  userId: string;
-  userName: string;
-  userEmail: string;
-  permission: string;
-  sharedAt: string;
-}
-
-// Bank Question Request/Response types
-export interface CreateBankQuestionRequest {
+// Quiz Question Request/Response types
+export interface CreateQuizQuestionRequest {
   questionType: string;
   text: string;
   explanation?: string;
@@ -35,6 +27,7 @@ export interface CreateBankQuestionRequest {
   bloomLevel?: string;
   courseOutcome?: number;
   attachedFiles?: string[];
+  orderIndex: number;
 
   // Type-specific fields
   options?: {
@@ -81,12 +74,13 @@ export interface CreateBankQuestionRequest {
   maxFileSize?: number;
 }
 
-export interface UpdateBankQuestionRequest extends CreateBankQuestionRequest {
+export interface UpdateQuizQuestionRequest extends CreateQuizQuestionRequest {
   id: string;
 }
 
-export type BankQuestionResponse = Question & {
+export type QuizQuestionResponse = Question & {
   id: string;
+  orderIndex: number;
   createdAt: string;
   updatedAt: string;
 };

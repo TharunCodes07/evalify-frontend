@@ -28,8 +28,12 @@ const ItalicToolbar = React.forwardRef<HTMLButtonElement, ButtonProps>(
               editor?.isActive("italic") && "bg-accent",
               className,
             )}
+            onMouseDown={(e) => {
+              e.preventDefault(); // Prevent losing focus
+            }}
             onClick={(e) => {
-              editor?.chain().focus().toggleMark("italic").run();
+              e.preventDefault();
+              editor?.chain().focus().toggleItalic().run();
               onClick?.(e);
             }}
             disabled={!editor?.can().chain().focus().toggleMark("italic").run()}

@@ -113,10 +113,13 @@ function ImagePlaceholderComponent(props: NodeViewProps) {
     },
     onSuccess: (data) => {
       const imageUrl = fileUploadQueries.constructMinioUrl(data.objectName);
-      editor.chain().focus().setImage({ src: imageUrl }).run();
-      setOpen(false);
-      setUploadProgress(0);
-      deleteNode();
+      // Use setTimeout to avoid flushSync warning by deferring the update
+      setTimeout(() => {
+        editor.chain().focus().setImage({ src: imageUrl }).run();
+        setOpen(false);
+        setUploadProgress(0);
+        deleteNode();
+      }, 0);
     },
     onError: (error) => {
       showError("Upload Failed", {

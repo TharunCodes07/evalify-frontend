@@ -238,6 +238,7 @@ export function CourseEvaluationForm({
       const draftScores = convertFormDataToDraftScores();
       saveDraft(draftScores);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData, commonCriteriaData]);
 
   const submitMutation = useMutation({

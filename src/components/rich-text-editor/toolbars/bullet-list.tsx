@@ -30,6 +30,7 @@ const BulletListToolbar = React.forwardRef<HTMLButtonElement, ButtonProps>(
               className,
             )}
             onClick={(e) => {
+              e.preventDefault();
               editor?.chain().focus().toggleBulletList().run();
               onClick?.(e);
             }}

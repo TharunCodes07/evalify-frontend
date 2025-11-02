@@ -29,6 +29,7 @@ const BlockquoteToolbar = React.forwardRef<HTMLButtonElement, ButtonProps>(
               className,
             )}
             onClick={(e) => {
+              e.preventDefault();
               editor?.chain().focus().toggleBlockquote().run();
               onClick?.(e);
             }}

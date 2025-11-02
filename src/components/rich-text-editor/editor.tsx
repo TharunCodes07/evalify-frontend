@@ -28,6 +28,7 @@ interface EditorProps {
 
 export interface TiptapEditorRef {
   editor: Editor | null;
+  reset: () => void;
 }
 
 export const TiptapEditor = forwardRef<TiptapEditorRef, EditorProps>(
@@ -56,11 +57,7 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, EditorProps>(
             class: "bg-accent rounded-md p-1",
           },
         },
-        horizontalRule: {
-          HTMLAttributes: {
-            class: "my-2",
-          },
-        },
+        horizontalRule: false, // Disable horizontal rule to prevent ___ from converting
         codeBlock: {
           HTMLAttributes: {
             class:
@@ -126,11 +123,16 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, EditorProps>(
       immediatelyRender: false,
     });
 
-    // Expose the editor instance through the ref
+    // Expose the editor instance and reset method through the ref
     useImperativeHandle(
       ref,
       () => ({
         editor,
+        reset: () => {
+          if (editor) {
+            editor.commands.clearContent();
+          }
+        },
       }),
       [editor],
     );

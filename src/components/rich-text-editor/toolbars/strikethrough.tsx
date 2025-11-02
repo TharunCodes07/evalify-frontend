@@ -28,8 +28,12 @@ const StrikeThroughToolbar = React.forwardRef<HTMLButtonElement, ButtonProps>(
               editor?.isActive("strike") && "bg-accent",
               className,
             )}
+            onMouseDown={(e) => {
+              e.preventDefault(); // Prevent losing focus
+            }}
             onClick={(e) => {
-              editor?.chain().focus().toggleMark("strike").run();
+              e.preventDefault();
+              editor?.chain().focus().toggleStrike().run();
               onClick?.(e);
             }}
             disabled={!editor?.can().chain().focus().toggleMark("strike").run()}
