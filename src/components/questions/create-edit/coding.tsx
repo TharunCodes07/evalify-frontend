@@ -36,6 +36,14 @@ export default function CodingComponent({
 }: CodingComponentProps) {
   const [expandedTestCase, setExpandedTestCase] = useState<string | null>(null);
 
+  const totalWeightage = (value.testCases || []).reduce(
+    (sum, tc) => sum + (tc.marksWeightage || 1),
+    0,
+  );
+
+  const weightageError =
+    value.marks > 0 && Math.abs(totalWeightage - value.marks) > 0.01;
+
   const handleQuestionChange = (content: string) => {
     onChange({ ...value, text: content });
   };
@@ -50,7 +58,7 @@ export default function CodingComponent({
         boilerplateCode: value.codingConfig?.boilerplateCode || "",
         referenceSolution: value.codingConfig?.referenceSolution || "",
         timeLimitMs: value.codingConfig?.timeLimitMs || 1000,
-        memoryLimitMb: value.codingConfig?.memoryLimitMb || 256,
+        memoryLimitMb: value.codingConfig?.memoryLimitMb,
       },
     });
   };
@@ -85,7 +93,7 @@ export default function CodingComponent({
     });
   };
 
-  const handleTimeLimitChange = (timeLimit: number) => {
+  const handleTimeLimitChange = (timeLimit: number | undefined) => {
     onChange({
       ...value,
       codingConfig: {
@@ -95,7 +103,7 @@ export default function CodingComponent({
     });
   };
 
-  const handleMemoryLimitChange = (memoryLimit: number) => {
+  const handleMemoryLimitChange = (memoryLimit: number | undefined) => {
     onChange({
       ...value,
       codingConfig: {
@@ -190,30 +198,36 @@ export default function CodingComponent({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="timeLimit">Time Limit (ms)</Label>
+              <Label htmlFor="timeLimit">Time Limit (ms) (Optional)</Label>
               <Input
                 id="timeLimit"
                 type="number"
                 min="0"
-                placeholder="e.g., 1000"
+                placeholder="e.g., 10000 (default: 10 seconds)"
                 value={value.codingConfig?.timeLimitMs || ""}
-                onChange={(e) =>
-                  handleTimeLimitChange(parseInt(e.target.value) || 0)
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  handleTimeLimitChange(
+                    val ? parseInt(val) : (undefined as unknown as number),
+                  );
+                }}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="memoryLimit">Memory Limit (MB)</Label>
+              <Label htmlFor="memoryLimit">Memory Limit (MB) (Optional)</Label>
               <Input
                 id="memoryLimit"
                 type="number"
                 min="0"
-                placeholder="e.g., 256"
+                placeholder="e.g., 256 (leave empty for no limit)"
                 value={value.codingConfig?.memoryLimitMb || ""}
-                onChange={(e) =>
-                  handleMemoryLimitChange(parseInt(e.target.value) || 0)
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  handleMemoryLimitChange(
+                    val ? parseInt(val) : (undefined as unknown as number),
+                  );
+                }}
               />
             </div>
           </div>
@@ -286,10 +300,24 @@ export default function CodingComponent({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TestTube className="h-5 w-5 text-primary" />
-              Test Cases
-            </CardTitle>
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TestTube className="h-5 w-5 text-primary" />
+                Test Cases
+              </CardTitle>
+              {weightageError && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                  Total weightage ({totalWeightage.toFixed(1)}) must equal
+                  question marks ({value.marks})
+                </p>
+              )}
+              {!weightageError && (value.testCases || []).length > 0 && (
+                <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                  Total weightage: {totalWeightage.toFixed(1)} / {value.marks}{" "}
+                  marks
+                </p>
+              )}
+            </div>
             <Button onClick={handleAddTestCase} size="sm">
               <Plus className="h-4 w-4 mr-2" />
               Add Test Case

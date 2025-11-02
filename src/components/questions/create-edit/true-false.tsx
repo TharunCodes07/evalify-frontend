@@ -21,8 +21,10 @@ export default function TrueFalseComponent({
   };
 
   const handleAnswerChange = (answer: boolean) => {
-    onChange({ ...value, answer });
+    onChange({ ...value, trueFalseAnswer: answer });
   };
+
+  const currentAnswer = value.trueFalseAnswer;
 
   return (
     <div className="space-y-6">
@@ -54,9 +56,9 @@ export default function TrueFalseComponent({
             <Button
               type="button"
               onClick={() => handleAnswerChange(true)}
-              variant={value.answer === true ? "default" : "outline"}
+              variant={currentAnswer === true ? "default" : "outline"}
               className={`flex-1 h-20 text-lg font-semibold ${
-                value.answer === true
+                currentAnswer === true
                   ? "bg-green-600 hover:bg-green-700 text-white"
                   : "hover:bg-green-50 dark:hover:bg-green-950/20 hover:border-green-500"
               }`}
@@ -67,9 +69,9 @@ export default function TrueFalseComponent({
             <Button
               type="button"
               onClick={() => handleAnswerChange(false)}
-              variant={value.answer === false ? "default" : "outline"}
+              variant={currentAnswer === false ? "default" : "outline"}
               className={`flex-1 h-20 text-lg font-semibold ${
-                value.answer === false
+                currentAnswer === false
                   ? "bg-red-600 hover:bg-red-700 text-white"
                   : "hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-500"
               }`}

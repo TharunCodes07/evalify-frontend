@@ -26,17 +26,15 @@ import { CSS } from "@dnd-kit/utilities";
 interface SortableItemProps {
   id: string;
   children: React.ReactNode;
-  isDragging?: boolean;
 }
 
-function SortableItem({ id, children, isDragging }: SortableItemProps) {
+function SortableItem({ id, children }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
@@ -66,22 +64,16 @@ export function MatchTheFollowingRenderer({
   const mtfQuestion = question as MatchTheFollowingQuestion;
   const studentPairs = studentAnswer?.matchPairs || {};
 
-  // Backend structure: options with matchPairIds
-  // Left items: options without matchPairIds (or empty matchPairIds)
-  // Right items: options with matchPairIds containing correct left item ids
-  const leftItems =
-    mtfQuestion.options?.filter(
-      (opt) => !opt.matchPairIds || opt.matchPairIds.length === 0,
-    ) || [];
-  const rightItems =
-    mtfQuestion.options?.filter(
-      (opt) => opt.matchPairIds && opt.matchPairIds.length > 0,
-    ) || [];
+  const leftItems = (mtfQuestion.options || [])
+    .filter((opt) => opt.isCorrect === true)
+    .sort((a, b) => a.orderIndex - b.orderIndex);
+
+  const rightItems = (mtfQuestion.options || [])
+    .filter((opt) => opt.isCorrect === false)
+    .sort((a, b) => a.orderIndex - b.orderIndex);
 
   const [rightOrder, setRightOrder] = useState(
-    rightItems
-      .sort((a, b) => a.orderIndex - b.orderIndex)
-      .map((item) => item.id),
+    rightItems.map((item) => item.id),
   );
 
   const sensors = useSensors(
@@ -114,40 +106,93 @@ export function MatchTheFollowingRenderer({
     }
   };
 
-  // Get correct right item IDs for a left item
-  const getCorrectRightId = (leftId: string): string | null => {
-    // Find right item that has this leftId in its matchPairIds
-    const correctRight = rightItems.find((right) =>
-      right.matchPairIds?.includes(leftId),
-    );
-    return correctRight?.id || null;
+  const getCorrectRightIds = (leftItemId: string): string[] => {
+    const leftItem = leftItems.find((item) => item.id === leftItemId);
+    return leftItem?.matchPairIds || [];
   };
 
-  // Check if a match is correct
-  const isMatchCorrect = (leftId: string): boolean => {
-    const studentRightId = studentPairs[leftId];
+  const getRightItemsByMatchPairIds = (matchPairIds: string[]) => {
+    return rightItems.filter((rightItem) =>
+      matchPairIds.some((mpId) => rightItem.matchPairIds?.includes(mpId)),
+    );
+  };
+
+  const isMatchCorrect = (leftItemId: string): boolean => {
+    const studentRightId = studentPairs[leftItemId];
     if (!studentRightId) return false;
-    const correctRightId = getCorrectRightId(leftId);
-    return studentRightId === correctRightId;
+    const correctRightIds = getCorrectRightIds(leftItemId);
+    const studentRightItem = rightItems.find((r) => r.id === studentRightId);
+    if (!studentRightItem?.matchPairIds) return false;
+    return correctRightIds.some((mpId) =>
+      studentRightItem.matchPairIds?.includes(mpId),
+    );
   };
 
   const orderedRightItems = rightOrder
     .map((id) => rightItems.find((item) => item.id === id))
     .filter((item): item is NonNullable<typeof item> => item !== undefined);
 
-  // Question only mode - show left items first, then all right items below
   if (!showCorrectAnswer && !showStudentAnswer) {
     return (
       <div className="space-y-6">
-        {/* Left Items - Column A */}
         <div className="space-y-3">
           <div className="text-sm font-semibold text-muted-foreground mb-2">
             Column A - Items to Match:
           </div>
-          {leftItems
-            .sort((a, b) => a.orderIndex - b.orderIndex)
-            .map((leftItem, index) => (
-              <Card key={leftItem.id} className="p-4">
+          {leftItems.map((leftItem, index) => (
+            <Card key={leftItem.id} className="p-4 bg-muted/30">
+              <div className="flex items-start gap-3">
+                <span className="text-sm font-semibold text-muted-foreground shrink-0">
+                  {index + 1}.
+                </span>
+                <ContentPreview
+                  content={leftItem.optionText}
+                  noProse
+                  className="border-0 p-0"
+                />
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <div className="space-y-3">
+          <div className="text-sm font-semibold text-muted-foreground mb-2">
+            Column B - Available Options:
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {rightItems.map((rightItem, index) => (
+              <div
+                key={rightItem.id}
+                className="inline-flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-muted bg-muted/30"
+              >
+                <span className="text-sm font-semibold text-muted-foreground shrink-0">
+                  {String.fromCharCode(65 + index)}.
+                </span>
+                <div className="text-sm">
+                  <ContentPreview
+                    content={rightItem.optionText}
+                    noProse
+                    className="border-0 p-0"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEditable && onAnswerEdit) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <div className="text-sm font-semibold text-muted-foreground mb-2">
+              Column A
+            </div>
+            {leftItems.map((leftItem, index) => (
+              <Card key={leftItem.id} className="p-4 bg-muted/30">
                 <div className="flex items-start gap-3">
                   <span className="text-sm font-semibold text-muted-foreground shrink-0">
                     {index + 1}.
@@ -160,68 +205,8 @@ export function MatchTheFollowingRenderer({
                 </div>
               </Card>
             ))}
-        </div>
-
-        {/* Right Items - Column B - displayed as larger badges/cards */}
-        <div className="space-y-3">
-          <div className="text-sm font-semibold text-muted-foreground mb-2">
-            Column B - Available Options:
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {rightItems
-              .sort((a, b) => a.orderIndex - b.orderIndex)
-              .map((rightItem, index) => (
-                <div
-                  key={rightItem.id}
-                  className="inline-flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-muted bg-muted/30 hover:bg-muted/50 transition-colors"
-                >
-                  <span className="text-sm font-semibold text-muted-foreground shrink-0">
-                    {String.fromCharCode(65 + index)}.
-                  </span>
-                  <div className="text-sm">
-                    <ContentPreview
-                      content={rightItem.optionText}
-                      noProse
-                      className="border-0 p-0"
-                    />
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Editable mode - drag and drop
-  if (isEditable && onAnswerEdit) {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left Column */}
-          <div className="space-y-3">
-            <div className="text-sm font-semibold text-muted-foreground mb-2">
-              Column A
-            </div>
-            {leftItems
-              .sort((a, b) => a.orderIndex - b.orderIndex)
-              .map((leftItem, index) => (
-                <Card key={leftItem.id} className="p-4 bg-muted/30">
-                  <div className="flex items-start gap-3">
-                    <span className="text-sm font-semibold text-muted-foreground shrink-0">
-                      {index + 1}.
-                    </span>
-                    <ContentPreview
-                      content={leftItem.optionText}
-                      noProse
-                      className="border-0 p-0"
-                    />
-                  </div>
-                </Card>
-              ))}
           </div>
 
-          {/* Right Column - Draggable */}
           <div className="space-y-3">
             <div className="text-sm font-semibold text-muted-foreground mb-2">
               Column B (Drag to reorder and match with Column A)
@@ -255,32 +240,134 @@ export function MatchTheFollowingRenderer({
     );
   }
 
-  // Review mode - show matches with correctness
   return (
     <div className="space-y-6">
-      {/* Show correct answer pairs */}
       {showCorrectAnswer && (
+        <Card className="p-4 bg-green-50/50 dark:bg-green-950/20 border-green-500">
+          <div className="text-sm font-semibold mb-3 text-green-700 dark:text-green-300">
+            Correct Matches:
+          </div>
+          <div className="space-y-2">
+            {leftItems.map((leftItem, leftIndex) => {
+              const correctRightIds = getCorrectRightIds(leftItem.id);
+              const correctRightItems =
+                getRightItemsByMatchPairIds(correctRightIds);
+
+              if (correctRightItems.length === 0) {
+                return (
+                  <div
+                    key={leftItem.id}
+                    className="flex items-center gap-3 text-sm p-2 bg-yellow-50 dark:bg-yellow-950/20 rounded border border-yellow-300"
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      <Badge variant="outline" className="shrink-0">
+                        {leftIndex + 1}
+                      </Badge>
+                      <div className="flex-1 p-2 bg-background rounded border">
+                        <ContentPreview
+                          content={leftItem.optionText}
+                          noProse
+                          className="border-0 p-0"
+                        />
+                      </div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 text-xs text-yellow-700 dark:text-yellow-300 italic">
+                      No correct match defined
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={leftItem.id}
+                  className="flex items-start gap-3 text-sm p-3 bg-background rounded border"
+                >
+                  <div className="flex items-center gap-2 flex-1">
+                    <Badge variant="outline" className="shrink-0">
+                      {leftIndex + 1}
+                    </Badge>
+                    <div className="flex-1 p-2 bg-muted/30 rounded border">
+                      <ContentPreview
+                        content={leftItem.optionText}
+                        noProse
+                        className="border-0 p-0"
+                      />
+                    </div>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-green-600 shrink-0 mt-2" />
+                  <div className="flex-1 space-y-2">
+                    {correctRightItems.map((rightItem) => {
+                      const rightIndex = rightItems.findIndex(
+                        (r) => r.id === rightItem.id,
+                      );
+
+                      return (
+                        <div
+                          key={`${leftItem.id}-${rightItem.id}`}
+                          className="flex items-center gap-2"
+                        >
+                          <Badge variant="outline" className="shrink-0">
+                            {rightIndex >= 0
+                              ? String.fromCharCode(65 + rightIndex)
+                              : "?"}
+                          </Badge>
+                          <div className="flex-1 p-2 bg-green-50 dark:bg-green-950/30 rounded border border-green-200">
+                            <ContentPreview
+                              content={rightItem.optionText}
+                              noProse
+                              className="border-0 p-0"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {showStudentAnswer && (
         <>
-          <Card className="p-4 bg-green-50/50 dark:bg-green-950/20 border-green-500">
-            <div className="text-sm font-semibold mb-3 text-green-700 dark:text-green-300">
-              Correct Matches:
-            </div>
-            <div className="space-y-2">
-              {leftItems
-                .sort((a, b) => a.orderIndex - b.orderIndex)
-                .map((leftItem, leftIndex) => {
-                  const correctRightId = getCorrectRightId(leftItem.id);
+          {Object.keys(studentPairs).length === 0 ? (
+            <Card className="p-4 bg-muted/30 border-dashed">
+              <div className="text-sm text-muted-foreground italic text-center">
+                No matches made by student
+              </div>
+            </Card>
+          ) : (
+            <Card className="p-4 bg-blue-50/50 dark:bg-blue-950/20 border-blue-500">
+              <div className="text-sm font-semibold mb-3 text-blue-700 dark:text-blue-300">
+                Student Matches:
+              </div>
+              <div className="space-y-2">
+                {leftItems.map((leftItem, leftIndex) => {
+                  const studentRightId = studentPairs[leftItem.id];
                   const rightItem = rightItems.find(
-                    (r) => r.id === correctRightId,
+                    (r) => r.id === studentRightId,
                   );
-                  const rightIndex = rightItems
-                    .sort((a, b) => a.orderIndex - b.orderIndex)
-                    .findIndex((r) => r.id === correctRightId);
+                  const rightIndex = rightItems.findIndex(
+                    (r) => r.id === studentRightId,
+                  );
+                  const isCorrect =
+                    showCorrectAnswer && isMatchCorrect(leftItem.id);
+                  const hasAnswer = !!studentRightId;
 
                   return (
                     <div
                       key={leftItem.id}
-                      className="flex items-center gap-3 text-sm"
+                      className={cn(
+                        "flex items-center gap-3 text-sm",
+                        showCorrectAnswer &&
+                          hasAnswer &&
+                          (isCorrect
+                            ? "bg-green-50 dark:bg-green-950/30 p-2 rounded border border-green-300"
+                            : "bg-red-50 dark:bg-red-950/30 p-2 rounded border border-red-300"),
+                      )}
                     >
                       <div className="flex items-center gap-2 flex-1">
                         <Badge variant="outline" className="shrink-0">
@@ -294,7 +381,21 @@ export function MatchTheFollowingRenderer({
                           />
                         </div>
                       </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="shrink-0">
+                        {showCorrectAnswer && hasAnswer ? (
+                          isCorrect ? (
+                            <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
+                              <Check className="h-3 w-3 text-white" />
+                            </div>
+                          ) : (
+                            <div className="h-5 w-5 rounded-full bg-red-500 flex items-center justify-center">
+                              <X className="h-3 w-3 text-white" />
+                            </div>
+                          )
+                        ) : (
+                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 flex-1">
                         <Badge variant="outline" className="shrink-0">
                           {rightIndex >= 0
@@ -309,7 +410,7 @@ export function MatchTheFollowingRenderer({
                               className="border-0 p-0"
                             />
                           ) : (
-                            <span className="text-muted-foreground italic">
+                            <span className="text-muted-foreground italic text-xs">
                               No match
                             </span>
                           )}
@@ -318,221 +419,36 @@ export function MatchTheFollowingRenderer({
                     </div>
                   );
                 })}
-            </div>
-          </Card>
-
-          {/* All Available Right Items */}
-          <div className="space-y-3">
-            <div className="text-sm font-semibold text-muted-foreground mb-2">
-              All Available Options (Column B):
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {rightItems
-                .sort((a, b) => a.orderIndex - b.orderIndex)
-                .map((rightItem, index) => (
-                  <div
-                    key={rightItem.id}
-                    className="inline-flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-muted bg-muted/30"
-                  >
-                    <span className="text-sm font-semibold text-muted-foreground shrink-0">
-                      {String.fromCharCode(65 + index)}.
-                    </span>
-                    <div className="text-sm">
-                      <ContentPreview
-                        content={rightItem.optionText}
-                        noProse
-                        className="border-0 p-0"
-                      />
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Show student answers if available */}
-      {showStudentAnswer && (
-        <>
-          {Object.keys(studentPairs).length === 0 && !isEditable ? (
-            <Card className="p-4 bg-muted/30 border-dashed">
-              <div className="text-sm text-muted-foreground italic text-center">
-                No matches made by student
               </div>
             </Card>
-          ) : (
-            <>
-              <Card className="p-4">
-                <div className="text-sm font-semibold mb-3">
-                  {isEditable
-                    ? "Edit Student Matches (Click badges below to match):"
-                    : "Student's Matches:"}
-                </div>
-                <div className="space-y-2">
-                  {leftItems
-                    .sort((a, b) => a.orderIndex - b.orderIndex)
-                    .map((leftItem, leftIndex) => {
-                      const studentRightId = studentPairs[leftItem.id];
-                      const rightItem = rightItems.find(
-                        (r) => r.id === studentRightId,
-                      );
-                      const isCorrect = isMatchCorrect(leftItem.id);
-                      const hasAnswer = !!studentRightId;
-                      const rightIndex = rightItems
-                        .sort((a, b) => a.orderIndex - b.orderIndex)
-                        .findIndex((r) => r.id === studentRightId);
-
-                      return (
-                        <div
-                          key={leftItem.id}
-                          className={cn(
-                            "flex items-center gap-3 text-sm p-3 rounded-lg border-2",
-                            showCorrectAnswer &&
-                              isCorrect &&
-                              "border-green-500 bg-green-50/50 dark:bg-green-950/20",
-                            showCorrectAnswer &&
-                              !isCorrect &&
-                              hasAnswer &&
-                              "border-red-500 bg-red-50/50 dark:bg-red-950/20",
-                            !showCorrectAnswer && "border-border",
-                          )}
-                        >
-                          <div className="flex items-center gap-2 flex-1">
-                            <Badge variant="outline" className="shrink-0">
-                              {leftIndex + 1}
-                            </Badge>
-                            <div className="flex-1 p-2 bg-background rounded border">
-                              <ContentPreview
-                                content={leftItem.optionText}
-                                noProse
-                                className="border-0 p-0"
-                              />
-                            </div>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <div className="flex items-center gap-2 flex-1">
-                            {hasAnswer ? (
-                              <>
-                                <Badge variant="outline" className="shrink-0">
-                                  {rightIndex >= 0
-                                    ? String.fromCharCode(65 + rightIndex)
-                                    : "?"}
-                                </Badge>
-                                <div className="flex-1 p-2 bg-background rounded border">
-                                  <ContentPreview
-                                    content={rightItem!.optionText}
-                                    noProse
-                                    className="border-0 p-0"
-                                  />
-                                </div>
-                                {isEditable && (
-                                  <button
-                                    onClick={() => {
-                                      if (onAnswerEdit && question.id) {
-                                        const newPairs = { ...studentPairs };
-                                        delete newPairs[leftItem.id];
-                                        onAnswerEdit(question.id, {
-                                          ...studentAnswer,
-                                          matchPairs: newPairs,
-                                        });
-                                      }
-                                    }}
-                                    className="text-red-500 hover:text-red-700"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </button>
-                                )}
-                              </>
-                            ) : (
-                              <div className="flex-1 p-2 bg-muted/30 rounded border border-dashed text-muted-foreground italic">
-                                {isEditable
-                                  ? "Click an option below to match"
-                                  : "No match"}
-                              </div>
-                            )}
-                          </div>
-                          {showCorrectAnswer && hasAnswer && (
-                            <div className="shrink-0">
-                              {isCorrect ? (
-                                <Check className="h-5 w-5 text-green-600" />
-                              ) : (
-                                <X className="h-5 w-5 text-red-600" />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                </div>
-              </Card>
-
-              {isEditable && (
-                <div className="space-y-3">
-                  <div className="text-sm font-semibold text-muted-foreground mb-2">
-                    Available Options (Click to match with items above):
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    {rightItems
-                      .sort((a, b) => a.orderIndex - b.orderIndex)
-                      .map((rightItem, index) => {
-                        const matchedToLeft = Object.entries(studentPairs).find(
-                          ([_, rightId]) => rightId === rightItem.id,
-                        )?.[0];
-                        const leftIndex = leftItems
-                          .sort((a, b) => a.orderIndex - b.orderIndex)
-                          .findIndex((l) => l.id === matchedToLeft);
-
-                        return (
-                          <button
-                            key={rightItem.id}
-                            onClick={() => {
-                              if (onAnswerEdit && question.id) {
-                                const unmatchedLeft = leftItems
-                                  .sort((a, b) => a.orderIndex - b.orderIndex)
-                                  .find((l) => !studentPairs[l.id]);
-
-                                if (unmatchedLeft) {
-                                  const newPairs = { ...studentPairs };
-                                  if (matchedToLeft) {
-                                    delete newPairs[matchedToLeft];
-                                  }
-                                  newPairs[unmatchedLeft.id] = rightItem.id;
-                                  onAnswerEdit(question.id, {
-                                    ...studentAnswer,
-                                    matchPairs: newPairs,
-                                  });
-                                }
-                              }
-                            }}
-                            className={cn(
-                              "inline-flex items-center gap-2 px-4 py-3 rounded-lg border-2 transition-colors",
-                              matchedToLeft
-                                ? "border-primary/50 bg-primary/10 opacity-50"
-                                : "border-muted bg-muted/30 hover:border-primary hover:bg-primary/5",
-                            )}
-                            disabled={!onAnswerEdit}
-                          >
-                            <span className="text-sm font-semibold text-muted-foreground shrink-0">
-                              {String.fromCharCode(65 + index)}
-                              {matchedToLeft && ` → ${leftIndex + 1}`}
-                            </span>
-                            <div className="text-sm">
-                              <ContentPreview
-                                content={rightItem.optionText}
-                                noProse
-                                className="border-0 p-0"
-                              />
-                            </div>
-                          </button>
-                        );
-                      })}
-                  </div>
-                </div>
-              )}
-            </>
           )}
         </>
       )}
+
+      <div className="space-y-3">
+        <div className="text-sm font-semibold text-muted-foreground mb-2">
+          All Available Options (Column B):
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {rightItems.map((rightItem, index) => (
+            <div
+              key={rightItem.id}
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-muted bg-muted/30"
+            >
+              <span className="text-sm font-semibold text-muted-foreground shrink-0">
+                {String.fromCharCode(65 + index)}.
+              </span>
+              <div className="text-sm">
+                <ContentPreview
+                  content={rightItem.optionText}
+                  noProse
+                  className="border-0 p-0"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,72 +43,60 @@ export function ShareBankDialog({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [permission, setPermission] = useState("EDIT");
-  const parentRef = useRef<HTMLDivElement>(null);
 
+  // --- Queries ---
   const { data: searchResults = [], isLoading: isSearching } = useQuery({
     queryKey: ["userSearch", searchQuery],
     queryFn: () => bankQueries.searchUsers(searchQuery),
     enabled: searchQuery.length >= 2,
   });
 
-  const { data: shares = [], refetch: refetchShares } = useQuery({
+  const { data: shares = [] } = useQuery({
     queryKey: ["bankShares", bank.id],
     queryFn: () => bankQueries.getBankShares(bank.id),
     enabled: isOpen,
   });
 
-  useEffect(() => {
-    if (isOpen) {
-      refetchShares();
-      setSelectedUsers([]);
-      setSearchQuery("");
-    }
-  }, [isOpen, refetchShares]);
-
+  // --- Mutations ---
   const { mutate: shareBank, isPending: isSharing } = useMutation({
-    mutationFn: (data: { userIds: string[]; permission: string }) => {
-      return bankQueries.shareBank(bank.id, data);
-    },
+    mutationFn: (data: { userIds: string[]; permission: string }) =>
+      bankQueries.shareBank(bank.id, data),
     onSuccess: () => {
       success("Bank shared successfully!");
       queryClient.invalidateQueries({ queryKey: ["bankShares", bank.id] });
       setSelectedUsers([]);
       setSearchQuery("");
-      refetchShares();
     },
     onError: (err: Error) => {
-      const errorMessage =
+      const msg =
         (err as { response?: { data?: { message?: string } } }).response?.data
           ?.message ||
         err.message ||
         "Failed to share bank";
-      error(errorMessage);
+      error(msg);
     },
   });
 
   const { mutate: removeShare, isPending: isRemoving } = useMutation({
-    mutationFn: (userId: string) => {
-      return bankQueries.removeShare(bank.id, userId);
-    },
+    mutationFn: (userId: string) => bankQueries.removeShare(bank.id, userId),
     onSuccess: () => {
       success("Share removed successfully!");
       queryClient.invalidateQueries({ queryKey: ["bankShares", bank.id] });
-      refetchShares();
     },
     onError: (err: Error) => {
-      const errorMessage =
+      const msg =
         (err as { response?: { data?: { message?: string } } }).response?.data
           ?.message ||
         err.message ||
         "Failed to remove share";
-      error(errorMessage);
+      error(msg);
     },
   });
 
+  // --- Handlers ---
   const handleShare = () => {
-    if (selectedUsers.length > 0) {
+    if (selectedUsers.length > 0)
       shareBank({ userIds: selectedUsers, permission });
-    }
   };
 
   const toggleUser = (userId: string) => {
@@ -119,34 +107,46 @@ export function ShareBankDialog({
     );
   };
 
-  const alreadySharedIds = shares.map(
-    (share: QuestionBankShare) => share.userId,
+  // --- Memos to prevent cascades ---
+  const alreadySharedIds = useMemo(
+    () => shares.map((s: QuestionBankShare) => s.userId),
+    [shares],
   );
 
   const filteredResults = useMemo(
     () =>
       searchResults.filter(
-        (user: { id: string }) =>
-          !alreadySharedIds.includes(user.id) && user.id !== bank.owner.id,
+        (u: { id: string }) =>
+          !alreadySharedIds.includes(u.id) && u.id !== bank.owner.id,
       ),
     [searchResults, alreadySharedIds, bank.owner.id],
   );
+
+  // --- Virtualizer with dynamic sizing ---
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const virtualizer = useVirtualizer({
     count: filteredResults.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 60,
-    measureElement: (element: Element) =>
-      element.getBoundingClientRect().height,
-    overscan: 5,
+    overscan: 8,
+    getItemKey: (index) => {
+      const item = filteredResults[index];
+      return item && typeof item === "object" && "id" in item
+        ? (item.id as string | number)
+        : index;
+    },
+    measureElement: (el: Element) =>
+      (el as HTMLElement).getBoundingClientRect().height,
   });
 
-  useEffect(() => {
-    virtualizer.measure();
-  }, [filteredResults, virtualizer]);
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Share Question Bank</DialogTitle>
@@ -156,6 +156,7 @@ export function ShareBankDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Search */}
           <div className="space-y-2">
             <Label htmlFor="search">Search Users</Label>
             <div className="relative">
@@ -170,6 +171,7 @@ export function ShareBankDialog({
             </div>
           </div>
 
+          {/* Virtualized search results */}
           {searchQuery.length >= 2 && (
             <div className="border rounded-md overflow-hidden">
               {isSearching ? (
@@ -180,33 +182,34 @@ export function ShareBankDialog({
                 <div
                   ref={parentRef}
                   className="overflow-y-auto"
-                  style={{ height: "192px", maxHeight: "192px" }}
+                  style={{ height: 192, maxHeight: 192 }}
                 >
                   <div
                     style={{
-                      height: `${virtualizer.getTotalSize()}px`,
+                      height: virtualizer.getTotalSize(),
                       width: "100%",
                       position: "relative",
                     }}
                   >
-                    {virtualizer.getVirtualItems().map((virtualItem) => {
-                      const user = filteredResults[virtualItem.index] as {
+                    {virtualizer.getVirtualItems().map((vi) => {
+                      const user = filteredResults[vi.index] as {
                         id: string;
                         name: string;
                         email: string;
                         role: string;
                       };
+
                       return (
                         <div
                           key={user.id}
-                          ref={virtualizer.measureElement}
-                          data-index={virtualItem.index}
+                          ref={virtualizer.measureElement} // dynamic size hook
+                          data-index={vi.index} // required for measuring
                           style={{
                             position: "absolute",
                             top: 0,
                             left: 0,
                             width: "100%",
-                            transform: `translateY(${virtualItem.start}px)`,
+                            transform: `translateY(${vi.start}px)`,
                           }}
                         >
                           <div
@@ -241,6 +244,7 @@ export function ShareBankDialog({
             </div>
           )}
 
+          {/* Permission picker */}
           {selectedUsers.length > 0 && (
             <div className="space-y-2">
               <Label>Permission Level</Label>
@@ -258,6 +262,7 @@ export function ShareBankDialog({
             </div>
           )}
 
+          {/* Current shares */}
           {shares.length > 0 && (
             <div className="space-y-2">
               <Label>Currently Shared With</Label>
@@ -307,7 +312,9 @@ export function ShareBankDialog({
                 Sharing...
               </>
             ) : (
-              `Share with ${selectedUsers.length} user${selectedUsers.length !== 1 ? "s" : ""}`
+              `Share with ${selectedUsers.length} user${
+                selectedUsers.length !== 1 ? "s" : ""
+              }`
             )}
           </Button>
         </DialogFooter>

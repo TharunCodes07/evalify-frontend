@@ -14,7 +14,7 @@ export function TrueFalseRenderer({
   isEditable,
 }: QuestionRendererProps) {
   const tfQuestion = question as TrueFalseQuestion;
-  const correctAnswer = tfQuestion.answer;
+  const correctAnswer = tfQuestion.trueFalseAnswer;
   const studentAnswerValue = studentAnswer?.answerText === "true";
   const hasStudentAnswer = studentAnswer?.answerText !== undefined;
 

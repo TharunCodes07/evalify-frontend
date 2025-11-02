@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import QuestionCreation from "@/components/questions/question-creation";
+import QuestionCreation from "@/components/questions/create-edit/question-creation";
 import { useToast } from "@/hooks/use-toast";
 
 export default function CreateBankQuestionPage() {

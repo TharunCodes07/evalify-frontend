@@ -19,7 +19,7 @@ export function FillInBlanksRenderer({
   isEditable,
 }: QuestionRendererProps) {
   const fibQuestion = question as FillInBlanksQuestion;
-  const { blankConfig } = fibQuestion;
+  const blankConfig = fibQuestion.blankConfig;
   const studentBlanks = studentAnswer?.blankValues || {};
   const [editingBlanks, setEditingBlanks] =
     useState<Record<number, string>>(studentBlanks);
@@ -45,11 +45,19 @@ export function FillInBlanksRenderer({
 
   const isBlankCorrect = (blankIndex: number): boolean => {
     const studentValue = studentBlanks[blankIndex]?.trim().toLowerCase() || "";
-    const acceptableAnswers = blankConfig.acceptableAnswers[blankIndex] || [];
+    const acceptableAnswers = blankConfig?.acceptableAnswers[blankIndex] || [];
     return acceptableAnswers.some(
       (answer) => answer.trim().toLowerCase() === studentValue,
     );
   };
+
+  if (!blankConfig) {
+    return (
+      <div className="text-sm text-muted-foreground italic">
+        No blank configuration available
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

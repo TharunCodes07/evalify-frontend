@@ -20,8 +20,8 @@ import QuestionSettings from "./question-settings";
 import {
   getQuestionComponent,
   createDefaultQuestion,
-} from "./question-factory";
-import { validateQuestion } from "./question-validator";
+} from "../question-factory";
+import { validateQuestion } from "../question-validator";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Save, AlertCircle, FileText } from "lucide-react";
@@ -53,7 +53,9 @@ export default function QuestionCreation({
 
   useEffect(() => {
     if (editingQuestion) {
-      setQuestion(editingQuestion);
+      const transformedQuestion = { ...editingQuestion } as Question;
+
+      setQuestion(transformedQuestion);
       setSelectedType(editingQuestion.questionType);
     } else {
       // Always create a default question based on selectedType
@@ -102,8 +104,8 @@ export default function QuestionCreation({
           break;
 
         case QuestionType.TRUE_FALSE:
-          if ("answer" in questionData) {
-            requestData.answer = questionData.answer;
+          if ("trueFalseAnswer" in questionData) {
+            requestData.trueFalseAnswer = Boolean(questionData.trueFalseAnswer);
           }
           break;
 
@@ -131,24 +133,26 @@ export default function QuestionCreation({
 
         case QuestionType.DESCRIPTIVE:
           if ("descriptiveConfig" in questionData) {
-            requestData.modelAnswer =
-              questionData.descriptiveConfig.modelAnswer;
-            requestData.keywords = questionData.descriptiveConfig.keywords;
-            requestData.minWords = questionData.descriptiveConfig.minWords;
-            requestData.maxWords = questionData.descriptiveConfig.maxWords;
+            requestData.descriptiveConfig = {
+              modelAnswer: questionData.descriptiveConfig.modelAnswer,
+              keywords: questionData.descriptiveConfig.keywords,
+              minWords: questionData.descriptiveConfig.minWords,
+              maxWords: questionData.descriptiveConfig.maxWords,
+            };
           }
           break;
 
         case QuestionType.CODING:
           if ("codingConfig" in questionData && "testCases" in questionData) {
-            requestData.language = questionData.codingConfig.language;
-            requestData.templateCode = questionData.codingConfig.templateCode;
-            requestData.boilerplateCode =
-              questionData.codingConfig.boilerplateCode;
-            requestData.referenceSolution =
-              questionData.codingConfig.referenceSolution;
-            requestData.timeLimitMs = questionData.codingConfig.timeLimitMs;
-            requestData.memoryLimitMb = questionData.codingConfig.memoryLimitMb;
+            requestData.codingConfig = {
+              language: questionData.codingConfig.language,
+              templateCode: questionData.codingConfig.templateCode,
+              boilerplateCode: questionData.codingConfig.boilerplateCode,
+              referenceSolution: questionData.codingConfig.referenceSolution,
+              timeLimitMs: questionData.codingConfig.timeLimitMs || 10000,
+              memoryLimitMb:
+                questionData.codingConfig.memoryLimitMb || undefined,
+            };
             requestData.testCases = questionData.testCases.map((tc) => ({
               input: tc.input,
               expectedOutput: tc.expectedOutput,

@@ -43,8 +43,8 @@ export function DescriptiveRenderer({
   };
 
   const studentWordCount = wordCount(studentAnswer?.answerText || "");
-  const minWords = descQuestion.descriptiveConfig.minWords;
-  const maxWords = descQuestion.descriptiveConfig.maxWords;
+  const minWords = descQuestion.descriptiveConfig?.minWords;
+  const maxWords = descQuestion.descriptiveConfig?.maxWords;
   const meetsMinWords = !minWords || studentWordCount >= minWords;
   const meetsMaxWords = !maxWords || studentWordCount <= maxWords;
 
@@ -122,7 +122,7 @@ export function DescriptiveRenderer({
         </div>
       )}
 
-      {showCorrectAnswer && descQuestion.descriptiveConfig.modelAnswer && (
+      {showCorrectAnswer && descQuestion.descriptiveConfig?.modelAnswer && (
         <div className="space-y-2">
           <span className="text-sm font-semibold text-green-600 dark:text-green-400">
             Model Answer
@@ -138,7 +138,7 @@ export function DescriptiveRenderer({
       )}
 
       {showCorrectAnswer &&
-        descQuestion.descriptiveConfig.keywords &&
+        descQuestion.descriptiveConfig?.keywords &&
         descQuestion.descriptiveConfig.keywords.length > 0 && (
           <div className="space-y-2">
             <span className="text-sm font-semibold">Keywords</span>

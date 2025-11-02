@@ -79,7 +79,7 @@ export interface MMCQQuestion extends BaseQuestion {
 // True/False Question - extends BaseQuestion
 export interface TrueFalseQuestion extends BaseQuestion {
   questionType: QuestionType.TRUE_FALSE;
-  answer: boolean;
+  trueFalseAnswer?: boolean;
 }
 
 // Fill in the Blanks Question - extends BaseQuestion

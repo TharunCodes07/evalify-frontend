@@ -7,6 +7,7 @@ import { Edit, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { getQuestionTypeDisplayName } from "../../question-factory";
 import { MarksEditor } from "./marks-editor";
 import { ContentPreview } from "@/components/rich-text-editor/content-preview";
+import { AttachmentViewer } from "@/components/rich-text-editor/attachment-viewer";
 
 export function QuestionHeader({
   question,
@@ -47,15 +48,14 @@ export function QuestionHeader({
                   CO-{question.courseOutcome}
                 </Badge>
               )}
-            {"bloomsTaxonomy" in question &&
-              (question as { bloomsTaxonomy?: string }).bloomsTaxonomy && (
-                <Badge
-                  variant="outline"
-                  className="font-normal bg-purple-50 dark:bg-purple-950/30 border-purple-300 dark:border-purple-700"
-                >
-                  {(question as { bloomsTaxonomy: string }).bloomsTaxonomy}
-                </Badge>
-              )}
+            {question.bloomLevel && (
+              <Badge
+                variant="outline"
+                className="font-normal bg-purple-50 dark:bg-purple-950/30 border-purple-300 dark:border-purple-700"
+              >
+                {question.bloomLevel}
+              </Badge>
+            )}
             {"difficulty" in question &&
               (question as { difficulty?: string }).difficulty && (
                 <Badge
@@ -127,6 +127,10 @@ export function QuestionHeader({
           className="border-0 p-0"
         />
       </div>
+
+      {question.attachedFiles && question.attachedFiles.length > 0 && (
+        <AttachmentViewer files={question.attachedFiles} />
+      )}
 
       {onMarksEdit && question.id && hasStudentAnswer && (
         <MarksEditor

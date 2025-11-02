@@ -20,7 +20,9 @@ export function CodingRenderer({
   const codingQuestion = question as CodingQuestion;
   const [isEditing, setIsEditing] = useState(false);
   const [editedCode, setEditedCode] = useState(
-    studentAnswer?.answerText || codingQuestion.codingConfig.templateCode || "",
+    studentAnswer?.answerText ||
+      codingQuestion.codingConfig?.templateCode ||
+      "",
   );
 
   const handleSave = () => {
@@ -42,14 +44,14 @@ export function CodingRenderer({
     <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
         <Badge variant="secondary">
-          {codingQuestion.codingConfig.language}
+          {codingQuestion.codingConfig?.language}
         </Badge>
-        {codingQuestion.codingConfig.timeLimitMs && (
+        {codingQuestion.codingConfig?.timeLimitMs && (
           <Badge variant="outline">
             Time: {codingQuestion.codingConfig.timeLimitMs}ms
           </Badge>
         )}
-        {codingQuestion.codingConfig.memoryLimitMb && (
+        {codingQuestion.codingConfig?.memoryLimitMb && (
           <Badge variant="outline">
             Memory: {codingQuestion.codingConfig.memoryLimitMb}MB
           </Badge>
@@ -77,7 +79,7 @@ export function CodingRenderer({
               <CodeEditor
                 initial={editedCode}
                 onChange={setEditedCode}
-                language={codingQuestion.codingConfig.language}
+                language={codingQuestion.codingConfig?.language}
                 minHeight={300}
               />
               <div className="flex justify-end gap-2">
@@ -94,7 +96,7 @@ export function CodingRenderer({
           ) : (
             <CodeEditor
               initial={studentAnswer?.answerText || "// No code submitted"}
-              language={codingQuestion.codingConfig.language}
+              language={codingQuestion.codingConfig?.language}
               minHeight={300}
               readOnly
             />
@@ -106,10 +108,10 @@ export function CodingRenderer({
         <Tabs defaultValue="template" className="w-full">
           <TabsList>
             <TabsTrigger value="template">Template Code</TabsTrigger>
-            {codingQuestion.codingConfig.boilerplateCode && (
+            {codingQuestion.codingConfig?.boilerplateCode && (
               <TabsTrigger value="boilerplate">Boilerplate</TabsTrigger>
             )}
-            {codingQuestion.codingConfig.referenceSolution && (
+            {codingQuestion.codingConfig?.referenceSolution && (
               <TabsTrigger value="reference">Reference Solution</TabsTrigger>
             )}
             {codingQuestion.testCases &&
@@ -119,7 +121,7 @@ export function CodingRenderer({
           </TabsList>
 
           <TabsContent value="template" className="mt-4">
-            {codingQuestion.codingConfig.templateCode ? (
+            {codingQuestion.codingConfig?.templateCode ? (
               <CodeEditor
                 initial={codingQuestion.codingConfig.templateCode}
                 language={codingQuestion.codingConfig.language}
@@ -133,7 +135,7 @@ export function CodingRenderer({
             )}
           </TabsContent>
 
-          {codingQuestion.codingConfig.boilerplateCode && (
+          {codingQuestion.codingConfig?.boilerplateCode && (
             <TabsContent value="boilerplate" className="mt-4">
               <CodeEditor
                 initial={codingQuestion.codingConfig.boilerplateCode}
@@ -144,7 +146,7 @@ export function CodingRenderer({
             </TabsContent>
           )}
 
-          {codingQuestion.codingConfig.referenceSolution && (
+          {codingQuestion.codingConfig?.referenceSolution && (
             <TabsContent value="reference" className="mt-4">
               <CodeEditor
                 initial={codingQuestion.codingConfig.referenceSolution}

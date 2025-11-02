@@ -45,7 +45,7 @@ export interface CreateBankQuestionRequest {
     matchPairIds?: string[];
   }[];
 
-  answer?: boolean;
+  trueFalseAnswer?: boolean;
 
   blankConfig?: {
     blankCount: number;
@@ -54,17 +54,21 @@ export interface CreateBankQuestionRequest {
     evaluationType: string;
   };
 
-  modelAnswer?: string;
-  keywords?: string[];
-  minWords?: number;
-  maxWords?: number;
+  descriptiveConfig?: {
+    modelAnswer?: string;
+    keywords?: string[];
+    minWords?: number;
+    maxWords?: number;
+  };
 
-  language?: string;
-  templateCode?: string;
-  boilerplateCode?: string;
-  referenceSolution?: string;
-  timeLimitMs?: number;
-  memoryLimitMb?: number;
+  codingConfig?: {
+    language: string;
+    templateCode?: string;
+    boilerplateCode?: string;
+    referenceSolution?: string;
+    timeLimitMs?: number;
+    memoryLimitMb?: number;
+  };
 
   testCases?: {
     input: string;

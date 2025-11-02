@@ -5,13 +5,13 @@ import {
   FillInBlanksEvaluationType,
 } from "@/types/questions";
 import type { ComponentType } from "react";
-import MCQComponent from "./mcq";
-import TrueFalseComponent from "./true-false";
-import FillInBlanksComponent from "./fill-in-blanks";
-import MatchTheFollowingComponent from "./match-the-following";
-import DescriptiveComponent from "./descriptive";
-import CodingComponent from "./coding";
-import FileUploadComponent from "./file-upload";
+import MCQComponent from "./create-edit/mcq";
+import TrueFalseComponent from "./create-edit/true-false";
+import FillInBlanksComponent from "./create-edit/fill-in-blanks";
+import MatchTheFollowingComponent from "./create-edit/match-the-following";
+import DescriptiveComponent from "./create-edit/descriptive";
+import CodingComponent from "./create-edit/coding";
+import FileUploadComponent from "./create-edit/file-upload";
 
 export interface QuestionComponentProps<T extends Question = Question> {
   value: T;
@@ -75,7 +75,7 @@ export function createDefaultQuestion(questionType: QuestionType): Question {
       return {
         ...baseQuestion,
         questionType: QuestionType.TRUE_FALSE,
-        answer: true,
+        trueFalseAnswer: true,
       };
     case QuestionType.FILL_IN_BLANKS:
       return {
