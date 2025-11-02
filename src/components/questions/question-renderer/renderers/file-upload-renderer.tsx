@@ -50,22 +50,25 @@ export function FileUploadRenderer({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
-        {fileQuestion.allowedFileTypes &&
-          fileQuestion.allowedFileTypes.length > 0 && (
+        {fileQuestion.fileUploadConfig?.allowedFileTypes &&
+          fileQuestion.fileUploadConfig.allowedFileTypes.length > 0 && (
             <div className="flex items-center gap-1">
               <span className="text-sm text-muted-foreground">
                 Allowed types:
               </span>
-              {fileQuestion.allowedFileTypes.map((type, idx) => (
-                <Badge key={idx} variant="outline" className="text-xs">
-                  {type}
-                </Badge>
-              ))}
+              {fileQuestion.fileUploadConfig.allowedFileTypes.map(
+                (type, idx) => (
+                  <Badge key={idx} variant="outline" className="text-xs">
+                    {type}
+                  </Badge>
+                ),
+              )}
             </div>
           )}
-        {fileQuestion.maxFileSize && (
+        {fileQuestion.fileUploadConfig?.maxFileSize && (
           <Badge variant="outline" className="text-xs">
-            Max size: {formatFileSize(fileQuestion.maxFileSize)}
+            Max size:{" "}
+            {formatFileSize(fileQuestion.fileUploadConfig.maxFileSize)}
           </Badge>
         )}
       </div>

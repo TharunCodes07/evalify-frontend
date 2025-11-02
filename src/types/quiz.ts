@@ -74,8 +74,10 @@ export interface CreateQuizQuestionRequest {
     checker: string;
   }[];
 
-  allowedFileTypes?: string[];
-  maxFileSize?: number;
+  fileUploadConfig?: {
+    allowedFileTypes?: string[];
+    maxFileSize?: number;
+  };
 }
 
 export interface UpdateQuizQuestionRequest extends CreateQuizQuestionRequest {

@@ -123,8 +123,10 @@ export function createDefaultQuestion(questionType: QuestionType): Question {
       return {
         ...baseQuestion,
         questionType: QuestionType.FILE_UPLOAD,
-        allowedFileTypes: [],
-        maxFileSize: undefined,
+        fileUploadConfig: {
+          allowedFileTypes: [],
+          maxFileSize: undefined,
+        },
       };
     default:
       throw new Error(`Unsupported question type: ${questionType}`);

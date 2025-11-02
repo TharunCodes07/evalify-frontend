@@ -81,8 +81,10 @@ export interface CreateBankQuestionRequest {
     checker: string;
   }[];
 
-  allowedFileTypes?: string[];
-  maxFileSize?: number;
+  fileUploadConfig?: {
+    allowedFileTypes?: string[];
+    maxFileSize?: number;
+  };
 }
 
 export interface UpdateBankQuestionRequest extends CreateBankQuestionRequest {

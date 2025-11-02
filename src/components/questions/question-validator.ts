@@ -316,9 +316,9 @@ export function validateQuestion(question: Question | null): ValidationResult {
 
     case QuestionType.FILE_UPLOAD:
       if (
-        "maxFileSize" in question &&
-        question.maxFileSize !== undefined &&
-        question.maxFileSize <= 0
+        question.fileUploadConfig?.maxFileSize !== undefined &&
+        question.fileUploadConfig.maxFileSize !== null &&
+        question.fileUploadConfig.maxFileSize <= 0
       ) {
         errors.push({
           field: "maxFileSize",

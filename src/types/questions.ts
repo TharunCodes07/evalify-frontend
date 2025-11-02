@@ -110,8 +110,10 @@ export interface CodingQuestion extends BaseQuestion {
 // File Upload Question - extends BaseQuestion
 export interface FileUploadQuestion extends BaseQuestion {
   questionType: QuestionType.FILE_UPLOAD;
-  allowedFileTypes?: string[];
-  maxFileSize?: number;
+  fileUploadConfig?: {
+    allowedFileTypes?: string[];
+    maxFileSize?: number;
+  };
 }
 
 // Union type for all question types

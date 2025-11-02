@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Question, QuestionType } from "@/types/questions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -42,11 +43,13 @@ export default function QuestionCreation({
   editingQuestion,
   onSave,
 }: QuestionCreationProps) {
+  const router = useRouter();
   const [selectedType, setSelectedType] = useState<QuestionType>(
     editingQuestion?.questionType || QuestionType.MCQ,
   );
   const [question, setQuestion] = useState<Question | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [saveAndBack, setSaveAndBack] = useState(false);
 
   const queryClient = useQueryClient();
   const { success, error } = useToast();
@@ -58,8 +61,28 @@ export default function QuestionCreation({
       setQuestion(transformedQuestion);
       setSelectedType(editingQuestion.questionType);
     } else {
-      // Always create a default question based on selectedType
-      setQuestion(createDefaultQuestion(selectedType));
+      // When changing question type, preserve text, explanation, and settings
+      const currentText = question?.text || "";
+      const currentExplanation = question?.explanation || "";
+      const currentMarks = question?.marks || 1;
+      const currentNegativeMarks = question?.negativeMarks || 0;
+      const currentTopics = question?.topics || [];
+      const currentBloomLevel = question?.bloomLevel;
+      const currentCourseOutcome = question?.courseOutcome;
+      const currentAttachedFiles = question?.attachedFiles || [];
+
+      const newQuestion = createDefaultQuestion(selectedType);
+      setQuestion({
+        ...newQuestion,
+        text: currentText,
+        explanation: currentExplanation,
+        marks: currentMarks,
+        negativeMarks: currentNegativeMarks,
+        topics: currentTopics,
+        bloomLevel: currentBloomLevel,
+        courseOutcome: currentCourseOutcome,
+        attachedFiles: currentAttachedFiles,
+      });
     }
   }, [editingQuestion, selectedType]);
 
@@ -167,11 +190,11 @@ export default function QuestionCreation({
           break;
 
         case QuestionType.FILE_UPLOAD:
-          if ("allowedFileTypes" in questionData) {
-            requestData.allowedFileTypes = questionData.allowedFileTypes;
-          }
-          if ("maxFileSize" in questionData) {
-            requestData.maxFileSize = questionData.maxFileSize;
+          if (questionData.fileUploadConfig) {
+            requestData.fileUploadConfig = {
+              allowedFileTypes: questionData.fileUploadConfig.allowedFileTypes,
+              maxFileSize: questionData.fileUploadConfig.maxFileSize,
+            };
           }
           break;
       }
@@ -194,7 +217,13 @@ export default function QuestionCreation({
       queryClient.invalidateQueries({
         queryKey: [context, contextId, "questions"],
       });
-      if (onSave) {
+      queryClient.invalidateQueries({
+        queryKey: [`${context}-questions`, contextId],
+      });
+
+      if (saveAndBack) {
+        router.push(`/${context}/${contextId}`);
+      } else if (onSave) {
         onSave(data);
       }
     },
@@ -250,10 +279,12 @@ export default function QuestionCreation({
     },
   });
 
-  const handleSave = () => {
+  const handleSave = (andBack = false) => {
     if (!validateQuestionData() || !question) {
       return;
     }
+
+    setSaveAndBack(andBack);
 
     if (editingQuestion) {
       updateMutation.mutate({
@@ -326,7 +357,11 @@ export default function QuestionCreation({
 
           <Card className="p-4 mt-6">
             <div className="flex items-center justify-end gap-4">
-              <Button type="button" onClick={handleSave} disabled={isLoading}>
+              <Button
+                type="button"
+                onClick={() => handleSave(false)}
+                disabled={isLoading}
+              >
                 <Save className="h-4 w-4 mr-2" />
                 {isLoading
                   ? "Saving..."
@@ -334,6 +369,17 @@ export default function QuestionCreation({
                     ? "Update Question"
                     : "Create Question"}
               </Button>
+              {!editingQuestion && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => handleSave(true)}
+                  disabled={isLoading}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Create & Back
+                </Button>
+              )}
             </div>
           </Card>
         </div>

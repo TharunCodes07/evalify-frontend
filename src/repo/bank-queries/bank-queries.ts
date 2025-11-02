@@ -77,6 +77,41 @@ const bankQueries = {
     }
     return [];
   },
+
+  // Topic management
+  getTopics: async (bankId: string): Promise<string[]> => {
+    const response = await axiosInstance.get(`/api/v1/banks/${bankId}/topics`);
+    return response.data;
+  },
+
+  addTopic: async (bankId: string, topic: string): Promise<string[]> => {
+    const response = await axiosInstance.post(
+      `/api/v1/banks/${bankId}/topics`,
+      {
+        topic,
+      },
+    );
+    return response.data;
+  },
+
+  updateTopic: async (
+    bankId: string,
+    oldTopic: string,
+    newTopic: string,
+  ): Promise<string[]> => {
+    const response = await axiosInstance.put(
+      `/api/v1/banks/${bankId}/topics/${encodeURIComponent(oldTopic)}`,
+      { newTopic },
+    );
+    return response.data;
+  },
+
+  deleteTopic: async (bankId: string, topic: string): Promise<string[]> => {
+    const response = await axiosInstance.delete(
+      `/api/v1/banks/${bankId}/topics/${encodeURIComponent(topic)}`,
+    );
+    return response.data;
+  },
 };
 
 export default bankQueries;

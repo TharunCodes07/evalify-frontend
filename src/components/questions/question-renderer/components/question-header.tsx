@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { QuestionRendererProps } from "../types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,16 @@ import { getQuestionTypeDisplayName } from "../../question-factory";
 import { MarksEditor } from "./marks-editor";
 import { ContentPreview } from "@/components/rich-text-editor/content-preview";
 import { AttachmentViewer } from "@/components/rich-text-editor/attachment-viewer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function QuestionHeader({
   question,
@@ -18,8 +29,20 @@ export function QuestionHeader({
   onMarksEdit,
   showCorrectAnswer: _showCorrectAnswer,
 }: QuestionRendererProps) {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const hasStudentAnswer =
     studentAnswer && Object.keys(studentAnswer).length > 0;
+
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (onDelete && question.id) {
+      onDelete(question.id);
+    }
+    setShowDeleteDialog(false);
+  };
 
   return (
     <div className="space-y-3">
@@ -109,11 +132,7 @@ export function QuestionHeader({
             </Button>
           )}
           {onDelete && question.id && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(question.id!)}
-            >
+            <Button variant="ghost" size="sm" onClick={handleDeleteClick}>
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           )}
@@ -139,6 +158,28 @@ export function QuestionHeader({
           onSave={(marks: number) => onMarksEdit(question.id!, marks)}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Question</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this question? This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -28,7 +28,10 @@ export default function FileUploadComponent({
   const handleMaxFileSizeChange = (size: number) => {
     onChange({
       ...value,
-      maxFileSize: size,
+      fileUploadConfig: {
+        ...value.fileUploadConfig,
+        maxFileSize: size,
+      },
     });
   };
 
@@ -39,11 +42,14 @@ export default function FileUploadComponent({
       ? newFileType.trim()
       : `.${newFileType.trim()}`;
 
-    const currentTypes = value.allowedFileTypes || [];
+    const currentTypes = value.fileUploadConfig?.allowedFileTypes || [];
     if (!currentTypes.includes(fileType)) {
       onChange({
         ...value,
-        allowedFileTypes: [...currentTypes, fileType],
+        fileUploadConfig: {
+          ...value.fileUploadConfig,
+          allowedFileTypes: [...currentTypes, fileType],
+        },
       });
     }
     setNewFileType("");
@@ -52,9 +58,12 @@ export default function FileUploadComponent({
   const handleRemoveFileType = (fileType: string) => {
     onChange({
       ...value,
-      allowedFileTypes: (value.allowedFileTypes || []).filter(
-        (ft) => ft !== fileType,
-      ),
+      fileUploadConfig: {
+        ...value.fileUploadConfig,
+        allowedFileTypes: (
+          value.fileUploadConfig?.allowedFileTypes || []
+        ).filter((ft) => ft !== fileType),
+      },
     });
   };
 
@@ -71,11 +80,14 @@ export default function FileUploadComponent({
 
   const handleQuickAddFileType = (types: string) => {
     const typeArray = types.split(",").map((t) => t.trim());
-    const currentTypes = value.allowedFileTypes || [];
+    const currentTypes = value.fileUploadConfig?.allowedFileTypes || [];
     const newTypes = [...new Set([...currentTypes, ...typeArray])];
     onChange({
       ...value,
-      allowedFileTypes: newTypes,
+      fileUploadConfig: {
+        ...value.fileUploadConfig,
+        allowedFileTypes: newTypes,
+      },
     });
   };
 
@@ -113,7 +125,7 @@ export default function FileUploadComponent({
               min="0"
               step="0.1"
               placeholder="e.g., 10"
-              value={value.maxFileSize || ""}
+              value={value.fileUploadConfig?.maxFileSize || ""}
               onChange={(e) =>
                 handleMaxFileSizeChange(parseFloat(e.target.value) || 0)
               }
@@ -172,31 +184,34 @@ export default function FileUploadComponent({
               </Button>
             </div>
 
-            {value.allowedFileTypes && value.allowedFileTypes.length > 0 && (
-              <div className="space-y-2">
-                <Label className="text-sm">Configured File Types</Label>
-                <div className="flex flex-wrap gap-2">
-                  {value.allowedFileTypes.map((fileType) => (
-                    <Badge
-                      key={fileType}
-                      variant="secondary"
-                      className="flex items-center gap-1 pl-2 pr-1"
-                    >
-                      {fileType}
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRemoveFileType(fileType)}
-                        className="h-4 w-4 p-0 hover:bg-transparent"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
+            {value.fileUploadConfig?.allowedFileTypes &&
+              value.fileUploadConfig.allowedFileTypes.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm">Configured File Types</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {value.fileUploadConfig.allowedFileTypes.map(
+                      (fileType: string) => (
+                        <Badge
+                          key={fileType}
+                          variant="secondary"
+                          className="flex items-center gap-1 pl-2 pr-1"
+                        >
+                          {fileType}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleRemoveFileType(fileType)}
+                            className="h-4 w-4 p-0 hover:bg-transparent"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ),
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         </CardContent>
       </Card>
