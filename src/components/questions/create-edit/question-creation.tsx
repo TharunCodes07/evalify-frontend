@@ -248,6 +248,93 @@ export default function QuestionCreation({
         attachedFiles: questionData.attachedFiles,
       };
 
+      // Include question type specific configurations
+      switch (questionData.questionType) {
+        case QuestionType.MCQ:
+        case QuestionType.MMCQ:
+          if ("options" in questionData) {
+            requestData.options = questionData.options.map((opt) => ({
+              optionText: opt.optionText,
+              orderIndex: opt.orderIndex,
+              isCorrect: opt.isCorrect,
+              marksWeightage: opt.marksWeightage,
+            }));
+          }
+          break;
+
+        case QuestionType.TRUE_FALSE:
+          if ("trueFalseAnswer" in questionData) {
+            requestData.trueFalseAnswer = Boolean(questionData.trueFalseAnswer);
+          }
+          break;
+
+        case QuestionType.FILL_IN_BLANKS:
+          if ("blankConfig" in questionData) {
+            requestData.blankConfig = {
+              blankCount: questionData.blankConfig.blankCount,
+              acceptableAnswers: questionData.blankConfig.acceptableAnswers,
+              blankWeights: questionData.blankConfig.blankWeights,
+              evaluationType: questionData.blankConfig.evaluationType,
+            };
+          }
+          break;
+
+        case QuestionType.MATCH_THE_FOLLOWING:
+          if ("options" in questionData) {
+            requestData.options = questionData.options.map((opt) => ({
+              optionText: opt.optionText,
+              orderIndex: opt.orderIndex,
+              isCorrect: opt.isCorrect,
+              matchPairIds: opt.matchPairIds,
+            }));
+          }
+          break;
+
+        case QuestionType.DESCRIPTIVE:
+          if ("descriptiveConfig" in questionData) {
+            requestData.descriptiveConfig = {
+              modelAnswer: questionData.descriptiveConfig.modelAnswer,
+              keywords: questionData.descriptiveConfig.keywords,
+              minWords: questionData.descriptiveConfig.minWords,
+              maxWords: questionData.descriptiveConfig.maxWords,
+            };
+          }
+          break;
+
+        case QuestionType.CODING:
+          if ("codingConfig" in questionData && "testCases" in questionData) {
+            requestData.codingConfig = {
+              language: questionData.codingConfig.language,
+              templateCode: questionData.codingConfig.templateCode,
+              boilerplateCode: questionData.codingConfig.boilerplateCode,
+              referenceSolution: questionData.codingConfig.referenceSolution,
+              timeLimitMs: questionData.codingConfig.timeLimitMs || 10000,
+              memoryLimitMb:
+                questionData.codingConfig.memoryLimitMb || undefined,
+            };
+            requestData.testCases = questionData.testCases.map((tc) => ({
+              input: tc.input,
+              expectedOutput: tc.expectedOutput,
+              visibility: tc.visibility,
+              marksWeightage: tc.marksWeightage,
+              orderIndex: tc.orderIndex,
+              generatedFromSolution: tc.generatedFromSolution,
+              floatTolerance: tc.floatTolerance,
+              checker: tc.checker,
+            }));
+          }
+          break;
+
+        case QuestionType.FILE_UPLOAD:
+          if (questionData.fileUploadConfig) {
+            requestData.fileUploadConfig = {
+              allowedFileTypes: questionData.fileUploadConfig.allowedFileTypes,
+              maxFileSize: questionData.fileUploadConfig.maxFileSize,
+            };
+          }
+          break;
+      }
+
       if (context === "bank") {
         return questionQueries.bank.updateQuestion(
           contextId,
