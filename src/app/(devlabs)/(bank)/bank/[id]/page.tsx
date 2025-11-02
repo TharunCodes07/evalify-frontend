@@ -23,6 +23,7 @@ export default function BankDetailPage() {
   const queryClient = useQueryClient();
   const { toast, success } = useToast();
   const { user } = useSessionContext();
+
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [topicFilter, setTopicFilter] = useState<"all" | "none" | string[]>(
     "all",
@@ -62,7 +63,7 @@ export default function BankDetailPage() {
     [bank, user],
   );
 
-  // Get topics from backend instead of extracting from questions
+  // Prefer fetching topics from backend
   const { data: backendTopics = [] } = useQuery<string[]>({
     queryKey: ["bank-topics", bankId],
     queryFn: () => bankQueries.getTopics(bankId),
@@ -76,19 +77,18 @@ export default function BankDetailPage() {
     }
     if (Array.isArray(topicFilter)) {
       return questions.filter((q) =>
-        q.topics?.some((topic) => topicFilter.includes(topic)),
+        q.topics?.some((t) => topicFilter.includes(t)),
       );
     }
     return questions;
   }, [questions, topicFilter]);
 
-  // Virtualizer setup
+  // Virtualizer setup — element-based scrolling
   const parentRef = useRef<HTMLDivElement>(null);
-
   const virtualizer = useVirtualizer({
     count: filteredQuestions.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 400,
+    estimateSize: () => 400, // fallback estimate
     overscan: 3,
     getItemKey: (index) => filteredQuestions[index]?.id ?? index,
     measureElement: (el: Element) =>
@@ -163,8 +163,8 @@ export default function BankDetailPage() {
 
   if (bankLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="border-b bg-muted/30 px-6 py-4 mb-6">
+      <div className="h-screen overflow-hidden flex flex-col bg-background">
+        <div className="border-b bg-muted/30 px-6 py-4 shrink-0">
           <div className="container mx-auto">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
@@ -175,16 +175,19 @@ export default function BankDetailPage() {
             </div>
           </div>
         </div>
-        <div className="container mx-auto px-6 pb-10">
-          <QuestionListSkeleton count={3} />
+        <div className="container mx-auto px-6 flex-1 overflow-hidden">
+          <div className="h-full overflow-auto">
+            <QuestionListSkeleton count={3} />
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b bg-muted/30 px-6 py-4 mb-6">
+    <div className="h-screen overflow-hidden flex flex-col bg-background">
+      {/* Header: fixed area, not scrolling */}
+      <div className="border-b bg-muted/30 px-6 py-4 shrink-0">
         <div className="container mx-auto">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
@@ -216,43 +219,47 @@ export default function BankDetailPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 pb-10">
+      {/* Content: fills the rest; the ONLY scrollbar lives inside the virtualizer parent */}
+      <div className="container mx-auto px-6 flex-1 overflow-hidden">
         {questionsLoading ? (
-          <QuestionListSkeleton count={3} />
+          <div className="h-full overflow-auto">
+            <QuestionListSkeleton count={3} />
+          </div>
         ) : questions.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">
-              No questions in this bank yet
-            </p>
-            {canEdit && (
-              <Button
-                className="mt-4"
-                onClick={() => router.push(`/bank/${bankId}/create`)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Question
-              </Button>
-            )}
+          <div className="h-full overflow-auto">
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">
+                No questions in this bank yet
+              </p>
+              {canEdit && (
+                <Button
+                  className="mt-4"
+                  onClick={() => router.push(`/bank/${bankId}/create`)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create First Question
+                </Button>
+              )}
+            </div>
           </div>
         ) : filteredQuestions.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">
-              No questions match the selected filter
-            </p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => setTopicFilter("all")}
-            >
-              Clear Filter
-            </Button>
+          <div className="h-full overflow-auto">
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">
+                No questions match the selected filter
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => setTopicFilter("all")}
+              >
+                Clear Filter
+              </Button>
+            </div>
           </div>
         ) : (
-          <div
-            ref={parentRef}
-            className="overflow-y-auto"
-            style={{ height: "calc(100vh - 250px)" }}
-          >
+          // Virtualizer parent: ONLY scroll container
+          <div ref={parentRef} className="h-full overflow-y-auto">
             <div
               style={{
                 height: virtualizer.getTotalSize(),

@@ -1,19 +1,123 @@
 import { Question } from "./questions";
 
+// Quiz Configuration Types
+export interface DisplaySettings {
+  showQuestionsOneByOne: boolean;
+  allowQuestionNavigation: boolean;
+}
+
+export interface AttemptSettings {
+  maxAttempts: number;
+  canReattemptIfFailed: boolean;
+  passingPercentage?: number;
+}
+
+export interface RandomizationSettings {
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+  randomizeQuestions: boolean;
+}
+
+export interface ScoringSettings {
+  negativeMarkingEnabled: boolean;
+}
+
+export interface AntiCheatingSettings {
+  requireFullScreen: boolean;
+  preventQuestionCopy: boolean;
+  preventTabSwitch: boolean;
+  tabSwitchLimit?: number;
+  calculatorAccess: boolean;
+  autoSubmit: boolean;
+}
+
+export interface SecuritySettings {
+  passwordProtected: boolean;
+  password?: string;
+}
+
+export interface QuizConfigDTO {
+  display: DisplaySettings;
+  attempts: AttemptSettings;
+  randomization: RandomizationSettings;
+  scoring: ScoringSettings;
+  antiCheating: AntiCheatingSettings;
+  security: SecuritySettings;
+}
+
 // Quiz related types
 export interface Quiz {
   id: string;
-  name: string;
+  title: string;
   description?: string;
-  duration?: number;
-  totalMarks?: number;
-  passingMarks?: number;
-  shuffleQuestions?: boolean;
-  shuffleOptions?: boolean;
-  showResults?: boolean;
-  allowReview?: boolean;
+  startTime?: string;
+  endTime?: string;
+  durationMinutes: number;
+  config: QuizConfigDTO;
+  totalMarks: number;
+  isPublished: boolean;
+  createdBy: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
   createdAt: string;
   updatedAt: string;
+  semesterCount?: number;
+  batchCount?: number;
+  courseCount?: number;
+  studentCount?: number;
+  labCount?: number;
+}
+
+export interface ParticipantInfo {
+  id: string;
+  name: string;
+  additionalInfo?: string;
+}
+
+export interface QuizDetailResponse extends Quiz {
+  semesters: ParticipantInfo[];
+  batches: ParticipantInfo[];
+  courses: ParticipantInfo[];
+  students: ParticipantInfo[];
+  labs: ParticipantInfo[];
+}
+
+// Create Quiz Request
+export interface CreateQuizRequest {
+  title: string;
+  description?: string;
+  startTime: string; // ISO timestamp
+  endTime: string; // ISO timestamp
+  durationMinutes: number;
+
+  semesterIds?: string[];
+  batchIds?: string[];
+  courseIds?: string[];
+  studentIds?: string[];
+  labIds?: string[];
+
+  config: QuizConfigDTO;
+  createdById: string;
+}
+
+// Update Quiz Request
+export interface UpdateQuizRequest {
+  title?: string;
+  description?: string;
+  startTime?: string;
+  endTime?: string;
+  durationMinutes?: number;
+
+  semesterIds?: string[];
+  batchIds?: string[];
+  courseIds?: string[];
+  studentIds?: string[];
+  labIds?: string[];
+
+  config?: QuizConfigDTO;
 }
 
 // Quiz Question Request/Response types

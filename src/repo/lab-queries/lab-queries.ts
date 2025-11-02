@@ -111,6 +111,11 @@ const labQueries = {
     const response = await axiosInstance.get("/api/lab");
     return response.data;
   },
+
+  getActiveLabs: async () => {
+    const response = await axiosInstance.get("/api/lab/active");
+    return response.data;
+  },
 };
 
 export default labQueries;
