@@ -12,9 +12,33 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSessionContext } from "@/lib/session-context";
-import { useEffect, useMemo, useCallback, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useCallback,
+  useState,
+} from "react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { TopicsFilterDrawer } from "@/components/bank/topics-filter-drawer";
+import { Badge } from "@/components/ui/badge";
+
+const TopicBadge = lazy(async () => ({
+  default: ({ count }: { count: number }) => (
+    <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs">
+      {count} Topics
+    </Badge>
+  ),
+}));
+
+const QuestionBadge = lazy(async () => ({
+  default: ({ count }: { count: number }) => (
+    <Badge className="rounded-full px-2 py-0.5 text-xs">
+      {count} Questions
+    </Badge>
+  ),
+}));
 
 export default function BankDetailPage() {
   const params = useParams();
@@ -23,7 +47,6 @@ export default function BankDetailPage() {
   const queryClient = useQueryClient();
   const { toast, success } = useToast();
   const { user } = useSessionContext();
-
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [topicFilter, setTopicFilter] = useState<"all" | "none" | string[]>(
     "all",
@@ -39,7 +62,13 @@ export default function BankDetailPage() {
   >({
     queryKey: ["bank-questions", bankId],
     queryFn: () => questionQueries.bank.getAllQuestions(bankId),
-    refetchOnMount: true,
+  });
+
+  const { data: backendTopics = [], isLoading: topicsLoading } = useQuery<
+    string[]
+  >({
+    queryKey: ["bank-topics", bankId],
+    queryFn: () => bankQueries.getTopics(bankId),
   });
 
   const deleteMutation = useMutation({
@@ -59,11 +88,6 @@ export default function BankDetailPage() {
       bank.permission === "EDIT" ||
       bank.permission === "MANAGE");
 
-  const { data: backendTopics = [] } = useQuery<string[]>({
-    queryKey: ["bank-topics", bankId],
-    queryFn: () => bankQueries.getTopics(bankId),
-  });
-
   const filteredQuestions = useMemo(() => {
     if (topicFilter === "all") return questions;
     if (topicFilter === "none")
@@ -75,7 +99,6 @@ export default function BankDetailPage() {
     return questions;
   }, [questions, topicFilter]);
 
-  // ✅ Single-scrollbar virtualization (window-based)
   const virtualizer = useWindowVirtualizer({
     count: filteredQuestions.length,
     estimateSize: () => 400,
@@ -83,12 +106,10 @@ export default function BankDetailPage() {
     getItemKey: (i) => filteredQuestions[i]?.id ?? i,
   });
 
-  // force re-measure on length changes
   useEffect(() => {
     virtualizer.measure();
   }, [filteredQuestions.length, virtualizer]);
 
-  // ✅ Type-safe measure callback
   const measureRef = useCallback(
     (el: HTMLDivElement | null) => {
       if (el) virtualizer.measureElement(el);
@@ -157,10 +178,16 @@ export default function BankDetailPage() {
     }
   };
 
+  const topicCount =
+    (backendTopics?.length && backendTopics.length > 0
+      ? backendTopics.length
+      : bank?.topics?.length) ?? 0;
+  const questionCount = questions.length;
+
   if (bankLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="border-b bg-muted/30 px-6 py-4 mb-6">
+        <div className="border-b px-6 py-4 mb-6">
           <div className="container mx-auto flex items-center justify-between">
             <div className="space-y-2">
               <Skeleton className="h-9 w-64" />
@@ -178,38 +205,65 @@ export default function BankDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-muted/30 px-6 py-4 mb-6">
-        <div className="container mx-auto flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold">{bank?.name}</h1>
-            {bank?.description && (
-              <p className="text-muted-foreground mt-1">{bank.description}</p>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <TopicsFilterDrawer
-              topics={backendTopics}
-              selectedTopics={selectedTopics}
-              onTopicsChange={setSelectedTopics}
-              onAddTopic={handleAddTopic}
-              onUpdateTopic={handleUpdateTopic}
-              onDeleteTopic={handleDeleteTopic}
-              onFilterChange={setTopicFilter}
-              currentFilter={topicFilter}
-              canEdit={!!canEdit}
-            />
-            {canEdit && (
-              <Button onClick={() => router.push(`/bank/${bankId}/create`)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Question
-              </Button>
-            )}
+      <div className="border-b px-6 py-4 mb-6">
+        <div className="container mx-auto">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center flex-wrap gap-3">
+                <h1 className="text-3xl font-bold">{bank?.name}</h1>
+                {topicsLoading ? (
+                  <Skeleton className="h-5 w-24 rounded-full" />
+                ) : (
+                  <Suspense
+                    fallback={
+                      <Badge
+                        variant="secondary"
+                        className="rounded-full px-2 py-0.5 text-xs opacity-60"
+                      >
+                        ...
+                      </Badge>
+                    }
+                  >
+                    <TopicBadge count={topicCount} />
+                  </Suspense>
+                )}
+                {questionsLoading ? (
+                  <Skeleton className="h-5 w-28 rounded-full" />
+                ) : (
+                  <Suspense
+                    fallback={<Skeleton className="h-5 w-28 rounded-full" />}
+                  >
+                    <QuestionBadge count={questionCount} />
+                  </Suspense>
+                )}
+              </div>
+              {bank?.description && (
+                <p className="text-muted-foreground mt-1">{bank.description}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <TopicsFilterDrawer
+                topics={backendTopics}
+                selectedTopics={selectedTopics}
+                onTopicsChange={setSelectedTopics}
+                onAddTopic={handleAddTopic}
+                onUpdateTopic={handleUpdateTopic}
+                onDeleteTopic={handleDeleteTopic}
+                onFilterChange={setTopicFilter}
+                currentFilter={topicFilter}
+                canEdit={!!canEdit}
+              />
+              {canEdit && (
+                <Button onClick={() => router.push(`/bank/${bankId}/create`)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Question
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Content */}
       <div className="container mx-auto px-6 pb-10">
         {questionsLoading ? (
           <QuestionListSkeleton count={3} />

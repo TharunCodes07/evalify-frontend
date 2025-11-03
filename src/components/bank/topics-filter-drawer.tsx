@@ -190,7 +190,7 @@ export function TopicsFilterDrawer({
   };
 
   const getFilterLabel = () => {
-    if (currentFilter === "all") return "All Questions";
+    if (currentFilter === "all") return "Manage Topics & Filter";
     if (currentFilter === "none") return "No Topic";
     if (Array.isArray(currentFilter)) {
       return `${currentFilter.length} Topic${currentFilter.length > 1 ? "s" : ""}`;
