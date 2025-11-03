@@ -357,6 +357,9 @@ export default function QuestionCreation({
       queryClient.invalidateQueries({
         queryKey: [context, contextId, "questions"],
       });
+      queryClient.invalidateQueries({
+        queryKey: [`${context}-questions`, contextId],
+      });
       if (onSave) {
         onSave(data);
       }

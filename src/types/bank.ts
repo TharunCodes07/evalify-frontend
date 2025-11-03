@@ -24,6 +24,13 @@ export interface QuestionBankShare {
   sharedAt: string;
 }
 
+export interface BankSummary {
+  id: string;
+  name: string;
+  description?: string;
+  createdBy: string;
+}
+
 // Bank Question Request/Response types
 export interface CreateBankQuestionRequest {
   questionType: string;

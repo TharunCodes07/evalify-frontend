@@ -9,24 +9,31 @@ import {
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QuizMetadataForm } from "@/components/quiz/quiz-metadata-form";
 import { QuizParticipantsForm } from "@/components/quiz/quiz-participants-form";
 import { QuizSummary } from "@/components/quiz/quiz-summary";
 import { ArrowLeft, ArrowRight, Loader2, Save } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import quizQueries from "@/repo/quiz-queries/quiz-queries";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { CreateQuizRequest } from "@/types/quiz";
+import { QuizDetailResponse, UpdateQuizRequest } from "@/types/quiz";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
-export default function CreateQuizPage() {
+export default function EditQuizPage() {
   const user = useCurrentUser();
   const { success, error } = useToast();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const params = useParams();
+  const quizId = params.quizId as string;
   const [activeTab, setActiveTab] = useState("metadata");
+
+  const { data: quiz, isLoading: quizLoading } = useQuery<QuizDetailResponse>({
+    queryKey: ["quiz", quizId],
+    queryFn: () => quizQueries.getQuizById(quizId),
+  });
 
   const form = useForm<CreateQuizSchema>({
     resolver: zodResolver(createQuizSchema),
@@ -66,49 +73,97 @@ export default function CreateQuizPage() {
     },
   });
 
-  const { mutate: createDraft, isPending: isDraftPending } = useMutation({
-    mutationFn: (data: CreateQuizRequest) => quizQueries.createDraft(data),
+  // Populate form with quiz data
+  useEffect(() => {
+    if (quiz) {
+      form.reset({
+        title: quiz.title,
+        description: quiz.description || "",
+        startTime: quiz.startTime ? new Date(quiz.startTime) : undefined,
+        endTime: quiz.endTime ? new Date(quiz.endTime) : undefined,
+        durationMinutes: quiz.durationMinutes,
+        semesters: quiz.semesters,
+        batches: quiz.batches,
+        courses: quiz.courses,
+        students: quiz.students,
+        labs: quiz.labs,
+        config: {
+          showQuestionsOneByOne:
+            quiz.config.display?.showQuestionsOneByOne || false,
+          allowQuestionNavigation:
+            quiz.config.display?.allowQuestionNavigation ?? true,
+          maxAttempts: quiz.config.attempts?.maxAttempts || 1,
+          canReattemptIfFailed:
+            quiz.config.attempts?.canReattemptIfFailed || false,
+          passingPercentage: quiz.config.attempts?.passingPercentage,
+          shuffleQuestions:
+            quiz.config.randomization?.shuffleQuestions || false,
+          shuffleOptions: quiz.config.randomization?.shuffleOptions || false,
+          randomizeQuestions:
+            quiz.config.randomization?.randomizeQuestions || false,
+          negativeMarkingEnabled:
+            quiz.config.scoring?.negativeMarkingEnabled || false,
+          negativeMarksValue: quiz.config.scoring?.negativeMarksValue,
+          negativeMarkingQuestionTypes:
+            quiz.config.scoring?.negativeMarkingQuestionTypes,
+          requireFullScreen:
+            quiz.config.antiCheating?.requireFullScreen || false,
+          preventQuestionCopy:
+            quiz.config.antiCheating?.preventQuestionCopy ?? true,
+          preventTabSwitch: quiz.config.antiCheating?.preventTabSwitch || false,
+          tabSwitchLimit: quiz.config.antiCheating?.tabSwitchLimit,
+          calculatorAccess: quiz.config.antiCheating?.calculatorAccess || false,
+          autoSubmit: quiz.config.antiCheating?.autoSubmit || false,
+          passwordProtected: quiz.config.security?.passwordProtected || false,
+          password: quiz.config.security?.password,
+        },
+      });
+    }
+  }, [quiz, form]);
+
+  const { mutate: updateQuiz, isPending: isUpdatePending } = useMutation({
+    mutationFn: (data: UpdateQuizRequest) =>
+      quizQueries.updateQuiz(quizId, data),
     onSuccess: () => {
-      success("Quiz draft saved successfully!");
+      success("Quiz updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["quiz", quizId] });
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });
-      router.push("/quiz");
+      router.push(`/quiz/${quizId}`);
     },
     onError: (err) => {
-      error(`Failed to save draft: ${err.message}`);
+      error(`Failed to update quiz: ${err.message}`);
     },
   });
 
-  const { mutate: createAndPublish, isPending: isPublishPending } = useMutation(
-    {
-      mutationFn: (data: CreateQuizRequest) =>
-        quizQueries.createAndPublish(data),
-      onSuccess: () => {
-        success("Quiz created and published successfully!");
-        queryClient.invalidateQueries({ queryKey: ["quizzes"] });
-        router.push("/quiz");
-      },
-      onError: (err) => {
-        error(`Failed to create quiz: ${err.message}`);
-      },
+  const { mutate: publishQuiz, isPending: isPublishPending } = useMutation({
+    mutationFn: () => quizQueries.publishQuiz(quizId),
+    onSuccess: () => {
+      success("Quiz published successfully!");
+      queryClient.invalidateQueries({ queryKey: ["quiz", quizId] });
+      queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+      router.push(`/quiz/${quizId}`);
     },
-  );
+    onError: (err) => {
+      error(`Failed to publish quiz: ${err.message}`);
+    },
+  });
 
-  const isPending = isDraftPending || isPublishPending;
+  const isPending = isUpdatePending || isPublishPending;
 
-  async function handleSaveDraft() {
+  async function handleSaveChanges() {
     const data = form.getValues();
 
     if (!user) {
-      error("You must be logged in to create a quiz.");
+      error("You must be logged in to update a quiz.");
       return;
     }
 
     if (!data.title) {
-      error("Quiz title is required to save a draft.");
+      error("Quiz title is required.");
       return;
     }
 
-    const requestData: CreateQuizRequest = {
+    const requestData: UpdateQuizRequest = {
       title: data.title,
       description: data.description,
       startTime: data.startTime
@@ -157,19 +212,18 @@ export default function CreateQuizPage() {
           password: data.config.password,
         },
       },
-      createdById: user.id,
     };
 
-    createDraft(requestData);
+    updateQuiz(requestData);
   }
 
   async function onSubmit(data: CreateQuizSchema) {
     if (!user) {
-      error("You must be logged in to create a quiz.");
+      error("You must be logged in to update a quiz.");
       return;
     }
 
-    const requestData: CreateQuizRequest = {
+    const requestData: UpdateQuizRequest = {
       title: data.title,
       description: data.description,
       startTime: data.startTime.toISOString(),
@@ -214,9 +268,14 @@ export default function CreateQuizPage() {
           password: data.config.password,
         },
       },
-      createdById: user.id,
     };
-    createAndPublish(requestData);
+
+    // First update, then publish
+    updateQuiz(requestData, {
+      onSuccess: () => {
+        publishQuiz();
+      },
+    });
   }
 
   const isMetadataComplete =
@@ -236,7 +295,11 @@ export default function CreateQuizPage() {
       label: "Participants",
       component: <QuizParticipantsForm />,
     },
-    { value: "review", label: "Review & Create", component: <QuizSummary /> },
+    {
+      value: "review",
+      label: "Review & Save",
+      component: <QuizSummary />,
+    },
   ];
 
   const currentTabIndex = tabs.findIndex((tab) => tab.value === activeTab);
@@ -288,6 +351,28 @@ export default function CreateQuizPage() {
     form.handleSubmit(onSubmit)();
   };
 
+  if (quizLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!quiz) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Quiz not found</h2>
+          <p className="text-muted-foreground mb-4">
+            The quiz you&apos;re looking for doesn&apos;t exist.
+          </p>
+          <Button onClick={() => router.push("/quiz")}>Back to Quizzes</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="min-h-screen bg-background"
@@ -302,9 +387,9 @@ export default function CreateQuizPage() {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="flex items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Create Quiz</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Edit Quiz</h1>
             <p className="text-muted-foreground mt-1">
-              Set up a new quiz for your students
+              Update quiz settings and configuration
             </p>
           </div>
         </div>
@@ -346,7 +431,7 @@ export default function CreateQuizPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push("/quiz")}
+                  onClick={() => router.push(`/quiz/${quizId}`)}
                   disabled={isPending}
                 >
                   Cancel
@@ -368,10 +453,10 @@ export default function CreateQuizPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={handleSaveDraft}
+                  onClick={handleSaveChanges}
                   disabled={isPending || !form.watch("title")}
                 >
-                  {isDraftPending ? (
+                  {isUpdatePending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Saving...
@@ -379,7 +464,7 @@ export default function CreateQuizPage() {
                   ) : (
                     <>
                       <Save className="mr-2 h-4 w-4" />
-                      Save Draft
+                      Save Changes
                     </>
                   )}
                 </Button>
@@ -394,21 +479,25 @@ export default function CreateQuizPage() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button
-                    type="button"
-                    onClick={handlePublishQuiz}
-                    disabled={isPending || !isMetadataComplete}
-                    size="lg"
-                  >
-                    {isPublishPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Publishing...
-                      </>
-                    ) : (
-                      "Create & Publish Quiz"
+                  <>
+                    {!quiz.isPublished && (
+                      <Button
+                        type="button"
+                        onClick={handlePublishQuiz}
+                        disabled={isPending || !isMetadataComplete}
+                        size="lg"
+                      >
+                        {isPublishPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Publishing...
+                          </>
+                        ) : (
+                          "Update & Publish Quiz"
+                        )}
+                      </Button>
                     )}
-                  </Button>
+                  </>
                 )}
               </div>
             </div>

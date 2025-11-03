@@ -56,7 +56,6 @@ export interface Quiz {
   endTime?: string;
   durationMinutes: number;
   config: QuizConfigDTO;
-  totalMarks: number;
   isPublished: boolean;
   createdBy: {
     id: string;
@@ -71,6 +70,35 @@ export interface Quiz {
   courseCount?: number;
   studentCount?: number;
   labCount?: number;
+}
+
+// Bank Integration Types
+export interface BulkAddQuestionsRequest {
+  bankId: string;
+  questionIds: string[];
+}
+export interface QuizDetailResponse {
+  id: string;
+  title: string;
+  description?: string;
+  startTime?: string;
+  endTime?: string;
+  durationMinutes: number;
+  config: QuizConfigDTO;
+  isPublished: boolean;
+  createdBy: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  semesters: ParticipantInfo[];
+  batches: ParticipantInfo[];
+  courses: ParticipantInfo[];
+  students: ParticipantInfo[];
+  labs: ParticipantInfo[];
 }
 
 export interface ParticipantInfo {

@@ -2,12 +2,22 @@ import axiosInstance from "@/lib/axios/axios-client";
 import {
   CreateQuizRequest,
   Quiz,
+  QuizDetailResponse,
   UpdateQuizRequest,
   QuizShare,
   ShareQuizRequest,
+  BulkAddQuestionsRequest,
 } from "@/types/quiz";
+import { BankSummary } from "@/types/bank";
+import { Question } from "@/types/questions";
 
 const quizQueries = {
+  // Get quiz by ID
+  getQuizById: async (quizId: string): Promise<QuizDetailResponse> => {
+    const response = await axiosInstance.get(`/api/quiz/${quizId}`);
+    return response.data;
+  },
+
   // Create quiz as draft
   createDraft: async (data: CreateQuizRequest): Promise<Quiz> => {
     const response = await axiosInstance.post("/api/quiz/draft", data);
@@ -75,6 +85,37 @@ const quizQueries = {
       params: { query, size: 50 },
     });
     return response.data.data || [];
+  },
+
+  // Bank Integration APIs
+  searchBanksForQuiz: async (
+    quizId: string,
+    query?: string,
+  ): Promise<BankSummary[]> => {
+    const response = await axiosInstance.get(
+      `/api/quiz/${quizId}/bank/search`,
+      {
+        params: { query },
+      },
+    );
+    return response.data;
+  },
+
+  getBankQuestionsForQuiz: async (
+    quizId: string,
+    bankId: string,
+  ): Promise<Question[]> => {
+    const response = await axiosInstance.get(
+      `/api/quiz/${quizId}/bank/banks/${bankId}/questions`,
+    );
+    return response.data;
+  },
+
+  bulkAddQuestionsToQuiz: async (
+    quizId: string,
+    data: BulkAddQuestionsRequest,
+  ): Promise<void> => {
+    await axiosInstance.post(`/api/quiz/${quizId}/bank/add-questions`, data);
   },
 };
 

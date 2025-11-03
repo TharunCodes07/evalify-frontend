@@ -37,7 +37,7 @@ const InputNumber = React.forwardRef<HTMLInputElement, InputNumberProps>(
 
     // Initialize internal value
     React.useEffect(() => {
-      if (value !== undefined) {
+      if (value !== undefined && value !== null) {
         setInternalValue(value.toString());
         hasUserInput.current = true;
       } else if (!hasUserInput.current && defaultValue !== undefined) {
@@ -123,7 +123,7 @@ const InputNumber = React.forwardRef<HTMLInputElement, InputNumberProps>(
         return internalValue;
       }
 
-      if (value !== undefined) {
+      if (value !== undefined && value !== null) {
         return value.toString();
       }
 
