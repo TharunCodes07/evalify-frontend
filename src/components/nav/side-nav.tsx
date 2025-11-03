@@ -26,6 +26,7 @@ import {
   Sun,
   Monitor,
   Database,
+  ClipboardCheck,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -87,6 +88,13 @@ const navGroups: NavGroup[] = [
         url: "/reviews",
         roles: ["faculty", "manager"],
         color: "text-emerald-500",
+      },
+      {
+        title: "Quizzes",
+        icon: ClipboardCheck,
+        url: "/quiz",
+        roles: ["faculty", "manager"],
+        color: "text-pink-500",
       },
       {
         title: "Banks",

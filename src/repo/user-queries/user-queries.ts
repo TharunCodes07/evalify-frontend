@@ -46,10 +46,15 @@ const userQueries = {
       return [];
     }
     const response = await axiosInstance.get(
-      `/teams/students/search?query=${encodeURIComponent(query)}`
+      `/teams/students/search?query=${encodeURIComponent(query)}`,
     );
     const result = response.data;
     return Array.isArray(result) ? result : result.data || [];
+  },
+
+  getActiveStudents: async (): Promise<User[]> => {
+    const response = await axiosInstance.get("/api/user/students/active");
+    return response.data;
   },
 
   fetchUserById: async (userId: string): Promise<User> => {
@@ -60,7 +65,7 @@ const userQueries = {
   checkUserExists: async (email: string): Promise<{ exists: boolean }> => {
     try {
       const response = await axiosInstance.get(
-        `/api/user/check-exists?email=${encodeURIComponent(email)}`
+        `/api/user/check-exists?email=${encodeURIComponent(email)}`,
       );
       return response.data;
     } catch {

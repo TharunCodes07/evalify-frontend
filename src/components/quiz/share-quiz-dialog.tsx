@@ -20,24 +20,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { QuestionBank, QuestionBankShare } from "@/types/bank";
+import { QuizListResponse, QuizShare } from "@/types/quiz";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import bankQueries from "@/repo/bank-queries/bank-queries";
+import quizQueries from "@/repo/quiz-queries/quiz-queries";
 import { Loader2, Search, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
-interface ShareBankDialogProps {
-  bank: QuestionBank;
+interface ShareQuizDialogProps {
+  quiz: QuizListResponse;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function ShareBankDialog({
-  bank,
+export function ShareQuizDialog({
+  quiz,
   isOpen,
   onClose,
-}: ShareBankDialogProps) {
+}: ShareQuizDialogProps) {
   const queryClient = useQueryClient();
   const { error, success } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,23 +47,27 @@ export function ShareBankDialog({
   // --- Queries ---
   const { data: searchResults = [], isLoading: isSearching } = useQuery({
     queryKey: ["userSearch", searchQuery],
-    queryFn: () => bankQueries.searchUsers(searchQuery),
+    queryFn: () => quizQueries.searchUsers(searchQuery),
     enabled: searchQuery.length >= 2,
   });
 
   const { data: shares = [] } = useQuery({
-    queryKey: ["bankShares", bank.id],
-    queryFn: () => bankQueries.getBankShares(bank.id),
+    queryKey: ["quizShares", quiz.id],
+    queryFn: () => quizQueries.getQuizShares(quiz.id),
     enabled: isOpen,
   });
 
   // --- Mutations ---
-  const { mutate: shareBank, isPending: isSharing } = useMutation({
-    mutationFn: (data: { userIds: string[]; permission: string }) =>
-      bankQueries.shareBank(bank.id, data),
+  const { mutate: shareQuiz, isPending: isSharing } = useMutation({
+    mutationFn: async (data: { userIds: string[]; permission: string }) => {
+      return await quizQueries.shareQuiz(quiz.id, {
+        userIds: data.userIds,
+        permission: data.permission as "VIEW" | "EDIT",
+      });
+    },
     onSuccess: () => {
-      success("Bank shared successfully!");
-      queryClient.invalidateQueries({ queryKey: ["bankShares", bank.id] });
+      success("Quiz shared successfully!");
+      queryClient.invalidateQueries({ queryKey: ["quizShares", quiz.id] });
       setSelectedUsers([]);
       setSearchQuery("");
     },
@@ -72,16 +76,16 @@ export function ShareBankDialog({
         (err as { response?: { data?: { message?: string } } }).response?.data
           ?.message ||
         err.message ||
-        "Failed to share bank";
+        "Failed to share quiz";
       error(msg);
     },
   });
 
   const { mutate: removeShare, isPending: isRemoving } = useMutation({
-    mutationFn: (userId: string) => bankQueries.removeShare(bank.id, userId),
+    mutationFn: (userId: string) => quizQueries.removeShare(quiz.id, userId),
     onSuccess: () => {
       success("Share removed successfully!");
-      queryClient.invalidateQueries({ queryKey: ["bankShares", bank.id] });
+      queryClient.invalidateQueries({ queryKey: ["quizShares", quiz.id] });
     },
     onError: (err: Error) => {
       const msg =
@@ -100,10 +104,10 @@ export function ShareBankDialog({
     }: {
       userId: string;
       permission: "VIEW" | "EDIT";
-    }) => bankQueries.updateSharePermission(bank.id, userId, permission),
+    }) => quizQueries.updateSharePermission(quiz.id, userId, permission),
     onSuccess: () => {
       success("Permission updated successfully!");
-      queryClient.invalidateQueries({ queryKey: ["bankShares", bank.id] });
+      queryClient.invalidateQueries({ queryKey: ["quizShares", quiz.id] });
     },
     onError: (err: Error) => {
       const msg =
@@ -117,8 +121,8 @@ export function ShareBankDialog({
 
   // --- Handlers ---
   const handleShare = () => {
-    if (selectedUsers.length > 0)
-      shareBank({ userIds: selectedUsers, permission });
+    if (selectedUsers.length === 0) return;
+    shareQuiz({ userIds: selectedUsers, permission });
   };
 
   const toggleUser = (userId: string) => {
@@ -131,7 +135,7 @@ export function ShareBankDialog({
 
   // --- Memos to prevent cascades ---
   const alreadySharedIds = useMemo(
-    () => shares.map((s: QuestionBankShare) => s.userId),
+    () => shares.map((s: QuizShare) => s.userId),
     [shares],
   );
 
@@ -139,9 +143,9 @@ export function ShareBankDialog({
     () =>
       searchResults.filter(
         (u: { id: string }) =>
-          !alreadySharedIds.includes(u.id) && u.id !== bank.owner.id,
+          !alreadySharedIds.includes(u.id) && u.id !== quiz.createdBy.id,
       ),
-    [searchResults, alreadySharedIds, bank.owner.id],
+    [searchResults, alreadySharedIds, quiz.createdBy.id],
   );
 
   // --- Virtualizer with dynamic sizing ---
@@ -171,9 +175,9 @@ export function ShareBankDialog({
     >
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Share Question Bank</DialogTitle>
+          <DialogTitle>Share Quiz</DialogTitle>
           <DialogDescription>
-            Share &quot;{bank.name}&quot; with faculty, managers, or admins
+            Share &quot;{quiz.title}&quot; with faculty, managers, or admins
           </DialogDescription>
         </DialogHeader>
 
@@ -289,7 +293,7 @@ export function ShareBankDialog({
             <div className="space-y-2">
               <Label>Currently Shared With</Label>
               <div className="border rounded-md p-2 max-h-48 overflow-y-auto">
-                {shares.map((share: QuestionBankShare) => (
+                {shares.map((share: QuizShare) => (
                   <div
                     key={share.userId}
                     className="flex items-center justify-between p-2 hover:bg-accent rounded-md gap-2"

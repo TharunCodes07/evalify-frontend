@@ -53,6 +53,18 @@ const bankQueries = {
     return response.data;
   },
 
+  updateSharePermission: async (
+    bankId: string,
+    userId: string,
+    permission: "VIEW" | "EDIT",
+  ) => {
+    const response = await axiosInstance.put(
+      `/api/bank/${bankId}/share/${userId}`,
+      { permission },
+    );
+    return response.data;
+  },
+
   getBankShares: async (bankId: string) => {
     const response = await axiosInstance.get(`/api/bank/${bankId}/shares`);
     return response.data;

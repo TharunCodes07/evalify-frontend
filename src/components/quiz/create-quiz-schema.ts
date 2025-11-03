@@ -24,6 +24,8 @@ export const quizConfigSchema = z.object({
 
   // Scoring Settings
   negativeMarkingEnabled: z.boolean(),
+  negativeMarksValue: z.number().min(0).optional(),
+  negativeMarkingQuestionTypes: z.array(z.string()).optional(),
 
   // Anti-Cheating Settings
   requireFullScreen: z.boolean(),
@@ -80,10 +82,18 @@ export const createQuizSchema = z
       path: ["semesters"],
     },
   )
-  .refine((data) => data.endTime > data.startTime, {
-    message: "End time must be after start time.",
-    path: ["endTime"],
-  })
+  .refine(
+    (data) => {
+      // Compare by milliseconds to handle same date/time properly
+      const startMs = data.startTime.getTime();
+      const endMs = data.endTime.getTime();
+      return endMs >= startMs;
+    },
+    {
+      message: "End time must be after or equal to start time.",
+      path: ["endTime"],
+    },
+  )
   .refine(
     (data) => {
       if (data.config.passwordProtected) {

@@ -1,27 +1,15 @@
 "use client";
 
-import { useFormContext, useWatch } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
-import { Check, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { useFormContext } from "react-hook-form";
+import { useQueries } from "@tanstack/react-query";
+import { MultiSelect, OptionType } from "@/components/ui/multi-select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import semesterQueries from "@/repo/semester-queries/semester-queries";
 import batchQueries from "@/repo/batch-queries/batch-queries";
 import { courseQueries } from "@/repo/course-queries/course-queries";
-import {
-  Participant,
-  CreateQuizSchema,
-  ParticipantType,
-} from "./create-quiz-schema";
+import userQueries from "@/repo/user-queries/user-queries";
+import { Participant, CreateQuizSchema } from "./create-quiz-schema";
+import { User } from "@/components/admin/users/types/types";
 
 interface SemesterResponse {
   id: string;
@@ -41,150 +29,132 @@ interface CourseResponse {
   code: string;
 }
 
-interface ParticipantSelectorProps<T> {
-  queryKey: string[];
-  queryFn: () => Promise<T[]>;
-  itemKey: keyof CreateQuizSchema;
-  optionsTransformer: (data: T[]) => Participant[];
-  placeholder: string;
-}
-
-function ParticipantSelector<T>({
-  queryKey,
-  queryFn,
-  itemKey,
-  optionsTransformer,
-  placeholder,
-}: ParticipantSelectorProps<T>) {
-  const { control, setValue, getValues } = useFormContext<CreateQuizSchema>();
-  const selectedItems = useWatch({
-    control,
-    name: itemKey,
-    defaultValue: [],
-  }) as Participant[];
-  const selectedIds = new Set(selectedItems.map((item) => item.id));
-
-  const { data, isLoading } = useQuery<T[]>({
-    queryKey,
-    queryFn,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
-  });
-
-  const handleSelect = (item: Participant) => {
-    const currentItems =
-      (getValues(itemKey) as Participant[] | undefined) || [];
-    const isSelected = selectedIds.has(item.id);
-    const newItems = isSelected
-      ? currentItems.filter((i: Participant) => i.id !== item.id)
-      : [...currentItems, item];
-    setValue(itemKey, newItems, { shouldDirty: true, shouldValidate: true });
-  };
-
-  const options = data ? optionsTransformer(data) : [];
-
-  return (
-    <Command>
-      <CommandInput placeholder={placeholder} />
-      <CommandList>
-        <ScrollArea className="h-64">
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup>
-            {isLoading ? (
-              <div className="space-y-2 p-2">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-              </div>
-            ) : (
-              options.map((option) => (
-                <CommandItem
-                  key={option.id}
-                  onSelect={() => handleSelect(option)}
-                  className="flex items-center justify-between cursor-pointer"
-                >
-                  <span>{option.name}</span>
-                  {selectedIds.has(option.id) && (
-                    <Check className="h-4 w-4 text-primary" />
-                  )}
-                </CommandItem>
-              ))
-            )}
-          </CommandGroup>
-        </ScrollArea>
-      </CommandList>
-    </Command>
-  );
-}
-
-function SelectedItemsDisplay() {
-  const { control, setValue, getValues } = useFormContext<CreateQuizSchema>();
-  const watchedFields = useWatch({
-    control,
-    name: ["semesters", "batches", "courses", "students"],
-  });
-  const [semesters, batches, courses, students] = watchedFields;
-
-  const hasSelectedItems = [semesters, batches, courses, students].some(
-    (arr) => arr && arr.length > 0,
-  );
-
-  const handleRemove = (itemKey: ParticipantType, id: string) => {
-    const currentItems = getValues(itemKey) as Participant[];
-    setValue(
-      itemKey,
-      currentItems.filter((item) => item.id !== id),
-      { shouldDirty: true, shouldValidate: true },
-    );
-  };
-
-  if (!hasSelectedItems) return null;
-
-  const allItems = [
-    ...(semesters || []).map((item) => ({
-      ...item,
-      type: "semesters" as const,
-    })),
-    ...(batches || []).map((item) => ({ ...item, type: "batches" as const })),
-    ...(courses || []).map((item) => ({ ...item, type: "courses" as const })),
-    ...(students || []).map((item) => ({
-      ...item,
-      type: "students" as const,
-    })),
-  ];
-
-  return (
-    <div className="space-y-3 pt-4 border-t">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">
-          Selected Participants ({allItems.length})
-        </h3>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {allItems.map((item) => (
-          <Badge
-            key={`${item.type}-${item.id}`}
-            variant="secondary"
-            className="px-3 py-1.5 text-sm"
-          >
-            {item.name}
-            <button
-              type="button"
-              onClick={() => handleRemove(item.type, item.id)}
-              className="ml-2 hover:text-destructive"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </Badge>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function QuizParticipantsForm() {
-  const { formState } = useFormContext<CreateQuizSchema>();
+  const { formState, setValue, watch } = useFormContext<CreateQuizSchema>();
   const semesterError = formState.errors.semesters?.message;
+
+  // Watch current selections
+  const selectedSemesters = watch("semesters") || [];
+  const selectedBatches = watch("batches") || [];
+  const selectedCourses = watch("courses") || [];
+  const selectedStudents = watch("students") || [];
+
+  // Parallel queries for all participant types
+  const [semestersQuery, batchesQuery, coursesQuery, studentsQuery] =
+    useQueries({
+      queries: [
+        {
+          queryKey: ["activeSemesters"],
+          queryFn: semesterQueries.getActiveSemesters,
+          staleTime: 10 * 60 * 1000, // 10 minutes
+          gcTime: 15 * 60 * 1000, // 15 minutes
+        },
+        {
+          queryKey: ["activeBatches"],
+          queryFn: batchQueries.getActiveBatches,
+          staleTime: 10 * 60 * 1000,
+          gcTime: 15 * 60 * 1000,
+        },
+        {
+          queryKey: ["activeCourses"],
+          queryFn: courseQueries.getActiveCourses,
+          staleTime: 10 * 60 * 1000,
+          gcTime: 15 * 60 * 1000,
+        },
+        {
+          queryKey: ["activeStudents"],
+          queryFn: userQueries.getActiveStudents,
+          staleTime: 10 * 60 * 1000,
+          gcTime: 15 * 60 * 1000,
+        },
+      ],
+    });
+
+  // Transform data to MultiSelect options
+  const semesterOptions: OptionType[] =
+    semestersQuery.data?.map((s: SemesterResponse) => ({
+      label: `${s.name} - ${s.year}`,
+      value: s.id,
+    })) || [];
+
+  const batchOptions: OptionType[] =
+    batchesQuery.data?.map((b: BatchResponse) => ({
+      label: `${b.name} (${b.section})`,
+      value: b.id,
+    })) || [];
+
+  const courseOptions: OptionType[] =
+    coursesQuery.data?.map((c: CourseResponse) => ({
+      label: `${c.name} (${c.code})`,
+      value: c.id,
+    })) || [];
+
+  const studentOptions: OptionType[] =
+    studentsQuery.data?.map((s: User) => ({
+      label: s.name,
+      value: s.id,
+    })) || [];
+
+  // Handlers for MultiSelect changes
+  const handleSemestersChange = (values: string[]) => {
+    const participants: Participant[] = values.map((id) => {
+      const semester = semestersQuery.data?.find(
+        (s: SemesterResponse) => s.id === id,
+      );
+      return {
+        id,
+        name: semester ? `${semester.name} - ${semester.year}` : id,
+      };
+    });
+    setValue("semesters", participants, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  const handleBatchesChange = (values: string[]) => {
+    const participants: Participant[] = values.map((id) => {
+      const batch = batchesQuery.data?.find((b: BatchResponse) => b.id === id);
+      return {
+        id,
+        name: batch ? `${batch.name} (${batch.section})` : id,
+      };
+    });
+    setValue("batches", participants, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  const handleCoursesChange = (values: string[]) => {
+    const participants: Participant[] = values.map((id) => {
+      const course = coursesQuery.data?.find(
+        (c: CourseResponse) => c.id === id,
+      );
+      return {
+        id,
+        name: course ? `${course.name} (${course.code})` : id,
+      };
+    });
+    setValue("courses", participants, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  const handleStudentsChange = (values: string[]) => {
+    const participants: Participant[] = values.map((id) => {
+      const student = studentsQuery.data?.find((s: User) => s.id === id);
+      return {
+        id,
+        name: student ? student.name : id,
+      };
+    });
+    setValue("students", participants, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -193,70 +163,69 @@ export function QuizParticipantsForm() {
           {semesterError}
         </div>
       )}
+
       {/* Grid Layout for all participant types */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Semesters */}
         <div className="space-y-2">
           <h3 className="text-sm font-medium">Semesters</h3>
-          <div className="border rounded-lg overflow-hidden">
-            <ParticipantSelector<SemesterResponse>
-              queryKey={["activeSemesters"]}
-              queryFn={semesterQueries.getActiveSemesters}
-              itemKey="semesters"
-              optionsTransformer={(data) =>
-                data.map((s) => ({ id: s.id, name: `${s.name} - ${s.year}` }))
-              }
+          {semestersQuery.isLoading ? (
+            <Skeleton className="h-[88px] w-full rounded-md" />
+          ) : (
+            <MultiSelect
+              options={semesterOptions}
+              selected={selectedSemesters.map((s: Participant) => s.id)}
+              onChange={handleSemestersChange}
               placeholder="Search semesters..."
             />
-          </div>
+          )}
         </div>
 
         {/* Batches */}
         <div className="space-y-2">
           <h3 className="text-sm font-medium">Batches</h3>
-          <div className="border rounded-lg overflow-hidden">
-            <ParticipantSelector<BatchResponse>
-              queryKey={["activeBatches"]}
-              queryFn={batchQueries.getActiveBatches}
-              itemKey="batches"
-              optionsTransformer={(data) =>
-                data.map((b) => ({
-                  id: b.id,
-                  name: `${b.name} (${b.section})`,
-                }))
-              }
+          {batchesQuery.isLoading ? (
+            <Skeleton className="h-[88px] w-full rounded-md" />
+          ) : (
+            <MultiSelect
+              options={batchOptions}
+              selected={selectedBatches.map((b: Participant) => b.id)}
+              onChange={handleBatchesChange}
               placeholder="Search batches..."
             />
-          </div>
+          )}
         </div>
 
         {/* Courses */}
         <div className="space-y-2">
           <h3 className="text-sm font-medium">Courses</h3>
-          <div className="border rounded-lg overflow-hidden">
-            <ParticipantSelector<CourseResponse>
-              queryKey={["activeCourses"]}
-              queryFn={courseQueries.getActiveCourses}
-              itemKey="courses"
-              optionsTransformer={(data) =>
-                data.map((c) => ({ id: c.id, name: `${c.name} (${c.code})` }))
-              }
+          {coursesQuery.isLoading ? (
+            <Skeleton className="h-[88px] w-full rounded-md" />
+          ) : (
+            <MultiSelect
+              options={courseOptions}
+              selected={selectedCourses.map((c: Participant) => c.id)}
+              onChange={handleCoursesChange}
               placeholder="Search courses..."
             />
-          </div>
+          )}
         </div>
 
-        {/* Students - Can be added later if needed */}
+        {/* Students */}
         <div className="space-y-2">
           <h3 className="text-sm font-medium">Individual Students</h3>
-          <div className="border rounded-lg overflow-hidden p-4 text-center text-sm text-muted-foreground">
-            Individual student selection coming soon
-          </div>
+          {studentsQuery.isLoading ? (
+            <Skeleton className="h-[88px] w-full rounded-md" />
+          ) : (
+            <MultiSelect
+              options={studentOptions}
+              selected={selectedStudents.map((s: Participant) => s.id)}
+              onChange={handleStudentsChange}
+              placeholder="Search students..."
+            />
+          )}
         </div>
       </div>
-
-      {/* Selected Items Display */}
-      <SelectedItemsDisplay />
     </div>
   );
 }

@@ -398,7 +398,7 @@ export function QuizSettingsForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-base font-medium">
-                  Passing Percentage
+                  Passing Percentage (Optional)
                 </FormLabel>
                 <FormControl>
                   <Input

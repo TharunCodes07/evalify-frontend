@@ -20,6 +20,8 @@ export interface RandomizationSettings {
 
 export interface ScoringSettings {
   negativeMarkingEnabled: boolean;
+  negativeMarksValue?: number;
+  negativeMarkingQuestionTypes?: string[];
 }
 
 export interface AntiCheatingSettings {
@@ -75,14 +77,6 @@ export interface ParticipantInfo {
   id: string;
   name: string;
   additionalInfo?: string;
-}
-
-export interface QuizDetailResponse extends Quiz {
-  semesters: ParticipantInfo[];
-  batches: ParticipantInfo[];
-  courses: ParticipantInfo[];
-  students: ParticipantInfo[];
-  labs: ParticipantInfo[];
 }
 
 // Create Quiz Request
@@ -194,3 +188,37 @@ export type QuizQuestionResponse = Question & {
   createdAt: string;
   updatedAt: string;
 };
+
+// Quiz List Response (for table/grid views)
+export interface QuizListResponse {
+  id: string;
+  title: string;
+  description?: string;
+  startTime?: string;
+  endTime?: string;
+  durationMinutes: number;
+  isPublished: boolean;
+  createdBy: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  questionCount: number;
+  permission?: string; // For shared quizzes: "VIEW" | "EDIT" | null for owner
+}
+
+// Quiz Share Types
+export interface QuizShare {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  permission: "VIEW" | "EDIT";
+  sharedAt: string;
+}
+
+export interface ShareQuizRequest {
+  userIds: string[];
+  permission: "VIEW" | "EDIT";
+}

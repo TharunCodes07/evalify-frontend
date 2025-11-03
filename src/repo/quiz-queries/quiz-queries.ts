@@ -2,8 +2,9 @@ import axiosInstance from "@/lib/axios/axios-client";
 import {
   CreateQuizRequest,
   Quiz,
-  QuizDetailResponse,
   UpdateQuizRequest,
+  QuizShare,
+  ShareQuizRequest,
 } from "@/types/quiz";
 
 const quizQueries = {
@@ -34,27 +35,46 @@ const quizQueries = {
     return response.data;
   },
 
-  // Get quiz by ID (with full details)
-  getQuizById: async (quizId: string): Promise<QuizDetailResponse> => {
-    const response = await axiosInstance.get(`/api/quiz/${quizId}`);
-    return response.data;
-  },
-
-  // Get all quizzes (role-based)
-  getAllQuizzes: async (): Promise<Quiz[]> => {
-    const response = await axiosInstance.get("/api/quiz");
-    return response.data;
-  },
-
-  // Get published quizzes
-  getPublishedQuizzes: async (): Promise<Quiz[]> => {
-    const response = await axiosInstance.get("/api/quiz/published");
-    return response.data;
-  },
-
   // Delete quiz
   deleteQuiz: async (quizId: string): Promise<void> => {
     await axiosInstance.delete(`/api/quiz/${quizId}`);
+  },
+
+  // Share quiz with users
+  shareQuiz: async (quizId: string, data: ShareQuizRequest): Promise<void> => {
+    await axiosInstance.post(`/api/quiz/${quizId}/share`, data);
+  },
+
+  // Remove share from user
+  removeShare: async (quizId: string, userId: string): Promise<void> => {
+    await axiosInstance.delete(`/api/quiz/${quizId}/share/${userId}`);
+  },
+
+  // Update share permission
+  updateSharePermission: async (
+    quizId: string,
+    userId: string,
+    permission: "VIEW" | "EDIT",
+  ): Promise<void> => {
+    await axiosInstance.put(`/api/quiz/${quizId}/share/${userId}`, {
+      permission,
+    });
+  },
+
+  // Get quiz shares
+  getQuizShares: async (quizId: string): Promise<QuizShare[]> => {
+    const response = await axiosInstance.get(`/api/quiz/${quizId}/shares`);
+    return response.data;
+  },
+
+  // Search users for sharing
+  searchUsers: async (
+    query: string,
+  ): Promise<{ id: string; name: string; email: string }[]> => {
+    const response = await axiosInstance.get("/api/user/search", {
+      params: { query, size: 50 },
+    });
+    return response.data.data || [];
   },
 };
 

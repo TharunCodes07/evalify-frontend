@@ -329,7 +329,7 @@ export function QuizSummary() {
               {config.randomizeQuestions && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                  Random selection from pool
+                  Random selection for students
                 </div>
               )}
             </div>
