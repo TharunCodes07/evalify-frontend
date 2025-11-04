@@ -251,3 +251,74 @@ export interface ShareQuizRequest {
   userIds: string[];
   permission: "VIEW" | "EDIT";
 }
+
+// Student Quiz Types - Optimized for Redis-first approach
+export interface CourseInfo {
+  code: string;
+  name: string;
+}
+
+export interface LiveQuiz {
+  quizId: string;
+  title: string;
+  description?: string;
+  startTime?: string;
+  endTime?: string;
+  durationMinutes: number;
+  extensionMinutes: number;
+  isPasswordProtected: boolean;
+  createdByName: string;
+  courses: CourseInfo[];
+}
+
+export interface CompletedQuiz {
+  quizId: string;
+  title: string;
+  description?: string;
+  durationMinutes: number;
+  attemptId: number;
+  startedAt: string;
+  submittedAt: string;
+  status: string;
+  isLateSubmission: boolean;
+  obtainedMarks?: number;
+  percentage?: number;
+  timeTaken: number;
+  extensionMinutes: number;
+  createdByName: string;
+  courses: CourseInfo[];
+}
+
+export interface MissedQuiz {
+  quizId: string;
+  title: string;
+  description?: string;
+  startTime?: string;
+  endTime: string;
+  durationMinutes: number;
+  createdByName: string;
+  courses: CourseInfo[];
+}
+
+export interface PaginationInfo {
+  currentPage: number;
+  perPage: number;
+  totalPages: number;
+  totalCount: number;
+  hasMore: boolean;
+}
+
+export interface StudentQuizzesResponse<T> {
+  data: T[];
+  pagination: PaginationInfo;
+}
+
+// Types for password validation
+export interface ValidateQuizPasswordRequest {
+  password: string;
+}
+
+export interface ValidateQuizPasswordResponse {
+  valid: boolean;
+  message?: string;
+}

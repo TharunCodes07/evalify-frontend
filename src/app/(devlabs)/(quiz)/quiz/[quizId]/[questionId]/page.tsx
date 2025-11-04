@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import questionQueries from "@/repo/question-queries/question-queries";
 import { QuizQuestionResponse } from "@/types/quiz";
 import QuestionCreation from "@/components/questions/create-edit/question-creation";
-import { Loader2 } from "lucide-react";
+import { QuestionSkeleton } from "@/components/questions/question-renderer/question-skeleton";
 
 export default function EditQuizQuestionPage() {
   const params = useParams();
@@ -20,8 +20,14 @@ export default function EditQuizQuestionPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="container mx-auto py-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Edit Question</h1>
+          <p className="text-muted-foreground mt-2">
+            Update the question details below
+          </p>
+        </div>
+        <QuestionSkeleton />
       </div>
     );
   }

@@ -97,6 +97,13 @@ const navGroups: NavGroup[] = [
         color: "text-pink-500",
       },
       {
+        title: "Quizzes",
+        icon: ClipboardCheck,
+        url: "/quizzes",
+        roles: ["student"],
+        color: "text-pink-500",
+      },
+      {
         title: "Banks",
         icon: Database,
         url: "/bank",

@@ -3,17 +3,11 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSessionContext } from "@/lib/session-context";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { courseQueries } from "@/repo/course-queries/course-queries";
 import { projectQueries } from "@/repo/project-queries/project-queries";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  BarChart3,
-  Download,
-  Folder,
-} from "lucide-react";
+import { AlertTriangle, BarChart3, Download, Folder } from "lucide-react";
 import { ReviewPerformance } from "@/components/student-courses/performance-overview-chart";
 import { Course, Project } from "@/types/types";
 import PerformanceAnalytics from "@/components/student-courses/course-results/PerformanceAnalytics";
@@ -45,7 +39,6 @@ const categoryColors: Record<string, string> = {
 
 const CoursePerformancePage = () => {
   const params = useParams();
-  const router = useRouter();
   const courseId = params.courseid as string;
   const { session, status } = useSessionContext();
   const studentId = session?.user?.id;
@@ -214,17 +207,6 @@ const CoursePerformancePage = () => {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="outline"
-          className="border-2 hover:bg-accent"
-          onClick={() => router.push("/courses")}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Courses
-        </Button>
-      </div>
-
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
