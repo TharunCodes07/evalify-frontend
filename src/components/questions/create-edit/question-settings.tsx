@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BloomLevel, Question } from "@/types/questions";
+import { BloomLevel, Difficulty, Question } from "@/types/questions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { InputNumber } from "@/components/ui/input-number";
@@ -23,6 +23,7 @@ import {
   BrainCircuit,
   Target,
   Tags,
+  Gauge,
 } from "lucide-react";
 import { TiptapEditor } from "@/components/rich-text-editor/editor";
 import bankQueries from "@/repo/bank-queries/bank-queries";
@@ -65,6 +66,10 @@ export default function QuestionSettings({
 
   const handleBloomLevelChange = (bloomLevel: BloomLevel) => {
     onChange({ ...value, bloomLevel });
+  };
+
+  const handleDifficultyChange = (difficulty: Difficulty) => {
+    onChange({ ...value, difficulty });
   };
 
   const handleCourseOutcomeChange = (courseOutcome: number | undefined) => {
@@ -166,6 +171,42 @@ export default function QuestionSettings({
                   {level}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Difficulty Level */}
+        <div className="space-y-3">
+          <Label
+            htmlFor="difficulty"
+            className="text-sm font-medium flex items-center gap-2"
+          >
+            <Gauge className="h-4 w-4 text-amber-500" />
+            Difficulty Level
+          </Label>
+          <Select
+            value={value.difficulty}
+            onValueChange={(val) => handleDifficultyChange(val as Difficulty)}
+          >
+            <SelectTrigger id="difficulty">
+              <SelectValue placeholder="Select difficulty" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={Difficulty.EASY}>
+                <span className="text-green-600 dark:text-green-400 font-medium">
+                  Easy
+                </span>
+              </SelectItem>
+              <SelectItem value={Difficulty.MEDIUM}>
+                <span className="text-yellow-600 dark:text-yellow-400 font-medium">
+                  Medium
+                </span>
+              </SelectItem>
+              <SelectItem value={Difficulty.HARD}>
+                <span className="text-red-600 dark:text-red-400 font-medium">
+                  Hard
+                </span>
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>

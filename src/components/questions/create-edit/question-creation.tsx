@@ -68,6 +68,7 @@ export default function QuestionCreation({
       const currentNegativeMarks = question?.negativeMarks || 0;
       const currentTopics = question?.topics || [];
       const currentBloomLevel = question?.bloomLevel;
+      const currentDifficulty = question?.difficulty;
       const currentCourseOutcome = question?.courseOutcome;
       const currentAttachedFiles = question?.attachedFiles || [];
 
@@ -80,6 +81,7 @@ export default function QuestionCreation({
         negativeMarks: currentNegativeMarks,
         topics: currentTopics,
         bloomLevel: currentBloomLevel,
+        difficulty: currentDifficulty,
         courseOutcome: currentCourseOutcome,
         attachedFiles: currentAttachedFiles,
       });
@@ -109,6 +111,7 @@ export default function QuestionCreation({
         negativeMarks: questionData.negativeMarks,
         topics: questionData.topics || [],
         bloomLevel: questionData.bloomLevel,
+        difficulty: questionData.difficulty,
         courseOutcome: questionData.courseOutcome,
         attachedFiles: questionData.attachedFiles,
       };
@@ -244,6 +247,7 @@ export default function QuestionCreation({
         negativeMarks: questionData.negativeMarks,
         topics: questionData.topics || [],
         bloomLevel: questionData.bloomLevel,
+        difficulty: questionData.difficulty,
         courseOutcome: questionData.courseOutcome,
         attachedFiles: questionData.attachedFiles,
       };
@@ -445,6 +449,21 @@ export default function QuestionCreation({
             </Card>
           )}
 
+          {/* Settings shown on mobile before the buttons */}
+          <div className="lg:hidden mt-6">
+            <Card>
+              <CardContent className="pt-6">
+                <QuestionSettings
+                  value={question || createDefaultQuestion(selectedType)}
+                  onChange={setQuestion}
+                  context={context}
+                  bankId={context === "bank" ? contextId : undefined}
+                  hideExplanation={true}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
           <Card className="p-4 mt-6">
             <div className="flex items-center justify-end gap-4">
               <Button
@@ -474,7 +493,8 @@ export default function QuestionCreation({
           </Card>
         </div>
 
-        <div className="w-full lg:w-96 ">
+        {/* Settings shown on desktop in sidebar */}
+        <div className="hidden lg:block w-full lg:w-96">
           <div className="lg:sticky lg:top-[73px] p-6">
             <Card>
               <CardContent>

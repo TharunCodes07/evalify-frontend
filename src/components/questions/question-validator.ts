@@ -146,10 +146,10 @@ export function validateQuestion(question: Question | null): ValidationResult {
     case QuestionType.MATCH_THE_FOLLOWING:
       if ("options" in question) {
         const leftOptions = question.options.filter(
-          (opt) => !opt.matchPairIds?.includes(opt.id),
+          (opt) => opt.isCorrect === true,
         );
-        const rightOptions = question.options.filter((opt) =>
-          opt.matchPairIds?.includes(opt.id),
+        const rightOptions = question.options.filter(
+          (opt) => opt.isCorrect === false,
         );
 
         if (leftOptions.length === 0) {
@@ -192,7 +192,17 @@ export function validateQuestion(question: Question | null): ValidationResult {
           }
         });
 
-        const rightOptionIds = new Set(rightOptions.map((opt) => opt.id));
+        // Collect all valid matchPairIds from right items
+        const validMatchPairIds = new Set<string>();
+        rightOptions.forEach((rightOpt) => {
+          if (rightOpt.matchPairIds && rightOpt.matchPairIds.length > 0) {
+            rightOpt.matchPairIds.forEach((matchId) =>
+              validMatchPairIds.add(matchId),
+            );
+          }
+        });
+
+        // Validate left items' matchPairIds reference valid right item matchPairIds
         leftOptions.forEach((opt, index) => {
           if (!opt.matchPairIds || opt.matchPairIds.length === 0) {
             errors.push({
@@ -201,7 +211,7 @@ export function validateQuestion(question: Question | null): ValidationResult {
             });
           } else {
             const invalidMatches = opt.matchPairIds.filter(
-              (id) => !rightOptionIds.has(id),
+              (matchId) => !validMatchPairIds.has(matchId),
             );
             if (invalidMatches.length > 0) {
               errors.push({

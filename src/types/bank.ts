@@ -40,6 +40,7 @@ export interface CreateBankQuestionRequest {
   negativeMarks: number;
   topics: string[];
   bloomLevel?: string;
+  difficulty?: string;
   courseOutcome?: number;
   attachedFiles?: string[];
 

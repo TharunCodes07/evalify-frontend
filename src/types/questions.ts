@@ -37,6 +37,12 @@ export enum BloomLevel {
   CREATE = "CREATE",
 }
 
+export enum Difficulty {
+  EASY = "EASY",
+  MEDIUM = "MEDIUM",
+  HARD = "HARD",
+}
+
 export enum OutputChecker {
   EXACT = "EXACT",
   TRIMMED = "TRIMMED",
@@ -60,6 +66,7 @@ export interface BaseQuestion {
   negativeMarks: number;
   topics?: string[];
   bloomLevel?: BloomLevel;
+  difficulty?: Difficulty;
   courseOutcome?: number;
   attachedFiles?: string[];
 }

@@ -79,15 +79,20 @@ export function QuestionHeader({
                 {question.bloomLevel}
               </Badge>
             )}
-            {"difficulty" in question &&
-              (question as { difficulty?: string }).difficulty && (
-                <Badge
-                  variant="outline"
-                  className="font-normal bg-orange-50 dark:bg-orange-950/30 border-orange-300 dark:border-orange-700"
-                >
-                  {(question as { difficulty: string }).difficulty}
-                </Badge>
-              )}
+            {question.difficulty && (
+              <Badge
+                variant="outline"
+                className={`font-normal ${
+                  question.difficulty === "EASY"
+                    ? "bg-green-50 dark:bg-green-950/30 border-green-300 dark:border-green-700 text-green-700 dark:text-green-400"
+                    : question.difficulty === "MEDIUM"
+                      ? "bg-yellow-50 dark:bg-yellow-950/30 border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-400"
+                      : "bg-red-50 dark:bg-red-950/30 border-red-300 dark:border-red-700 text-red-700 dark:text-red-400"
+                }`}
+              >
+                {question.difficulty}
+              </Badge>
+            )}
             {hasStudentAnswer && studentAnswer.isCorrect !== undefined && (
               <Badge
                 variant={studentAnswer.isCorrect ? "default" : "destructive"}

@@ -151,6 +151,7 @@ export interface CreateQuizQuestionRequest {
   negativeMarks: number;
   topics: string[];
   bloomLevel?: string;
+  difficulty?: string;
   courseOutcome?: number;
   attachedFiles?: string[];
   orderIndex: number;

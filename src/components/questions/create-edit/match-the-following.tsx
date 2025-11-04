@@ -48,13 +48,14 @@ export default function MatchTheFollowingComponent({
   const dragCounter = useRef(0);
   const { success } = useToast();
 
-  const rightItems = (value.options || []).filter((opt) =>
-    opt.matchPairIds?.includes(opt.id),
-  );
+  // Left items have isCorrect: true, Right items have isCorrect: false
+  const leftItems = (value.options || [])
+    .filter((opt) => opt.isCorrect === true)
+    .sort((a, b) => a.orderIndex - b.orderIndex);
 
-  const leftItems = (value.options || []).filter(
-    (opt) => !opt.matchPairIds?.includes(opt.id),
-  );
+  const rightItems = (value.options || [])
+    .filter((opt) => opt.isCorrect === false)
+    .sort((a, b) => a.orderIndex - b.orderIndex);
 
   const handleQuestionChange = (content: string) => {
     onChange({ ...value, text: content });
@@ -86,7 +87,8 @@ export default function MatchTheFollowingComponent({
         id: generateId(),
         optionText: editorContent,
         orderIndex: leftItems.length,
-        isCorrect: false,
+        isCorrect: true, // Left items have isCorrect: true
+        matchPairIds: [], // Initially no matches
       };
       onChange({
         ...value,
@@ -94,13 +96,13 @@ export default function MatchTheFollowingComponent({
       });
       setIsCreatingNewLeftItem(false);
     } else if (isCreatingNewRightItem) {
-      const newId = generateId();
+      const uniqueMatchId = generateId();
       const newOption: QuestionOption = {
-        id: newId,
+        id: generateId(),
         optionText: editorContent,
         orderIndex: rightItems.length,
-        isCorrect: false,
-        matchPairIds: [newId],
+        isCorrect: false, // Right items have isCorrect: false
+        matchPairIds: [uniqueMatchId], // Right items have their own unique match ID
       };
       onChange({
         ...value,
@@ -171,18 +173,24 @@ export default function MatchTheFollowingComponent({
   };
 
   const removeRightItem = (id: string) => {
+    const rightItem = rightItems.find((item) => item.id === id);
+    if (!rightItem?.matchPairIds) return;
+
+    // Get the matchPairIds from the right item being deleted
+    const matchIdsToRemove = rightItem.matchPairIds;
+
     onChange({
       ...value,
       options: (value.options || [])
-        .filter((opt) => opt.id !== id)
+        .filter((opt) => opt.id !== id) // Remove the right item
         .map((opt) => {
-          if (opt.matchPairIds?.includes(id)) {
+          // Update left items that reference this right item's matchPairIds
+          if (opt.isCorrect === true && opt.matchPairIds) {
             const updatedMatches = opt.matchPairIds.filter(
-              (matchId) => matchId !== id,
+              (matchId) => !matchIdsToRemove.includes(matchId),
             );
             return {
               ...opt,
-              isCorrect: updatedMatches.length > 0,
               matchPairIds:
                 updatedMatches.length > 0 ? updatedMatches : undefined,
             };
@@ -227,20 +235,24 @@ export default function MatchTheFollowingComponent({
     if (!draggedItem) return;
 
     if (draggedItem.type === "right") {
-      const rightItemId = draggedItem.id;
+      const rightItem = rightItems.find((r) => r.id === draggedItem.id);
+      if (!rightItem?.matchPairIds || rightItem.matchPairIds.length === 0)
+        return;
+
+      // Get the matchPairId from the right item (each right item has its own unique matchPairId)
+      const rightMatchId = rightItem.matchPairIds[0];
 
       onChange({
         ...value,
         options: (value.options || []).map((opt) => {
-          if (opt.id === targetId) {
+          if (opt.id === targetId && opt.isCorrect === true) {
             const existingMatches = opt.matchPairIds || [];
-            if (existingMatches.includes(rightItemId)) {
-              return opt;
+            if (existingMatches.includes(rightMatchId)) {
+              return opt; // Already matched
             }
             return {
               ...opt,
-              isCorrect: true,
-              matchPairIds: [...existingMatches, rightItemId],
+              matchPairIds: [...existingMatches, rightMatchId],
             };
           }
           return opt;
@@ -257,19 +269,19 @@ export default function MatchTheFollowingComponent({
     onChange({
       ...value,
       options: (value.options || []).map((opt) => {
-        if (opt.id === leftId) {
+        if (opt.id === leftId && opt.isCorrect === true) {
           if (rightIdToRemove) {
+            // rightIdToRemove is actually a matchPairId, not the right item's id
             const updatedMatches = (opt.matchPairIds || []).filter(
-              (id) => id !== rightIdToRemove,
+              (matchId) => matchId !== rightIdToRemove,
             );
             return {
               ...opt,
-              isCorrect: updatedMatches.length > 0,
               matchPairIds:
                 updatedMatches.length > 0 ? updatedMatches : undefined,
             };
           }
-          return { ...opt, isCorrect: false, matchPairIds: undefined };
+          return { ...opt, matchPairIds: undefined };
         }
         return opt;
       }),
@@ -280,11 +292,24 @@ export default function MatchTheFollowingComponent({
     const leftItem = leftItems.find((l) => l.id === leftId);
     if (!leftItem || !leftItem.matchPairIds) return [];
 
-    return rightItems.filter((r) => leftItem.matchPairIds?.includes(r.id));
+    // Return right items whose matchPairIds intersect with left item's matchPairIds
+    return rightItems.filter((r) =>
+      r.matchPairIds?.some((rightMatchId) =>
+        leftItem.matchPairIds?.includes(rightMatchId),
+      ),
+    );
   };
 
   const isRightItemUsed = (rightItemId: string): boolean => {
-    return leftItems.some((left) => left.matchPairIds?.includes(rightItemId));
+    const rightItem = rightItems.find((r) => r.id === rightItemId);
+    if (!rightItem?.matchPairIds) return false;
+
+    // Check if any left item's matchPairIds contains this right item's matchPairIds
+    return leftItems.some((left) =>
+      left.matchPairIds?.some((leftMatchId) =>
+        rightItem.matchPairIds?.includes(leftMatchId),
+      ),
+    );
   };
 
   return (
@@ -401,29 +426,39 @@ export default function MatchTheFollowingComponent({
                             Matched with:
                           </Label>
                           <div className="space-y-2">
-                            {matchedRights.map((matchedRight) => (
-                              <div
-                                key={matchedRight.id}
-                                className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-950/20 rounded"
-                              >
+                            {matchedRights.map((matchedRight) => {
+                              // Find the matchPairId to remove (the intersection between left and right matchPairIds)
+                              const matchPairIdToRemove =
+                                item.matchPairIds?.find((leftMatchId) =>
+                                  matchedRight.matchPairIds?.includes(
+                                    leftMatchId,
+                                  ),
+                                );
+
+                              return (
                                 <div
-                                  className="prose prose-xs dark:prose-invert flex-1"
-                                  dangerouslySetInnerHTML={{
-                                    __html: matchedRight.optionText,
-                                  }}
-                                />
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() =>
-                                    removeMatch(item.id, matchedRight.id)
-                                  }
-                                  className="ml-2"
+                                  key={matchedRight.id}
+                                  className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/40 rounded border border-green-200 dark:border-green-700"
                                 >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ))}
+                                  <div
+                                    className="prose prose-xs dark:prose-invert flex-1"
+                                    dangerouslySetInnerHTML={{
+                                      __html: matchedRight.optionText,
+                                    }}
+                                  />
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      removeMatch(item.id, matchPairIdToRemove)
+                                    }
+                                    className="ml-2"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -487,7 +522,7 @@ export default function MatchTheFollowingComponent({
                 key={item.id}
                 className={`border rounded-lg p-4 cursor-move ${
                   isRightItemUsed(item.id)
-                    ? "bg-green-50 dark:bg-green-950/20 border-green-500"
+                    ? "bg-green-50 dark:bg-green-900/40 border-green-500 dark:border-green-600"
                     : "hover:border-primary"
                 }`}
                 draggable
