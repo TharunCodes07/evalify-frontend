@@ -1,20 +1,22 @@
 import axiosInstance from "@/lib/axios/axios-client";
+import type { StudentQuestion } from "@/types/student-questions";
 import type {
   LiveQuiz,
   CompletedQuiz,
   MissedQuiz,
   ValidateQuizPasswordResponse,
+  StudentQuizConfig,
 } from "@/types/quiz";
 
-// Re-export types for backwards compatibility
 export type {
   LiveQuiz,
   CompletedQuiz,
   MissedQuiz,
   ValidateQuizPasswordResponse,
+  StudentQuizConfig,
 } from "@/types/quiz";
+export type { StudentQuestion } from "@/types/student-questions";
 
-// API calls
 const studentQuizAPI = {
   getLiveQuizzes: async (): Promise<LiveQuiz[]> => {
     const response = await axiosInstance.get("/api/student/quizzes/live");
@@ -38,6 +40,20 @@ const studentQuizAPI = {
     const response = await axiosInstance.post(
       `/api/student/quizzes/${quizId}/validate-password`,
       { password },
+    );
+    return response.data;
+  },
+
+  getQuizConfig: async (quizId: string): Promise<StudentQuizConfig> => {
+    const response = await axiosInstance.get(
+      `/api/student/quizzes/${quizId}/config`,
+    );
+    return response.data;
+  },
+
+  getQuizQuestions: async (quizId: string): Promise<StudentQuestion[]> => {
+    const response = await axiosInstance.get(
+      `/api/student/quizzes/${quizId}/questions`,
     );
     return response.data;
   },

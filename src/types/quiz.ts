@@ -322,3 +322,19 @@ export interface ValidateQuizPasswordResponse {
   valid: boolean;
   message?: string;
 }
+
+export interface StudentQuizConfig {
+  startTime?: string;
+  endTime?: string;
+  durationMinutes: number;
+  showQuestionsOneByOne: boolean;
+  allowQuestionNavigation: boolean;
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+  requireFullScreen: boolean;
+  preventQuestionCopy: boolean;
+  preventTabSwitch: boolean;
+  tabSwitchLimit?: number;
+  calculatorAccess: boolean;
+  autoSubmit: boolean;
+}

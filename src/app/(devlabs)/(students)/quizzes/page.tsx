@@ -100,7 +100,7 @@ export default function StudentQuizzesPage() {
     setIsStarting(true);
     try {
       // Navigate to quiz page
-      router.push(`/quizzes/${selectedQuiz.quizId}`);
+      router.push(`/quiz-attempt/${selectedQuiz.quizId}`);
     } catch (error) {
       console.error("Failed to start quiz:", error);
       setIsStarting(false);
