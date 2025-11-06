@@ -19,6 +19,8 @@ interface SubmitConfirmDialogProps {
   answeredCount: number;
   totalQuestions: number;
   markedCount: number;
+  isAutoSubmit?: boolean;
+  timeRemaining?: number;
 }
 
 export function SubmitConfirmDialog({
@@ -28,11 +30,66 @@ export function SubmitConfirmDialog({
   answeredCount,
   totalQuestions,
   markedCount,
+  isAutoSubmit = false,
+  timeRemaining = 0,
 }: SubmitConfirmDialogProps) {
   const unansweredCount = totalQuestions - answeredCount - markedCount;
   const completionPercentage = Math.round(
     (answeredCount / totalQuestions) * 100,
   );
+
+  // If auto-submit is enabled and time is up, show different dialog
+  if (isAutoSubmit && timeRemaining <= 0) {
+    return (
+      <AlertDialog open={open} onOpenChange={onOpenChange}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader className="text-center">
+            <AlertDialogTitle className="text-xl font-semibold text-orange-600">
+              Auto-Submit Enabled
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              Time is up! Your quiz will be automatically submitted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-foreground mb-1">
+                {completionPercentage}%
+              </div>
+              <p className="text-sm text-muted-foreground">Quiz Completion</p>
+            </div>
+
+            <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
+              <div className="flex items-center gap-3 mb-2">
+                <AlertTriangle className="h-5 w-5 text-orange-600" />
+                <span className="font-medium text-orange-800 dark:text-orange-200">
+                  Auto-Submit Active
+                </span>
+              </div>
+              <p className="text-sm text-orange-700 dark:text-orange-300">
+                Your quiz answers have been automatically saved and will be
+                submitted shortly. No action is required on your part.
+              </p>
+            </div>
+
+            <div className="text-xs text-muted-foreground text-center">
+              Please wait while your submission is processed...
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={onConfirm}
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              Submit Now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

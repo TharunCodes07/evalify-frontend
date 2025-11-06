@@ -130,8 +130,14 @@ export function QuizRenderer({
     const interval = setInterval(() => {
       const remaining = calculateTimeRemaining(attemptData.mustSubmitBy);
       setTimeRemaining(remaining);
-      if (remaining <= 0 && config.autoSubmit) {
-        submitMutation.mutate();
+
+      if (remaining <= 0) {
+        if (config.autoSubmit) {
+          submitMutation.mutate();
+        } else {
+          // Force open submit modal when time is up
+          setShowSubmitDialog(true);
+        }
       }
     }, 1000);
     return () => clearInterval(interval);
@@ -518,6 +524,8 @@ export function QuizRenderer({
         answeredCount={answeredCount}
         totalQuestions={processedQuestions.length}
         markedCount={markedCount}
+        isAutoSubmit={config.autoSubmit}
+        timeRemaining={timeRemaining}
       />
     </>
   );
