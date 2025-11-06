@@ -263,6 +263,14 @@ export default function QuizDetailPage() {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => router.push(`/quiz/${quizId}/extensions`)}
+                  >
+                    <Clock className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Grant Extensions</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => router.push(`/quiz/${quizId}/edit`)}
                   >
                     <Settings className="h-4 w-4 sm:mr-2" />
