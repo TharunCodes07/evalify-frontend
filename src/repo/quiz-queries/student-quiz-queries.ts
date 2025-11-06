@@ -112,9 +112,9 @@ const studentQuizAPI = {
   },
 
   submitQuiz: async (attemptId: string): Promise<SubmitResponse> => {
-    const response = await axiosInstance.post(`/api/student/quiz/submit`, {
-      attemptId,
-    });
+    const response = await axiosInstance.post(
+      `/api/student/quiz/attempt/${attemptId}/submit`,
+    );
     return response.data;
   },
 

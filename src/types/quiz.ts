@@ -345,14 +345,14 @@ export interface AnswerData {
   answerText?: string;
   selectedOptionIds?: string[];
   blankValues?: Record<number, string>;
-  matchPairs?: Record<string, string | string[]>;
+  matchPairs?: Record<string, string[]>;
   fileUrls?: string[];
   markedForLater: boolean;
   answeredAt: number;
 }
 
 export interface StartAttemptRequest {
-  metadata?: Record<string, unknown>;
+  password?: string;
 }
 
 export interface StartAttemptResponse {
@@ -360,7 +360,6 @@ export interface StartAttemptResponse {
   quizId: string;
   startedAt: string;
   mustSubmitBy: string;
-  durationMinutes: number;
   answers: Record<string, AnswerData>;
   violationCount: number;
 }
@@ -373,7 +372,7 @@ export interface SaveAnswerRequest {
     answerText?: string;
     selectedOptionIds?: string[];
     blankValues?: Record<number, string>;
-    matchPairs?: Record<string, string | string[]>;
+    matchPairs?: Record<string, string[]>;
     fileUrls?: string[];
   };
   markedForLater: boolean;
@@ -403,19 +402,19 @@ export interface SubmitResponse {
   answeredQuestions: number;
   totalQuestions: number;
   isAutoSubmit: boolean;
-  syncStatus: "PENDING" | "SYNCING" | "SYNCED";
+  syncStatus: string;
 }
 
 export interface SubmissionResultResponse {
   attemptId: string;
   status: string;
-  syncStatus: "SYNCING" | "SYNCED";
-  message?: string;
+  syncStatus: string;
   submittedAt?: string;
   isLateSubmission?: boolean;
   obtainedMarks?: number;
   totalMarks?: number;
   percentage?: number;
+  message?: string;
 }
 
 export interface ExtensionRequest {

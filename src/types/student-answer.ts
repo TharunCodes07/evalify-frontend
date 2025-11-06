@@ -2,7 +2,7 @@ export interface StudentAnswer {
   answerText?: string;
   selectedOptionIds?: string[];
   blankValues?: Record<number, string>;
-  matchPairs?: Record<string, string | string[]>;
+  matchPairs?: Record<string, string[]>;
   fileUrls?: string[];
   answeredAt?: string;
 }

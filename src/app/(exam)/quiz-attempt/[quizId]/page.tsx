@@ -75,10 +75,7 @@ export default function QuizAttemptPage() {
     <QuizRenderer
       questions={questions}
       config={config}
-      attemptData={{
-        ...attemptData,
-        durationMinutes: config.durationMinutes,
-      }}
+      attemptData={attemptData}
     />
   );
 }

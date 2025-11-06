@@ -99,10 +99,7 @@ export default function StudentQuizzesPage() {
   // Start quiz mutation
   const startQuizMutation = useMutation({
     mutationFn: ({ quizId, password }: { quizId: string; password?: string }) =>
-      studentQuizAPI.startQuizAttempt(
-        quizId,
-        password ? { metadata: { password } } : {},
-      ),
+      studentQuizAPI.startQuizAttempt(quizId, password ? { password } : {}),
     onSuccess: (attemptData) => {
       setIsModalOpen(false);
       setIsStarting(false);

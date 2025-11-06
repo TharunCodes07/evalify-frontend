@@ -94,9 +94,10 @@ export function MatchTheFollowingRenderer({
       setRightOrder(newOrder);
 
       if (onAnswerEdit && question.id) {
-        const newPairs: Record<string, string> = {};
+        const newPairs: Record<string, string[]> = {};
         leftItems.forEach((left, idx) => {
-          newPairs[left.id] = newOrder[idx] || "";
+          const rightId = newOrder[idx];
+          newPairs[left.id] = rightId ? [rightId] : [];
         });
         onAnswerEdit(question.id, {
           ...studentAnswer,
@@ -106,26 +107,30 @@ export function MatchTheFollowingRenderer({
     }
   };
 
-  const getCorrectRightIds = (leftItemId: string): string[] => {
+  const getCorrectMatchIds = (leftItemId: string): string[] => {
     const leftItem = leftItems.find((item) => item.id === leftItemId);
     return leftItem?.matchPairIds || [];
   };
 
-  const getRightItemsByMatchPairIds = (matchPairIds: string[]) => {
+  const getRightItemsByMatchIds = (matchIds: string[]) => {
     return rightItems.filter((rightItem) =>
-      matchPairIds.some((mpId) => rightItem.matchPairIds?.includes(mpId)),
+      rightItem.matchPairIds?.some((mpId) => matchIds.includes(mpId)),
     );
   };
 
   const isMatchCorrect = (leftItemId: string): boolean => {
-    const studentRightId = studentPairs[leftItemId];
-    if (!studentRightId) return false;
-    const correctRightIds = getCorrectRightIds(leftItemId);
-    const studentRightItem = rightItems.find((r) => r.id === studentRightId);
-    if (!studentRightItem?.matchPairIds) return false;
-    return correctRightIds.some((mpId) =>
-      studentRightItem.matchPairIds?.includes(mpId),
-    );
+    const studentRightIds = studentPairs[leftItemId];
+    if (!studentRightIds || studentRightIds.length === 0) return false;
+    const correctMatchIds = getCorrectMatchIds(leftItemId);
+
+    // Check if any of the student's selected right items have match IDs that are correct
+    return studentRightIds.some((studentRightId) => {
+      const studentRightItem = rightItems.find((r) => r.id === studentRightId);
+      if (!studentRightItem?.matchPairIds) return false;
+      return studentRightItem.matchPairIds.some((matchId) =>
+        correctMatchIds.includes(matchId),
+      );
+    });
   };
 
   const orderedRightItems = rightOrder
@@ -249,9 +254,9 @@ export function MatchTheFollowingRenderer({
           </div>
           <div className="space-y-2">
             {leftItems.map((leftItem, leftIndex) => {
-              const correctRightIds = getCorrectRightIds(leftItem.id);
+              const correctMatchIds = getCorrectMatchIds(leftItem.id);
               const correctRightItems =
-                getRightItemsByMatchPairIds(correctRightIds);
+                getRightItemsByMatchIds(correctMatchIds);
 
               if (correctRightItems.length === 0) {
                 return (
@@ -346,27 +351,22 @@ export function MatchTheFollowingRenderer({
               </div>
               <div className="space-y-2">
                 {leftItems.map((leftItem, leftIndex) => {
-                  const studentRightId = studentPairs[leftItem.id];
-                  const rightItem = rightItems.find(
-                    (r) => r.id === studentRightId,
-                  );
-                  const rightIndex = rightItems.findIndex(
-                    (r) => r.id === studentRightId,
-                  );
+                  const studentRightIds = studentPairs[leftItem.id] || [];
                   const isCorrect =
                     showCorrectAnswer && isMatchCorrect(leftItem.id);
-                  const hasAnswer = !!studentRightId;
+                  const hasAnswer = studentRightIds.length > 0;
 
                   return (
                     <div
                       key={leftItem.id}
                       className={cn(
-                        "flex items-center gap-3 text-sm",
+                        "flex items-start gap-3 text-sm p-3 rounded border",
                         showCorrectAnswer &&
                           hasAnswer &&
                           (isCorrect
-                            ? "bg-green-50 dark:bg-green-950/30 p-2 rounded border border-green-300"
-                            : "bg-red-50 dark:bg-red-950/30 p-2 rounded border border-red-300"),
+                            ? "bg-green-50 dark:bg-green-950/30 border-green-300"
+                            : "bg-red-50 dark:bg-red-950/30 border-red-300"),
+                        !hasAnswer && "bg-muted/30",
                       )}
                     >
                       <div className="flex items-center gap-2 flex-1">
@@ -381,7 +381,7 @@ export function MatchTheFollowingRenderer({
                           />
                         </div>
                       </div>
-                      <div className="shrink-0">
+                      <div className="shrink-0 mt-2">
                         {showCorrectAnswer && hasAnswer ? (
                           isCorrect ? (
                             <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
@@ -396,25 +396,51 @@ export function MatchTheFollowingRenderer({
                           <ArrowRight className="h-4 w-4 text-muted-foreground" />
                         )}
                       </div>
-                      <div className="flex items-center gap-2 flex-1">
-                        <Badge variant="outline" className="shrink-0">
-                          {rightIndex >= 0
-                            ? String.fromCharCode(65 + rightIndex)
-                            : "?"}
-                        </Badge>
-                        <div className="flex-1 p-2 bg-background rounded border">
-                          {rightItem ? (
-                            <ContentPreview
-                              content={rightItem.optionText}
-                              noProse
-                              className="border-0 p-0"
-                            />
-                          ) : (
+                      <div className="flex-1">
+                        {hasAnswer ? (
+                          <div className="space-y-2">
+                            {studentRightIds.map((studentRightId) => {
+                              const rightItem = rightItems.find(
+                                (r) => r.id === studentRightId,
+                              );
+                              const rightIndex = rightItems.findIndex(
+                                (r) => r.id === studentRightId,
+                              );
+
+                              return (
+                                <div
+                                  key={studentRightId}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Badge variant="outline" className="shrink-0">
+                                    {rightIndex >= 0
+                                      ? String.fromCharCode(65 + rightIndex)
+                                      : "?"}
+                                  </Badge>
+                                  <div className="flex-1 p-2 bg-background rounded border">
+                                    {rightItem ? (
+                                      <ContentPreview
+                                        content={rightItem.optionText}
+                                        noProse
+                                        className="border-0 p-0"
+                                      />
+                                    ) : (
+                                      <span className="text-muted-foreground italic text-xs">
+                                        Item not found
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="p-2 bg-background rounded border">
                             <span className="text-muted-foreground italic text-xs">
                               No match
                             </span>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
