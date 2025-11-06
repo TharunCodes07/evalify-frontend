@@ -20,7 +20,7 @@ interface StartQuizModalProps {
   quiz: LiveQuiz | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
+  onConfirm: (password?: string) => void;
   isStarting?: boolean;
 }
 
@@ -64,8 +64,8 @@ export function StartQuizModal({
         );
 
         if (response.valid) {
-          // Password is correct, start the quiz
-          onConfirm();
+          // Password is correct, start the quiz with password
+          onConfirm(password);
         } else {
           // Password is incorrect
           setError(response.message || "Incorrect password");

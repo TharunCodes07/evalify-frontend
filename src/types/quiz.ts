@@ -338,3 +338,115 @@ export interface StudentQuizConfig {
   calculatorAccess: boolean;
   autoSubmit: boolean;
 }
+
+// Redis-first Quiz Attempt Types
+export interface AnswerData {
+  questionType: string;
+  answerText?: string;
+  selectedOptionIds?: string[];
+  blankValues?: Record<number, string>;
+  matchPairs?: Record<string, string | string[]>;
+  fileUrls?: string[];
+  markedForLater: boolean;
+  answeredAt: number;
+}
+
+export interface StartAttemptRequest {
+  metadata?: Record<string, unknown>;
+}
+
+export interface StartAttemptResponse {
+  attemptId: string;
+  quizId: string;
+  startedAt: string;
+  mustSubmitBy: string;
+  durationMinutes: number;
+  answers: Record<string, AnswerData>;
+  violationCount: number;
+}
+
+export interface SaveAnswerRequest {
+  attemptId: string;
+  questionId: string;
+  questionType: string;
+  answerData: {
+    answerText?: string;
+    selectedOptionIds?: string[];
+    blankValues?: Record<number, string>;
+    matchPairs?: Record<string, string | string[]>;
+    fileUrls?: string[];
+  };
+  markedForLater: boolean;
+}
+
+export interface SaveAnswerResponse {
+  success: boolean;
+  savedAt: string;
+}
+
+export interface AttemptResponse {
+  attemptId: string;
+  quizId: string;
+  startedAt: string;
+  mustSubmitBy: string;
+  extensionMinutes: number;
+  status: string;
+  answers: Record<string, AnswerData>;
+  violationCount: number;
+}
+
+export interface SubmitResponse {
+  success: boolean;
+  attemptId: string;
+  submittedAt: string;
+  isLateSubmission: boolean;
+  answeredQuestions: number;
+  totalQuestions: number;
+  isAutoSubmit: boolean;
+  syncStatus: "PENDING" | "SYNCING" | "SYNCED";
+}
+
+export interface SubmissionResultResponse {
+  attemptId: string;
+  status: string;
+  syncStatus: "SYNCING" | "SYNCED";
+  message?: string;
+  submittedAt?: string;
+  isLateSubmission?: boolean;
+  obtainedMarks?: number;
+  totalMarks?: number;
+  percentage?: number;
+}
+
+export interface ExtensionRequest {
+  additionalMinutes: number;
+  reason: string;
+}
+
+export interface ExtensionResponse {
+  success: boolean;
+  newMustSubmitBy: string;
+  totalExtensionMinutes: number;
+}
+
+export interface AttemptSummary {
+  attemptId: string;
+  studentId: string;
+  studentName?: string;
+  studentEmail?: string;
+  quizId: string;
+  startedAt: string;
+  mustSubmitBy: string;
+  extensionMinutes: number;
+  status: string;
+  violationCount: number;
+}
+
+export interface UpdateViolationRequest {
+  violationCount: number;
+}
+
+export interface UpdateViolationResponse {
+  success: boolean;
+  violationCount: number;
+}

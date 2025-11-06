@@ -13,11 +13,13 @@ import { StartQuizModal } from "@/components/quiz/student/start-quiz-modal";
 import { useRouter } from "next/navigation";
 import { Play, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import { useToast } from "@/hooks/use-toast";
 
 export default function StudentQuizzesPage() {
   const router = useRouter();
+  const { error: showError } = useToast();
   const [activeTab, setActiveTab] = useState<"live" | "completed" | "missed">(
     "live",
   );
@@ -94,18 +96,45 @@ export default function StudentQuizzesPage() {
     setIsModalOpen(true);
   };
 
-  const handleStartQuiz = async () => {
-    if (!selectedQuiz) return;
-
-    setIsStarting(true);
-    try {
-      // Navigate to quiz page
-      router.push(`/quiz-attempt/${selectedQuiz.quizId}`);
-    } catch (error) {
-      console.error("Failed to start quiz:", error);
+  // Start quiz mutation
+  const startQuizMutation = useMutation({
+    mutationFn: ({ quizId, password }: { quizId: string; password?: string }) =>
+      studentQuizAPI.startQuizAttempt(
+        quizId,
+        password ? { metadata: { password } } : {},
+      ),
+    onSuccess: (attemptData) => {
+      setIsModalOpen(false);
       setIsStarting(false);
-    }
-  };
+      // Navigate to quiz attempt page with attemptId
+      router.push(
+        `/quiz-attempt/${selectedQuiz?.quizId}?attemptId=${attemptData.attemptId}`,
+      );
+    },
+    onError: (error: unknown) => {
+      setIsStarting(false);
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      const errorMessage =
+        err?.response?.data?.message || err?.message || "Failed to start quiz";
+      showError(errorMessage, {
+        description:
+          "Please try again or contact support if the issue persists.",
+      });
+      console.error("Failed to start quiz:", error);
+    },
+  });
+
+  const handleStartQuiz = useCallback(
+    (password?: string) => {
+      if (!selectedQuiz) return;
+      setIsStarting(true);
+      startQuizMutation.mutate({ quizId: selectedQuiz.quizId, password });
+    },
+    [selectedQuiz, startQuizMutation],
+  );
 
   const handleCompletedQuizClick = (quizId: string) => {
     router.push(`/quiz/${quizId}/completed`);
